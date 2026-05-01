@@ -875,6 +875,17 @@
       <button class="reflection-save" id="settingsSignOut">Sign out</button>
     </div>
 
+    <div class="section-label">ai settings</div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px;margin-bottom:16px">
+      <div style="font-family:'DM Serif Display',serif;font-size:15px;color:var(--text);margin-bottom:4px">Anthropic API Key</div>
+      <div style="font-size:11px;color:var(--text-dimmer);margin-bottom:12px;line-height:1.6">Your key is stored locally on this device only and never sent anywhere except directly to Anthropic. Get one at <span style="color:var(--accent)">console.anthropic.com</span></div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <input class="ai-input" id="apiKeyInput" type="password" placeholder="sk-ant-..." autocomplete="off" style="flex:1;font-size:12px"/>
+        <button id="apiKeySaveBtn" style="padding:9px 16px;border-radius:var(--r-sm);background:var(--accent);color:var(--bg);font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.06em;text-transform:uppercase;border:none;cursor:pointer;white-space:nowrap;flex-shrink:0">Save</button>
+      </div>
+      <div id="apiKeyStatus" style="font-size:11px;margin-top:8px;display:none"></div>
+    </div>
+
     <div class="section-label">ask ai</div>
     <div class="ai-section" id="aiSectionSettings">
       <div class="ai-chips">
@@ -2094,14 +2105,27 @@ RECENT WELLNESS:
 ${recentWellness.length?recentWellness.join('\n'):'none recorded'}`;
 }
 
+function getApiKey(){return localStorage.getItem('ritualApiKey')||'';}
+
 async function askAI(question,suffix){
   if(!question||!question.trim())return;
   const msgs=document.getElementById('aiMessages'+suffix);
   const send=document.getElementById('aiSend'+suffix);
   const input=document.getElementById('aiInput'+suffix);
   if(!msgs)return;
-  input.value='';
 
+  const apiKey=getApiKey();
+  if(!apiKey){
+    input.value='';
+    const noKey=document.createElement('div');
+    noKey.className='ai-msg assistant';
+    noKey.innerHTML='No API key set. Go to <strong>Settings &#8594; AI Settings</strong> and add your Anthropic API key to enable AI.';
+    msgs.appendChild(noKey);
+    msgs.scrollTop=msgs.scrollHeight;
+    return;
+  }
+
+  input.value='';
   const uBubble=document.createElement('div');
   uBubble.className='ai-msg user';uBubble.textContent=question.trim();
   msgs.appendChild(uBubble);
@@ -2115,7 +2139,12 @@ async function askAI(question,suffix){
   try{
     const res=await fetch('https://api.anthropic.com/v1/messages',{
       method:'POST',
-      headers:{'Content-Type':'application/json'},
+      headers:{
+        'Content-Type':'application/json',
+        'x-api-key':apiKey,
+        'anthropic-version':'2023-06-01',
+        'anthropic-dangerous-direct-browser-access':'true'
+      },
       body:JSON.stringify({
         model:'claude-sonnet-4-20250514',
         max_tokens:1000,
@@ -2123,6 +2152,10 @@ async function askAI(question,suffix){
         messages:[{role:'user',content:question.trim()}]
       })
     });
+    if(!res.ok){
+      const errData=await res.json().catch(()=>({}));
+      throw new Error(errData.error?.message||`API error ${res.status}`);
+    }
     const data=await res.json();
     const reply=data.content&&data.content[0]?data.content[0].text:'Sorry, could not get a response.';
     thinking.remove();
@@ -2131,7 +2164,7 @@ async function askAI(question,suffix){
     msgs.appendChild(aBubble);
   }catch(err){
     thinking.className='ai-msg assistant';
-    thinking.textContent='Could not connect - check your internet connection.';
+    thinking.textContent='Could not reach AI - '+(err.message||'check your connection.');
   }finally{
     if(send)send.disabled=false;
     msgs.scrollTop=msgs.scrollHeight;
@@ -2779,6 +2812,40 @@ document.getElementById('signOutBtn').addEventListener('click',async()=>{
   localStorage.removeItem('ritualHabits');localStorage.removeItem('ritualCompletions');
   const b=document.getElementById('guestBanner');if(b)b.remove();
 });
+
+// ── API Key ──
+(function initApiKey(){
+  const input=document.getElementById('apiKeyInput');
+  const btn=document.getElementById('apiKeySaveBtn');
+  const status=document.getElementById('apiKeyStatus');
+  const stored=localStorage.getItem('ritualApiKey');
+  if(stored){
+    input.value=stored;
+    status.style.display='block';
+    status.style.color='var(--accent3)';
+    status.textContent='API key saved - AI is enabled.';
+  }
+  btn.addEventListener('click',()=>{
+    const val=input.value.trim();
+    if(!val){
+      localStorage.removeItem('ritualApiKey');
+      status.style.display='block';
+      status.style.color='var(--text-dimmer)';
+      status.textContent='API key removed.';
+      return;
+    }
+    if(!val.startsWith('sk-ant-')){
+      status.style.display='block';
+      status.style.color='#f08080';
+      status.textContent='That does not look like a valid Anthropic key (should start with sk-ant-).';
+      return;
+    }
+    localStorage.setItem('ritualApiKey',val);
+    status.style.display='block';
+    status.style.color='var(--accent3)';
+    status.textContent='API key saved - AI is enabled.';
+  });
+})();
 </script>
 </body>
 </html>
