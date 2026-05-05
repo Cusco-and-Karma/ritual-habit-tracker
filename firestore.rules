@@ -1,0 +1,31 @@
+rules_version = '2';
+
+// Deploy with: firebase deploy --only firestore:rules
+//
+// Model: each authenticated user has a single doc at users/{uid} containing
+// { habits: [...], completions: {...} }. A user can only access their own
+// document. All other paths are denied.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    match /users/{uid} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow delete: if request.auth != null && request.auth.uid == uid;
+      allow create, update: if request.auth != null
+                            && request.auth.uid == uid
+                            && isValidUserDoc(request.resource.data);
+    }
+
+    // Default deny everything else.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+
+  function isValidUserDoc(d) {
+    return d.keys().hasOnly(['habits', 'completions'])
+        && (!('habits' in d) || d.habits is list)
+        && (!('completions' in d) || d.completions is map);
+  }
+}

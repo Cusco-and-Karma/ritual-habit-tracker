@@ -1,0 +1,10 @@
+[build]
+  publish = "."
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# Security headers are defined in _headers for fine-grained per-path control.
+# This file just declares the publish dir and SPA-style redirect.

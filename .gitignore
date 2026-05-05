@@ -1,0 +1,52 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Editor / IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Old / backup HTML drafts (do not publish)
+habit-tracker.html
+habit-tracker.html-*
+habit-tracker2.html
+habit-tracker - hide health tab.html
+habit-tracker-working dropdown menu.html
+Ritual-Habit-Tracker.html
+*.bak
+*.orig
+
+# Secrets / env
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+serviceAccountKey.json
+firebase-debug.log
+firebase-debug.*.log
+
+# Netlify
+.netlify/
+
+# Firebase local config (project ID is not a secret, but keep it off GitHub
+# if you prefer — remove .firebaserc from this block to commit it)
+.firebaserc
+firebase.json
+firestore.indexes.json
+.firebase/
+
+# Node (in case you add tooling later)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Build output
+dist/
+build/
