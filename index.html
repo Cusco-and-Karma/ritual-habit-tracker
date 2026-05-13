@@ -138,8 +138,12 @@
   .theme-card-name{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-dim)}
   .accent-swatch{width:36px;height:36px;border-radius:50%;cursor:pointer;border:3px solid transparent;transition:border-color .2s,transform .2s;flex-shrink:0}
   .accent-swatch.active{border-color:var(--text);transform:scale(1.15)}
-  .bg-swatch{width:48px;height:32px;border-radius:var(--r-sm);cursor:pointer;border:2px solid transparent;transition:border-color .2s;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:9px;letter-spacing:.04em;text-transform:uppercase;color:rgba(255,255,255,.5)}
+  .bg-swatch{width:48px;height:32px;border-radius:var(--r-sm);cursor:pointer;border:2px solid transparent;transition:border-color .2s,transform .15s;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:9px;letter-spacing:.04em;text-transform:uppercase;color:rgba(255,255,255,.5)}
+  .bg-swatch:hover{transform:scale(1.07)}
   .bg-swatch.active{border-color:var(--accent)}
+  .surface-swatch{width:48px;height:32px;border-radius:var(--r-sm);cursor:pointer;border:2px solid transparent;transition:border-color .2s,transform .15s;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:9px;letter-spacing:.04em;text-transform:uppercase;color:rgba(255,255,255,.5)}
+  .surface-swatch:hover{transform:scale(1.07)}
+  .surface-swatch.active{border-color:var(--accent)}
   .settings-size-btn,.settings-radius-btn{flex:1;padding:10px 4px;background:var(--surface2);border:1.5px solid var(--border);border-radius:var(--r-sm);color:var(--text-dim);font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.04em;cursor:pointer;transition:all .15s}
   .settings-size-btn.active,.settings-radius-btn.active{border-color:var(--accent);color:var(--accent);background:var(--accent-glow)}
   .abstain-toggle{display:flex;align-items:center;gap:10px;margin-bottom:16px;padding:10px 14px;border-radius:var(--r-sm);background:var(--surface2);border:1.5px solid var(--border);cursor:pointer;transition:border-color .2s,background .2s;user-select:none}
@@ -392,6 +396,8 @@
   .save-btn{width:100%;padding:16px;border-radius:var(--r);background:var(--accent);color:var(--bg);font-family:'DM Mono',monospace;font-size:13px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;border:none;cursor:pointer;transition:opacity .2s,transform .15s}
   .save-btn:active{transform:scale(.98);opacity:.85}
   @keyframes fadeSlideIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes popIn{from{opacity:0;transform:scale(.92) translateY(-4px)}to{opacity:1;transform:scale(1) translateY(0)}}
+  @keyframes slideUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 
   /* HEALTH VIEW */
   .health-app-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px;cursor:pointer;transition:border-color .2s,background .2s;position:relative;overflow:hidden}
@@ -465,7 +471,7 @@
   #healthTabPill.active-pill::after,#cosmosTabPill.active-pill::after{transform:translateX(16px)}
 
   /* SUBCATEGORIES */
-  .subcat-manager{margin-bottom:16px}
+  .subcat-manager{margin-bottom:8px}
   .subcat-list{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;min-height:28px}
   .subcat-tag{display:flex;align-items:center;gap:4px;padding:4px 8px 4px 10px;border-radius:99px;background:var(--accent-glow);border:1px solid rgba(200,180,240,.3);font-size:11px;color:var(--accent)}
   .subcat-tag-remove{background:none;border:none;color:var(--accent);cursor:pointer;font-size:14px;line-height:1;padding:0 2px;opacity:.7}
@@ -540,7 +546,8 @@
   .week-nav-btn svg{width:14px;height:14px;stroke:var(--text-dim);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
   .week-empty{color:var(--text-dimmer);font-size:12px;text-align:center;padding:24px 0}
   /* Card per habit */
-  .wk-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px 14px 12px;margin-bottom:8px;position:relative;animation:fadeSlideIn .3s ease both;user-select:none}
+  .wk-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px 14px 12px;margin-bottom:8px;position:relative;animation:slideUp .3s cubic-bezier(.4,0,.2,1) both;user-select:none;transition:border-color .2s,box-shadow .2s,transform .15s}
+  .wk-card:hover{border-color:var(--text-dimmer);box-shadow:0 2px 12px rgba(0,0,0,.25)}
   .wk-card-header{display:flex;align-items:flex-start;gap:8px;margin-bottom:3px}
   .wk-card-emoji{font-size:16px;flex-shrink:0;margin-top:2px}
   .wk-card-title{font-family:'DM Serif Display',serif;font-size:17px;line-height:1.2;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -559,12 +566,14 @@
   .wk-day-box.is-today:not(.is-done) .wk-day-num{color:var(--text)}
   .wk-day-check{font-size:10px;line-height:1;height:11px;color:transparent;display:flex;align-items:center;justify-content:center}
   /* Popup menu */
-  .wk-popup{position:absolute;top:38px;right:8px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);padding:6px;z-index:60;min-width:140px;box-shadow:0 8px 32px rgba(0,0,0,.5);animation:fadeSlideIn .12s ease}
-  .wk-popup-item{display:flex;align-items:center;gap:8px;padding:9px 12px;border-radius:var(--r-sm);border:none;background:none;color:var(--text-dim);font-family:'DM Mono',monospace;font-size:12px;cursor:pointer;width:100%;text-align:left;letter-spacing:.03em;transition:background .1s,color .1s}
-  .wk-popup-item:active{background:var(--surface);color:var(--text)}
+  .wk-popup{position:fixed;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);padding:6px;z-index:1000;min-width:160px;max-height:70vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,.6),0 2px 8px rgba(0,0,0,.3);animation:popIn .18s cubic-bezier(.34,1.56,.64,1);transform-origin:top right}
+  .wk-popup-item{display:flex;align-items:center;gap:8px;padding:9px 12px;border-radius:var(--r-sm);border:none;background:none;color:var(--text-dim);font-family:'DM Mono',monospace;font-size:12px;cursor:pointer;width:100%;text-align:left;letter-spacing:.03em;transition:background .12s,color .12s,transform .1s}
+  .wk-popup-item:hover{background:var(--surface);color:var(--text);transform:translateX(2px)}
+  .wk-popup-item:active{background:var(--surface);color:var(--text);transform:scale(.98)}
   .wk-popup-item.danger{color:#f08080}
+  .wk-popup-item.danger:hover{background:rgba(240,128,128,.1)}
   .wk-popup-item svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
-  .wk-popup-item.disabled{opacity:.35;cursor:not-allowed}
+  .wk-popup-item.disabled{opacity:.35;cursor:not-allowed;pointer-events:none}
 
   /* BIRTH PROFILE */
   .birth-profile-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px;margin-bottom:4px}
@@ -663,10 +672,6 @@
   </div>
   <div class="streak-bar" id="streakBar"></div>
 
-  <!-- DAY SCROLLER -->
-  <div class="day-scroller">
-    <div class="day-scroller-track" id="dayScrollerTrack"></div>
-  </div>
   <div class="past-day-banner" id="pastDayBanner">
     <span class="past-day-banner-text" id="pastDayBannerText">Viewing a past day</span>
     <button class="past-day-banner-btn" id="pastDayBannerReturn">Back to today</button>
@@ -1084,7 +1089,7 @@
           <button class="settings-size-btn goal-btn active" data-goal="7">7</button>
         </div>
       </div>
-      <div class="field-label">Subcategories <span style="color:var(--text-dimmer);font-size:9px;letter-spacing:.04em">(optional)</span></div>
+      <div class="field-label" style="margin-bottom:4px">Subcategories <span style="color:var(--text-dimmer);font-size:9px;letter-spacing:.04em">(optional)</span></div>
       <div class="subcat-manager" id="editSubcatManager">
         <div class="subcat-list" id="editSubcatList"></div>
         <div class="subcat-input-row">
@@ -1167,6 +1172,9 @@
     <div class="section-label">background</div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px" id="bgPicker"></div>
 
+    <div class="section-label">card surface</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px" id="surfacePicker"></div>
+
     <div class="section-label">font size</div>
     <div style="display:flex;gap:8px;margin-bottom:20px">
       <button class="settings-size-btn" data-size="13">Small</button>
@@ -1243,7 +1251,7 @@
     </div>
     <div class="field-label">Color</div>
     <div class="color-grid" id="colorGrid"></div>
-    <div class="field-label">Subcategories <span style="color:var(--text-dimmer);font-size:9px;letter-spacing:.04em">(optional)</span></div>
+    <div class="field-label" style="margin-bottom:4px">Subcategories <span style="color:var(--text-dimmer);font-size:9px;letter-spacing:.04em">(optional)</span></div>
     <div class="subcat-manager" id="subcatManager">
       <div class="subcat-list" id="subcatList"></div>
       <div class="subcat-input-row">
@@ -1400,51 +1408,7 @@ function toggleHabit(hid, cardEl){
 function activeDay(){return viewingDay||todayKey();}
 
 function renderDayScroller(){
-  const track=document.getElementById('dayScrollerTrack');
-  if(!track)return;
-  track.innerHTML='';
-
-  const today=todayKey();
-  const selected=activeDay();
-  const DAY_ABBREVS=['Su','Mo','Tu','We','Th','Fr','Sa'];
-
-  // Always show Sun–Sat of the current (today's) week
-  const todayParts=today.split('-').map(Number);
-  const todayDate=new Date(todayParts[0],todayParts[1]-1,todayParts[2]);
-  const weekStartDate=new Date(todayDate);
-  weekStartDate.setDate(todayDate.getDate()-todayDate.getDay());
-
-  for(let i=0;i<7;i++){
-    const dt=new Date(weekStartDate);
-    dt.setDate(weekStartDate.getDate()+i);
-    const key=fmtKey(dt.getFullYear(),dt.getMonth()+1,dt.getDate());
-    const dayNum=dt.getDate();
-    const isToday=key===today;
-    const isSel=key===selected;
-    const isFuture=key>today;
-
-    const dotsHtml=habits.length?habits.slice(0,5).map(h=>{
-      const isDone=isCompleted(h.id,key);
-      return `<div class="day-pill-dot" style="${isDone?`background:${COLOR_HEX[h.color]||'var(--accent)'}`:''};opacity:${isDone?1:0.3}"></div>`;
-    }).join(''):'';
-
-    const pill=document.createElement('button');
-    pill.className='day-pill'+(isToday?' is-today':'')+(isSel?' selected':'')+(isFuture?' is-future':'');
-    pill.setAttribute('aria-label',`${DAY_ABBREVS[i]} ${dt.getMonth()+1}/${dayNum}`);
-    pill.innerHTML=`
-      <div class="day-pill-name">${isToday?'now':DAY_ABBREVS[i]}</div>
-      <div class="day-pill-num">${dayNum}</div>
-      <div class="day-pill-dots">${dotsHtml}</div>`;
-    if(!isFuture){
-      pill.addEventListener('click',()=>{
-        viewingDay=isToday?null:key;
-        renderDayScroller();
-        renderHomeForDay();
-        renderWeeklyGrid();
-      });
-    }
-    track.appendChild(pill);
-  }
+  // Day strip has been removed; only update the past-day banner
 
   // banner
   const banner=document.getElementById('pastDayBanner');
@@ -1860,7 +1824,7 @@ function renderProgress(day){
   if(!habits.length){document.getElementById('progressTitle').textContent='Build your ritual';document.getElementById('progressSub').textContent='Tap + to add your first habit.';}
   else if(!total){document.getElementById('progressTitle').textContent='Tracking';document.getElementById('progressSub').textContent='All habits are in tracking mode — just observe the patterns.';}
   else if(onTrack===total){document.getElementById('progressTitle').textContent='Week complete!';document.getElementById('progressSub').textContent='All goals met this week. Amazing!';}
-  else if(!onTrack){document.getElementById('progressTitle').textContent="This Week";document.getElementById('progressSub').textContent='Tap a cell to log a habit. Keep the streak alive.';}
+  else if(!onTrack){document.getElementById('progressTitle').textContent="In Progress";document.getElementById('progressSub').textContent='Tap a cell to log a habit. Keep the streak alive.';}
   else{document.getElementById('progressTitle').textContent='Keep going.';document.getElementById('progressSub').textContent=`${total-onTrack} habit${total-onTrack>1?'s':''} below goal this week.`;}
 }
 
@@ -2716,12 +2680,12 @@ function renderAll(){renderHeader();renderStreakBar();renderDayScroller();render
 
 // ══ HEALTH VIEW ══
 const HEALTH_APPS = [
-  {id:'garmin',    name:'Garmin',       icon:'⌚', color:'#3bc8a0'},
-  {id:'googlefit', name:'Google Fit',   icon:'🏃', color:'#4285f4'},
-  {id:'myfitnesspal',name:'MyFitnessPal',icon:'🥗', color:'#0097d6'},
-  {id:'strava',    name:'Strava',       icon:'🚴', color:'#fc4c02'},
-  {id:'applehealth',name:'Apple Health',icon:'❤️', color:'#ff3b30', comingSoon:true},
-  {id:'fitbit',    name:'Fitbit',       icon:'💪', color:'#00b0b9', comingSoon:true},
+  {id:'garmin',    name:'Garmin',       icon:'⌚', color:'#3bc8a0', comingSoon:true, comingSoonLabel:'needs native app'},
+  {id:'applehealth',name:'Apple Health',icon:'❤️', color:'#ff3b30', comingSoon:true, comingSoonLabel:'needs native app'},
+  {id:'strava',    name:'Strava',       icon:'🚴', color:'#fc4c02', comingSoon:true, comingSoonLabel:'coming soon'},
+  {id:'googlefit', name:'Google Fit',   icon:'🏃', color:'#4285f4', comingSoon:true, comingSoonLabel:'coming soon'},
+  {id:'myfitnesspal',name:'MyFitnessPal',icon:'🥗', color:'#0097d6', comingSoon:true, comingSoonLabel:'coming soon'},
+  {id:'fitbit',    name:'Fitbit',       icon:'💪', color:'#00b0b9', comingSoon:true, comingSoonLabel:'coming soon'},
 ];
 
 // Simulated health data - replace with real API calls later
@@ -2854,7 +2818,7 @@ function renderHealth(){
       <div class="health-app-badge ${connected?'on':''}"></div>
       <span class="health-app-icon">${app.icon}</span>
       <div class="health-app-name">${app.name}</div>
-      <div class="health-app-status ${connected?'on':'off'}">${app.comingSoon?'coming soon':connected?'connected':'tap to connect'}</div>`;
+      <div class="health-app-status ${connected?'on':'off'}">${app.comingSoon?(app.comingSoonLabel||'coming soon'):connected?'connected':'tap to connect'}</div>`;
     if(!app.comingSoon){
       card.addEventListener('click',()=>{
         const d=getHealthData();
@@ -3643,18 +3607,12 @@ function renderTrends(){
 // ══ SETTINGS & THEMING ══
 const DEFAULT_TEXT={text:'#f4f4fa',textDim:'#9898b0',textDimmer:'#5a5a78'};
 const THEMES=[
-  // dark
-  {id:'midnight', name:'Midnight', bg:'#0a0a0f', surface:'#16161f', surface2:'#1e1e2a', border:'#2e2e3e', accent:'#c8b4f0', ...DEFAULT_TEXT},
-  {id:'obsidian', name:'Obsidian', bg:'#0d0d0d', surface:'#181818', surface2:'#222222', border:'#333333', accent:'#e0e0e0', ...DEFAULT_TEXT},
-  {id:'forest',   name:'Forest',   bg:'#0a0f0a', surface:'#141f14', surface2:'#1a271a', border:'#253525', accent:'#a0e4a0', ...DEFAULT_TEXT},
-  {id:'ocean',    name:'Ocean',    bg:'#080d14', surface:'#0f1620', surface2:'#162030', border:'#1e2e42', accent:'#80c8f0', ...DEFAULT_TEXT},
-  {id:'rose',     name:'Rose',     bg:'#140a0f', surface:'#1f1016', surface2:'#2a161e', border:'#3e2030', accent:'#f0a0c0', ...DEFAULT_TEXT},
-  {id:'ember',    name:'Ember',    bg:'#120a04', surface:'#1e1208', surface2:'#2a1a0c', border:'#3e2a18', accent:'#f0c080', ...DEFAULT_TEXT},
-  {id:'dusk',     name:'Dusk',     bg:'#1e1828', surface:'#2a2238', surface2:'#342c44', border:'#44385c', accent:'#e0c0f8', ...DEFAULT_TEXT},
-  // light/gray
-  {id:'ash',      name:'Ash',      bg:'#3a3a42', surface:'#46464f', surface2:'#52525c', border:'#62626e', accent:'#c8b4f0', text:'#f4f4fa', textDim:'#c0c0d0', textDimmer:'#8888a0'},
-  {id:'slate',    name:'Slate',    bg:'#e8e8ed', surface:'#f4f4f7', surface2:'#ffffff', border:'#d2d2da', accent:'#6050b8', text:'#1a1a2e', textDim:'#4a4a6a', textDimmer:'#8888a8'},
-  {id:'chalk',    name:'Chalk',    bg:'#f5f5f0', surface:'#ffffff',  surface2:'#efefea', border:'#e0e0d8', accent:'#8050c0', text:'#1a1a1a', textDim:'#555555', textDimmer:'#999999'},
+  {id:'midnight', name:'Midnight', bg:'#0a0a0f', surface:'#16161f', surface2:'#1e1e2a', border:'#2a2a3a', accent:'#c8b4f0', ...DEFAULT_TEXT},
+  {id:'forest',   name:'Forest',   bg:'#060e09', surface:'#0e1a10', surface2:'#162318', border:'#243828', accent:'#7dd9a0', ...DEFAULT_TEXT},
+  {id:'ocean',    name:'Ocean',    bg:'#060c16', surface:'#0c1826', surface2:'#122034', border:'#1a2e48', accent:'#6cc4f5', ...DEFAULT_TEXT},
+  {id:'ember',    name:'Ember',    bg:'#100804', surface:'#1e1008', surface2:'#2c1c10', border:'#442c1a', accent:'#f0b060', ...DEFAULT_TEXT},
+  {id:'dusk',     name:'Dusk',     bg:'#1a1428', surface:'#26203e', surface2:'#322c50', border:'#48406a', accent:'#d4a8fc', ...DEFAULT_TEXT},
+  {id:'chalk',    name:'Chalk',    bg:'#f2f2ee', surface:'#ffffff',  surface2:'#eaeae4', border:'#d8d8d0', accent:'#7040c0', text:'#1a1a1a', textDim:'#505050', textDimmer:'#959590'},
 ];
 
 const FONT_OPTIONS=[
@@ -3665,7 +3623,15 @@ const FONT_OPTIONS=[
   {id:'jetbrains',     name:'JetBrains',value:"'JetBrains Mono',monospace",  url:'https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500&display=swap'},
 ];
 
-const ACCENT_SWATCHES=['#c8b4f0','#f0a0c0','#a0e4c8','#80c8f0','#f0c080','#e0a0f0','#a0f0e0','#f0b0a0','#b0d4a0','#6050b8'];
+const ACCENT_SWATCHES=['#c8b4f0','#f0a0c0','#a0e4c8','#6cc4f5','#f0b060','#d4a8fc','#7dd9a0','#f0b0a0','#b0d4a0','#6050b8'];
+const SURFACE_OPTIONS=[
+  {surface:'#16161f',surface2:'#1e1e2a',label:'Carbon'},
+  {surface:'#1e1e1e',surface2:'#282828',label:'Void'},
+  {surface:'#1c1c24',surface2:'#26263a',label:'Slate'},
+  {surface:'#22181a',surface2:'#2e2020',label:'Wine'},
+  {surface:'#181e18',surface2:'#202820',label:'Moss'},
+  {surface:'#f8f8f4',surface2:'#eeeeea',label:'Paper'},
+];
 const BG_OPTIONS=[
   {bg:'#0a0a0f',label:'Black'},
   {bg:'#0f0f1a',label:'Navy'},
@@ -3768,6 +3734,25 @@ function renderSettings(){
     });
     bgEl.appendChild(sw);
   });
+
+  // Surface picker
+  const sfEl=document.getElementById('surfacePicker');
+  if(sfEl){
+    sfEl.innerHTML='';
+    SURFACE_OPTIONS.forEach(o=>{
+      const sw=document.createElement('div');
+      sw.className='surface-swatch'+(themePrefs.surface===o.surface?' active':'');
+      const isLight=parseInt(o.surface.slice(1),16)>0x888888;
+      sw.style.background=o.surface;
+      sw.style.color=isLight?'rgba(0,0,0,.4)':'rgba(255,255,255,.45)';
+      sw.textContent=o.label;
+      sw.addEventListener('click',()=>{
+        themePrefs={...themePrefs,surface:o.surface,surface2:o.surface2,themeId:null};
+        saveThemePrefs();applyTheme(themePrefs);renderSettings();
+      });
+      sfEl.appendChild(sw);
+    });
+  }
 
   // Health tab toggle
   const healthEnabled=themePrefs.healthTabEnabled||false;
@@ -4323,15 +4308,41 @@ function renderWeeklyGrid(){
         <button class="wk-popup-item${isFirst?' disabled':''}" data-action="up"><svg viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"/></svg>Move Up</button>
         <button class="wk-popup-item${isLast?' disabled':''}" data-action="down"><svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>Move Down</button>
         <button class="wk-popup-item danger" data-action="delete"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>Delete</button>`;
-      card.appendChild(popup);
+
+      // Position popup fixed relative to button (never clipped by cards)
+      const btnRect=menuBtn.getBoundingClientRect();
+      const popW=168;
+      let leftPos=btnRect.right-popW;
+      if(leftPos<8)leftPos=8;
+      let topPos=btnRect.bottom+4;
+      // Flip up if too close to bottom
+      if(topPos+260>window.innerHeight)topPos=btnRect.top-264;
+      popup.style.top=topPos+'px';
+      popup.style.left=leftPos+'px';
+      document.body.appendChild(popup);
+
       popup.addEventListener('click',e2=>{
         e2.stopPropagation();
         const action=e2.target.closest('[data-action]')?.dataset.action;
         if(!action)return;
         popup.remove();
         if(action==='edit'){openEditModal(idx);}
-        else if(action==='set-goal'){habits[idx]={...habits[idx],targetDaysPerWeek:habits[idx]._lastGoal||7};save();renderWeeklyGrid();renderProgress(activeDay());}
-        else if(action==='set-track'){habits[idx]={...habits[idx],_lastGoal:habits[idx].targetDaysPerWeek||7,targetDaysPerWeek:0};save();renderWeeklyGrid();renderProgress(activeDay());}
+        else if(action==='set-goal'){
+          habits[idx]={...habits[idx],targetDaysPerWeek:habits[idx]._lastGoal||7};
+          save();
+          // Update freq label in-place — no full re-render
+          const freqEl=card.querySelector('.wk-card-freq');
+          if(freqEl)freqEl.textContent=freqLabel(habits[idx].targetDaysPerWeek);
+          renderProgress(activeDay());
+        }
+        else if(action==='set-track'){
+          habits[idx]={...habits[idx],_lastGoal:habits[idx].targetDaysPerWeek||7,targetDaysPerWeek:0};
+          save();
+          // Update freq label in-place — no full re-render
+          const freqEl=card.querySelector('.wk-card-freq');
+          if(freqEl)freqEl.textContent=freqLabel(0);
+          renderProgress(activeDay());
+        }
         else if(action==='up'&&!isFirst){moveHabit(idx,-1);}
         else if(action==='down'&&!isLast){moveHabit(idx,1);}
         else if(action==='delete'){
