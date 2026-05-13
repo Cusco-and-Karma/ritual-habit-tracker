@@ -10,7 +10,7 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firebaseinstallations.googleapis.com https://api.anthropic.com https://www.gstatic.com wss://*.firebaseio.com">
 <title>Ritual - Habit Tracker</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&family=Playfair+Display:ital,wght@0,400;1,400&family=Fraunces:ital,wght@0,400;1,300&family=Outfit:wght@300;400;500&family=Space+Grotesk:wght@300;400;500&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;-webkit-font-smoothing:antialiased}
   :root{--bg:#0a0a0f;--surface:#16161f;--surface2:#1e1e2a;--border:#2e2e3e;--text:#f4f4fa;--text-dim:#9898b0;--text-dimmer:#5a5a78;--accent:#c8b4f0;--accent-glow:rgba(200,180,240,.15);--accent2:#f0c4a0;--accent3:#a0e4c8;--accent4:#f0a0b4;--accent5:#a0c8f0;--accent6:#f0e0a0;--accent7:#e0a0f0;--accent8:#a0f0e0;--accent9:#f0b0a0;--accent10:#b0d4a0;--r:14px;--r-sm:8px;--font-body:'DM Mono',monospace}
@@ -614,8 +614,9 @@
   .day-detail-overlay.open .day-detail-sheet{transform:translateY(0)}
   .day-detail-toggle{width:100%;padding:14px;border-radius:var(--r);border:2px solid var(--border);background:transparent;color:var(--text-dim);font-family:'DM Mono',monospace;font-size:12px;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;transition:all .2s;margin-bottom:16px}
   .day-detail-toggle.is-done{background:var(--accent);border-color:transparent;color:var(--bg)}
-  .font-picker-btn{flex:1;padding:14px 8px;background:var(--surface2);border:1.5px solid var(--border);border-radius:var(--r-sm);color:var(--text-dim);font-size:13px;cursor:pointer;transition:all .15s;display:flex;flex-direction:column;align-items:center;gap:4px;letter-spacing:.02em;min-height:64px;justify-content:center}
-  .font-picker-btn .font-sample{font-size:17px;color:var(--text);line-height:1}
+  .font-picker-btn{flex:1;padding:16px 6px 12px;background:var(--surface2);border:1.5px solid var(--border);border-radius:var(--r-sm);color:var(--text-dim);font-size:13px;cursor:pointer;transition:all .18s cubic-bezier(.34,1.56,.64,1);display:flex;flex-direction:column;align-items:center;gap:6px;letter-spacing:.02em;min-height:76px;justify-content:center}
+  .font-picker-btn:hover{transform:translateY(-2px);border-color:var(--text-dimmer)}
+  .font-picker-btn .font-sample{font-size:20px;color:var(--text);line-height:1}
   .font-picker-btn .font-label{font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-dimmer);font-family:'DM Mono',monospace}
   .font-picker-btn.active{border-color:var(--accent);color:var(--accent);background:var(--accent-glow)}
   .font-picker-btn.active .font-sample{color:var(--accent)}
@@ -679,22 +680,12 @@
 
   <!-- HOME -->
   <div class="scroll-area view active" id="homeView">
-    <div class="progress-widget">
-      <div class="ring-container">
-        <svg class="ring-svg" viewBox="0 0 72 72">
-          <circle class="ring-track" cx="36" cy="36" r="30"/>
-          <circle class="ring-fill" id="ringFill" cx="36" cy="36" r="30"/>
-        </svg>
-        <div class="ring-label">
-          <span class="ring-num" id="ringNum">0</span>
-          <span class="ring-denom" id="ringDenom">/ 0</span>
-        </div>
-      </div>
-      <div class="progress-text">
-        <h3 id="progressTitle">Today's Ritual</h3>
-        <p id="progressSub">Tap a habit to mark it done.</p>
-      </div>
-    </div>
+    <!-- progress elements kept off-screen so renderProgress() calls don't throw -->
+    <span id="ringFill" style="display:none"></span>
+    <span id="ringNum" style="display:none"></span>
+    <span id="ringDenom" style="display:none"></span>
+    <span id="progressTitle" style="display:none"></span>
+    <span id="progressSub" style="display:none"></span>
     <div class="section-label">this week</div>
     <div class="weekly-grid" id="weeklyGrid"></div>
 
@@ -1170,10 +1161,10 @@
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px" id="accentPicker"></div>
 
     <div class="section-label">background</div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px" id="bgPicker"></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:4px" id="bgPicker"></div>
 
     <div class="section-label">card surface</div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px" id="surfacePicker"></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:4px" id="surfacePicker"></div>
 
     <div class="section-label">font size</div>
     <div style="display:flex;gap:8px;margin-bottom:20px">
@@ -1279,6 +1270,62 @@
       </div>
     </div>
     <button class="save-btn" id="saveBtn">Add to Ritual</button>
+  </div>
+</div>
+
+<!-- GARMIN CONNECT DETAIL PAGE -->
+<div class="modal-overlay" id="garminModal" role="dialog" aria-modal="true">
+  <div class="modal-sheet" style="padding-bottom:48px">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <button class="back-btn" id="garminBackBtn" aria-label="Close"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></button>
+      <div class="sheet-title">Connect Garmin</div>
+    </div>
+    <!-- Hero -->
+    <div style="display:flex;flex-direction:column;align-items:center;padding:20px 0 24px;border-bottom:1px solid var(--border);margin-bottom:20px">
+      <div style="font-size:52px;margin-bottom:12px">⌚</div>
+      <div style="font-family:'DM Serif Display',serif;font-size:22px;color:var(--text);margin-bottom:6px">Garmin Health Sync</div>
+      <div style="font-size:12px;color:var(--text-dim);text-align:center;line-height:1.6;max-width:280px">Sync steps, sleep, heart rate, and activity directly from your Garmin device.</div>
+    </div>
+    <!-- What syncs -->
+    <div style="margin-bottom:20px">
+      <div class="field-label" style="margin-bottom:12px">What will sync</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-sm);padding:12px;display:flex;align-items:center;gap:8px"><span style="font-size:18px">👟</span><span style="font-size:11px;color:var(--text-dim)">Daily Steps</span></div>
+        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-sm);padding:12px;display:flex;align-items:center;gap:8px"><span style="font-size:18px">🌙</span><span style="font-size:11px;color:var(--text-dim)">Sleep Tracking</span></div>
+        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-sm);padding:12px;display:flex;align-items:center;gap:8px"><span style="font-size:18px">❤️</span><span style="font-size:11px;color:var(--text-dim)">Heart Rate</span></div>
+        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-sm);padding:12px;display:flex;align-items:center;gap:8px"><span style="font-size:18px">🔥</span><span style="font-size:11px;color:var(--text-dim)">Active Calories</span></div>
+        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-sm);padding:12px;display:flex;align-items:center;gap:8px"><span style="font-size:18px">⚡</span><span style="font-size:11px;color:var(--text-dim)">Stress Score</span></div>
+        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-sm);padding:12px;display:flex;align-items:center;gap:8px"><span style="font-size:18px">🏋️</span><span style="font-size:11px;color:var(--text-dim)">Workouts</span></div>
+      </div>
+    </div>
+    <!-- Steps to connect -->
+    <div style="margin-bottom:24px">
+      <div class="field-label" style="margin-bottom:12px">How to connect (native app)</div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div style="display:flex;gap:12px;align-items:flex-start">
+          <div style="width:24px;height:24px;border-radius:50%;background:var(--accent-glow);border:1px solid rgba(200,180,240,.3);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:11px;font-family:'DM Mono',monospace;color:var(--accent)">1</div>
+          <div style="font-size:12px;color:var(--text-dim);line-height:1.5;padding-top:3px">Download the <strong style="color:var(--text)">Garmin Connect</strong> app on your phone and sign in to your Garmin account.</div>
+        </div>
+        <div style="display:flex;gap:12px;align-items:flex-start">
+          <div style="width:24px;height:24px;border-radius:50%;background:var(--accent-glow);border:1px solid rgba(200,180,240,.3);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:11px;font-family:'DM Mono',monospace;color:var(--accent)">2</div>
+          <div style="font-size:12px;color:var(--text-dim);line-height:1.5;padding-top:3px">Make sure your Garmin device is <strong style="color:var(--text)">synced</strong> to Garmin Connect at least once a day.</div>
+        </div>
+        <div style="display:flex;gap:12px;align-items:flex-start">
+          <div style="width:24px;height:24px;border-radius:50%;background:var(--accent-glow);border:1px solid rgba(200,180,240,.3);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:11px;font-family:'DM Mono',monospace;color:var(--accent)">3</div>
+          <div style="font-size:12px;color:var(--text-dim);line-height:1.5;padding-top:3px">When the <strong style="color:var(--text)">Ritual native app</strong> launches, tap Connect → Garmin to authorize access via Garmin Health API.</div>
+        </div>
+        <div style="display:flex;gap:12px;align-items:flex-start">
+          <div style="width:24px;height:24px;border-radius:50%;background:var(--accent-glow);border:1px solid rgba(200,180,240,.3);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:11px;font-family:'DM Mono',monospace;color:var(--accent)">4</div>
+          <div style="font-size:12px;color:var(--text-dim);line-height:1.5;padding-top:3px">Your health data will automatically appear in this Health tab — <strong style="color:var(--text)">no manual entry needed.</strong></div>
+        </div>
+      </div>
+    </div>
+    <!-- Notice -->
+    <div style="background:var(--accent-glow);border:1px solid rgba(200,180,240,.2);border-radius:var(--r-sm);padding:12px 14px;margin-bottom:20px;font-size:11px;color:var(--text-dim);line-height:1.5">
+      <strong style="color:var(--accent)">Note:</strong> Garmin's Health API requires OAuth and a server-side backend, which means the connection must go through the Ritual native app (coming soon). The web version will display your synced data once connected.
+    </div>
+    <button class="save-btn" id="garminNotifyBtn" style="background:var(--surface2);color:var(--accent);border:1px solid rgba(200,180,240,.3)">Notify me when available</button>
   </div>
 </div>
 
@@ -1644,7 +1691,19 @@ function renderHabitsForDay(key){
         pip.className='card-pip'+(curRating===s?' active':'');
         pip.textContent=s;
         if(curRating===s)pip.style.background=COLOR_HEX[h.color]||'var(--accent)';
-        pip.addEventListener('click',e=>{e.stopPropagation();setHabitDayRating(h.id,key,s);renderWeeklyGrid();});
+        pip.addEventListener('click',e=>{
+          e.stopPropagation();
+          setHabitDayRating(h.id,key,s);
+          // Update badge in-place — no full re-render needed
+          ratingInner.querySelectorAll('.card-pip').forEach((p,pi)=>{
+            const active=pi+1===s;
+            p.classList.toggle('active',active);
+            p.style.background=active?(COLOR_HEX[h.color]||'var(--accent)'):'';
+          });
+          const badge=ratingToggle.querySelector('.rating-badge');
+          const _rLabel=h.ratingLabel?h.ratingLabel.charAt(0).toUpperCase()+h.ratingLabel.slice(1):'Rate';
+          ratingToggle.querySelector('span').innerHTML=`${escapeHtml(_rLabel)} &nbsp;<span class="rating-badge">${s}/10</span>`;
+        });
         ratingInner.appendChild(pip);
       }
       ratingPanel.appendChild(ratingInner);
@@ -1818,9 +1877,9 @@ function renderProgress(day){
     return done>=goal;
   }).length;
   const pct=total?onTrack/total:0;
-  document.getElementById('ringFill').style.strokeDashoffset=188.5-(188.5*pct);
-  document.getElementById('ringNum').textContent=onTrack;
-  document.getElementById('ringDenom').textContent=`/ ${total}`;
+  const _rf=document.getElementById('ringFill');if(_rf&&_rf.style)_rf.style.strokeDashoffset=188.5-(188.5*pct);
+  const _rn=document.getElementById('ringNum');if(_rn)_rn.textContent=onTrack;
+  const _rd=document.getElementById('ringDenom');if(_rd)_rd.textContent=`/ ${total}`;
   if(!habits.length){document.getElementById('progressTitle').textContent='Build your ritual';document.getElementById('progressSub').textContent='Tap + to add your first habit.';}
   else if(!total){document.getElementById('progressTitle').textContent='Tracking';document.getElementById('progressSub').textContent='All habits are in tracking mode — just observe the patterns.';}
   else if(onTrack===total){document.getElementById('progressTitle').textContent='Week complete!';document.getElementById('progressSub').textContent='All goals met this week. Amazing!';}
@@ -2804,8 +2863,18 @@ function renderHealthChart(data){
   });
 }
 
+function openGarminModal(){
+  const m=document.getElementById('garminModal');
+  if(m){m.classList.add('open');}
+}
+function closeGarminModal(){
+  const m=document.getElementById('garminModal');
+  if(m){m.classList.remove('open');}
+}
+
 function renderHealth(){
   const data=getHealthData();
+  const anyConnected=data.connected.length>0;
 
   // Connected apps grid
   const grid=document.getElementById('healthAppsGrid');
@@ -2813,27 +2882,40 @@ function renderHealth(){
   HEALTH_APPS.forEach(app=>{
     const connected=data.connected.includes(app.id);
     const card=document.createElement('div');
-    card.className='health-app-card'+(connected?' connected':'')+(app.comingSoon?' coming-soon':'');
+    // Garmin is clickable to show instructions; others are coming-soon
+    const isGarmin=app.id==='garmin';
+    card.className='health-app-card'+(connected?' connected':'')+(app.comingSoon&&!isGarmin?' coming-soon':'');
     card.innerHTML=`
       <div class="health-app-badge ${connected?'on':''}"></div>
       <span class="health-app-icon">${app.icon}</span>
       <div class="health-app-name">${app.name}</div>
-      <div class="health-app-status ${connected?'on':'off'}">${app.comingSoon?(app.comingSoonLabel||'coming soon'):connected?'connected':'tap to connect'}</div>`;
-    if(!app.comingSoon){
-      card.addEventListener('click',()=>{
-        const d=getHealthData();
-        const idx=d.connected.indexOf(app.id);
-        if(idx>=0)d.connected.splice(idx,1);
-        else d.connected.push(app.id);
-        localStorage.setItem('ritualHealthData',JSON.stringify(d));
-        renderHealth();
-      });
+      <div class="health-app-status ${connected?'on':'off'}">${isGarmin?'tap to set up':app.comingSoon?(app.comingSoonLabel||'coming soon'):connected?'connected':'tap to connect'}</div>`;
+    if(isGarmin){
+      card.style.cursor='pointer';
+      card.addEventListener('click',openGarminModal);
     }
     grid.appendChild(card);
   });
 
-  // Metrics
+  // ── Empty state if nothing connected ──
   const mg=document.getElementById('healthMetricsGrid');
+  const nc=document.getElementById('healthNutritionCard');
+  const chartCard=document.getElementById('healthChartCard');
+
+  if(!anyConnected){
+    mg.innerHTML=`<div style="grid-column:1/-1;padding:24px 0;text-align:center">
+      <div style="font-size:32px;margin-bottom:10px">📡</div>
+      <div style="font-family:'DM Serif Display',serif;font-size:16px;color:var(--text);margin-bottom:6px">No data yet</div>
+      <div style="font-size:11px;color:var(--text-dimmer);line-height:1.6">Connect an app above to start<br>seeing your health metrics here.</div>
+    </div>`;
+    if(chartCard)chartCard.style.display='none';
+    nc.innerHTML=`<div style="padding:16px 0;text-align:center;font-size:11px;color:var(--text-dimmer)">Nutrition data will appear once an app is connected.</div>`;
+    return;
+  }
+
+  // Show data when connected
+  if(chartCard)chartCard.style.display='';
+
   mg.innerHTML='';
   Object.entries(data.metrics).forEach(([key,m])=>{
     const card=document.createElement('div');
@@ -2849,11 +2931,8 @@ function renderHealth(){
     mg.appendChild(card);
   });
 
-  // Chart
   renderHealthChart(data);
 
-  // Nutrition
-  const nc=document.getElementById('healthNutritionCard');
   nc.innerHTML=Object.entries(data.nutrition).map(([key,n])=>{
     const pct=Math.min(100,Math.round((n.current/n.goal)*100));
     const label=key.charAt(0).toUpperCase()+key.slice(1);
@@ -3608,38 +3687,44 @@ function renderTrends(){
 const DEFAULT_TEXT={text:'#f4f4fa',textDim:'#9898b0',textDimmer:'#5a5a78'};
 const THEMES=[
   {id:'midnight', name:'Midnight', bg:'#0a0a0f', surface:'#16161f', surface2:'#1e1e2a', border:'#2a2a3a', accent:'#c8b4f0', ...DEFAULT_TEXT},
-  {id:'forest',   name:'Forest',   bg:'#060e09', surface:'#0e1a10', surface2:'#162318', border:'#243828', accent:'#7dd9a0', ...DEFAULT_TEXT},
-  {id:'ocean',    name:'Ocean',    bg:'#060c16', surface:'#0c1826', surface2:'#122034', border:'#1a2e48', accent:'#6cc4f5', ...DEFAULT_TEXT},
-  {id:'ember',    name:'Ember',    bg:'#100804', surface:'#1e1008', surface2:'#2c1c10', border:'#442c1a', accent:'#f0b060', ...DEFAULT_TEXT},
-  {id:'dusk',     name:'Dusk',     bg:'#1a1428', surface:'#26203e', surface2:'#322c50', border:'#48406a', accent:'#d4a8fc', ...DEFAULT_TEXT},
+  {id:'noir',     name:'Noir',     bg:'#050508', surface:'#111114', surface2:'#19191e', border:'#282830', accent:'#e8e0ff', ...DEFAULT_TEXT},
+  {id:'abyss',    name:'Abyss',    bg:'#03090e', surface:'#0a1520', surface2:'#102030', border:'#183050', accent:'#40b0e8', ...DEFAULT_TEXT},
+  {id:'wine',     name:'Wine',     bg:'#120408', surface:'#1e0c14', surface2:'#2a1420', border:'#401828', accent:'#f07090', ...DEFAULT_TEXT},
+  {id:'ember',    name:'Ember',    bg:'#0e0600', surface:'#1c0e04', surface2:'#2c1a0c', border:'#482a14', accent:'#ffb060', ...DEFAULT_TEXT},
   {id:'chalk',    name:'Chalk',    bg:'#f2f2ee', surface:'#ffffff',  surface2:'#eaeae4', border:'#d8d8d0', accent:'#7040c0', text:'#1a1a1a', textDim:'#505050', textDimmer:'#959590'},
 ];
 
 const FONT_OPTIONS=[
-  {id:'dm-mono',       name:'Mono',     value:"'DM Mono',monospace",         url:null},
-  {id:'inter',         name:'Inter',    value:"'Inter',sans-serif",          url:'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&display=swap'},
-  {id:'space-grotesk', name:'Grotesk',  value:"'Space Grotesk',sans-serif",  url:'https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500&display=swap'},
-  {id:'ibm-plex-mono', name:'IBM Plex', value:"'IBM Plex Mono',monospace",   url:'https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500&display=swap'},
-  {id:'jetbrains',     name:'JetBrains',value:"'JetBrains Mono',monospace",  url:'https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500&display=swap'},
+  {id:'dm-mono',       name:'Mono',      sample:'Aa 01',  value:"'DM Mono',monospace",          url:null},
+  {id:'playfair',      name:'Playfair',  sample:'Ritual', value:"'Playfair Display',serif",      url:'https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;1,400&display=swap'},
+  {id:'fraunces',      name:'Fraunces',  sample:'Ritual', value:"'Fraunces',serif",              url:'https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;1,300&display=swap'},
+  {id:'outfit',        name:'Outfit',    sample:'Ritual', value:"'Outfit',sans-serif",           url:'https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500&display=swap'},
+  {id:'space-grotesk', name:'Grotesk',   sample:'Aa Rg',  value:"'Space Grotesk',sans-serif",   url:'https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500&display=swap'},
+  {id:'jetbrains',     name:'JetBrains', sample:'Aa_01',  value:"'JetBrains Mono',monospace",   url:'https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500&display=swap'},
 ];
 
 const ACCENT_SWATCHES=['#c8b4f0','#f0a0c0','#a0e4c8','#6cc4f5','#f0b060','#d4a8fc','#7dd9a0','#f0b0a0','#b0d4a0','#6050b8'];
 const SURFACE_OPTIONS=[
   {surface:'#16161f',surface2:'#1e1e2a',label:'Carbon'},
-  {surface:'#1e1e1e',surface2:'#282828',label:'Void'},
+  {surface:'#181818',surface2:'#242424',label:'Void'},
   {surface:'#1c1c24',surface2:'#26263a',label:'Slate'},
-  {surface:'#22181a',surface2:'#2e2020',label:'Wine'},
-  {surface:'#181e18',surface2:'#202820',label:'Moss'},
+  {surface:'#1e1014',surface2:'#2a1820',label:'Wine'},
+  {surface:'#0e1a10',surface2:'#162318',label:'Moss'},
+  {surface:'#10181e',surface2:'#162430',label:'Abyss'},
+  {surface:'#1e1a10',surface2:'#2c2618',label:'Amber'},
   {surface:'#f8f8f4',surface2:'#eeeeea',label:'Paper'},
 ];
 const BG_OPTIONS=[
   {bg:'#0a0a0f',label:'Black'},
+  {bg:'#050508',label:'Void'},
   {bg:'#0f0f1a',label:'Navy'},
-  {bg:'#0a0f0a',label:'Forest'},
+  {bg:'#060e09',label:'Forest'},
   {bg:'#14080e',label:'Wine'},
-  {bg:'#0d0d0d',label:'Void'},
+  {bg:'#080614',label:'Grape'},
+  {bg:'#100804',label:'Ember'},
+  {bg:'#04100e',label:'Deep Sea'},
   {bg:'#e8e8ed',label:'Gray'},
-  {bg:'#f5f5f0',label:'Chalk'},
+  {bg:'#f2f2ee',label:'Chalk'},
 ];
 
 let themePrefs = JSON.parse(localStorage.getItem('ritualTheme')||'{}');
@@ -3801,7 +3886,7 @@ function renderSettings(){
     FONT_OPTIONS.forEach(f=>{
       const btn=document.createElement('button');
       btn.className='font-picker-btn'+(themePrefs.fontId===f.id?' active':'');
-      btn.innerHTML=`<span class="font-sample" style="font-family:${f.value}">Aa</span><span class="font-label">${f.name}</span>`;
+      btn.innerHTML=`<span class="font-sample" style="font-family:${f.value};font-size:20px;letter-spacing:.01em">${f.sample||'Aa'}</span><span class="font-label">${f.name}</span>`;
       btn.addEventListener('click',()=>{
         themePrefs={...themePrefs,fontId:f.id};
         saveThemePrefs();applyTheme(themePrefs);renderSettings();
@@ -3943,6 +4028,15 @@ function closeEditModal(){editModal.classList.remove('open');}
 
 document.getElementById('editBackBtn').addEventListener('click',closeEditModal);
 editModal.addEventListener('click',e=>{if(e.target===editModal)closeEditModal();});
+
+// Garmin modal
+document.getElementById('garminBackBtn').addEventListener('click',closeGarminModal);
+document.getElementById('garminModal').addEventListener('click',e=>{if(e.target===document.getElementById('garminModal'))closeGarminModal();});
+document.getElementById('garminNotifyBtn').addEventListener('click',()=>{
+  document.getElementById('garminNotifyBtn').textContent='✓ You\'ll be notified!';
+  document.getElementById('garminNotifyBtn').style.opacity='.6';
+  document.getElementById('garminNotifyBtn').disabled=true;
+});
 
 function updateEditAbstainToggle(){
   const tog=document.getElementById('editAbstainToggle');
@@ -4161,7 +4255,17 @@ function moveHabit(idx,dir){
   const newIdx=idx+dir;
   if(newIdx<0||newIdx>=habits.length)return;
   const tmp=habits[idx];habits[idx]=habits[newIdx];habits[newIdx]=tmp;
-  save();renderWeeklyGrid();
+  save();
+  // Swap card DOM nodes in-place — no full re-render, no flash
+  const grid=document.getElementById('weeklyGrid');
+  if(!grid){renderWeeklyGrid();return;}
+  const cards=[...grid.querySelectorAll('.wk-card')];
+  if(!cards[idx]||!cards[newIdx]){renderWeeklyGrid();return;}
+  if(dir===-1){
+    grid.insertBefore(cards[idx],cards[newIdx]);
+  } else {
+    grid.insertBefore(cards[newIdx],cards[idx]);
+  }
 }
 
 function renderWeeklyGrid(){
