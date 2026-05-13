@@ -121,6 +121,21 @@
   .progress-text h3{font-family:'DM Serif Display',serif;font-size:20px;color:var(--text);margin-bottom:4px}
   .progress-text p{font-size:12px;color:var(--text-dim);line-height:1.5}
   .swipe-hint{font-size:10px;color:var(--text-dimmer);text-align:center;padding:8px 0 0;letter-spacing:.04em}
+  /* Duration vs Wellness dual chart */
+  .dur-well-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px;margin-bottom:10px}
+  .dur-well-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;gap:8px}
+  .dur-well-title{font-family:'DM Serif Display',serif;font-size:16px;color:var(--text)}
+  .dur-well-range-btns{display:flex;gap:4px}
+  .dur-well-range-btn{padding:4px 10px;border-radius:99px;font-size:10px;font-family:'DM Mono',monospace;letter-spacing:.04em;border:1px solid var(--border);background:transparent;color:var(--text-dim);cursor:pointer;transition:all .15s;text-transform:uppercase}
+  .dur-well-range-btn.active{background:var(--accent);border-color:var(--accent);color:var(--bg)}
+  .dur-well-chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+  .dur-well-chip{padding:5px 13px;border-radius:99px;font-size:10px;border:1px solid var(--border);background:transparent;color:var(--text-dim);cursor:pointer;transition:all .15s;white-space:nowrap;font-family:'DM Mono',monospace;letter-spacing:.04em}
+  .dur-chart-row-label{display:flex;align-items:center;gap:7px;margin-bottom:5px}
+  .dur-chart-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+  .dur-chart-lbl{font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-dimmer);font-family:'DM Mono',monospace;flex:1}
+  .dur-chart-avg{font-size:10px;color:var(--text-dim);font-family:'DM Mono',monospace}
+  .dur-chart-divider{height:1px;background:var(--border);margin:10px 0 10px}
+
   /* Date navigator (above wellness) */
   .date-nav{display:flex;align-items:center;justify-content:space-between;margin:20px 0 10px;padding:0}
   .date-nav-btn{width:34px;height:34px;border-radius:50%;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .15s cubic-bezier(.34,1.56,.64,1);flex-shrink:0;color:var(--text-dim)}
@@ -837,6 +852,33 @@
         <div class="wellness-tooltip" id="wellnessTooltip"></div>
       </div>
       <div id="wellnessOverlayChips" style="display:flex;gap:6px;flex-wrap:wrap;padding:8px 0 4px"></div>
+    </div>
+    <div id="durationWellnessSection" style="display:none">
+      <div class="section-label">duration vs wellness</div>
+      <div class="dur-well-wrap">
+        <div class="dur-well-header">
+          <div class="dur-well-title" id="durWellTitle"></div>
+          <div class="dur-well-range-btns" id="durWellRangeBtns">
+            <button class="dur-well-range-btn active" data-dur-range="14">14D</button>
+            <button class="dur-well-range-btn" data-dur-range="30">30D</button>
+            <button class="dur-well-range-btn" data-dur-range="90">90D</button>
+          </div>
+        </div>
+        <div class="dur-well-chips" id="durWellChips"></div>
+        <div class="dur-chart-row-label">
+          <div class="dur-chart-dot" id="durChartDot" style="background:var(--accent)"></div>
+          <div class="dur-chart-lbl">Duration (hrs)</div>
+          <div class="dur-chart-avg" id="durChartAvg"></div>
+        </div>
+        <svg id="durChartSvg" width="100%" height="90" style="display:block;overflow:visible"></svg>
+        <div class="dur-chart-divider"></div>
+        <div class="dur-chart-row-label">
+          <div class="dur-chart-dot" style="background:var(--accent2)"></div>
+          <div class="dur-chart-lbl">Wellness (1–10)</div>
+          <div class="dur-chart-avg" id="wellChart2Avg"></div>
+        </div>
+        <svg id="wellChart2Svg" width="100%" height="90" style="display:block;overflow:visible"></svg>
+      </div>
     </div>
     <div class="section-label">rolling completion rate</div>
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:4px" id="trendsRollingGrid"></div>
@@ -3309,6 +3351,8 @@ document.getElementById('dateNavNext').addEventListener('click',()=>{
 
 // ══ TRENDS VIEW ══
 let trendsRange=14;
+let durWellRange=14;
+let durWellHabitId=null;
 
 // ── Moon phase calculation (no external API needed) ──
 // Uses a known new moon reference date and the synodic period (29.53059 days)
@@ -3749,6 +3793,136 @@ function renderTrends(){
       });
     }
   }
+  renderDurationWellnessCharts();
+}
+
+// ── Duration vs Wellness helpers & charts ──
+function getHabitDurationMins(habitId,day){
+  const h2=habits.find(hh=>hh.id===habitId);
+  if(!h2)return 0;
+  const dur=getHabitDuration(habitId,day);
+  if(!dur||!Object.keys(dur).length)return 0;
+  if(h2.subcategories&&h2.subcategories.length){
+    const sc=getSubcatCompletions(habitId,day);
+    let total=0;
+    h2.subcategories.forEach(s=>{
+      if(sc[s])total+=(parseInt(dur[s+'_hrs'])||0)*60+(parseInt(dur[s])||0);
+    });
+    return total;
+  }
+  return(parseInt(dur['hours'])||0)*60+(parseInt(dur['total'])||0);
+}
+
+function renderDurSvgChart(svgEl,dataPoints,color,maxVal){
+  if(!svgEl)return;
+  const wrap=svgEl.parentElement;
+  const W=wrap?wrap.getBoundingClientRect().width||280:280;
+  const H=90;
+  const PAD={top:6,right:8,bottom:20,left:28};
+  const cW=W-PAD.left-PAD.right,cH=H-PAD.top-PAD.bottom;
+  svgEl.setAttribute('viewBox',`0 0 ${W} ${H}`);
+  svgEl.setAttribute('height',H);
+  svgEl.innerHTML='';
+  const mk=(tag,attrs={})=>{const el=document.createElementNS('http://www.w3.org/2000/svg',tag);Object.entries(attrs).forEach(([k,v])=>el.setAttribute(k,v));return el;};
+  const safeMax=maxVal||1;
+  // Grid lines & Y labels
+  const ticks=safeMax<=12?[0,Math.round(safeMax/2),Math.round(safeMax)]:[0,Math.round(safeMax/3),Math.round(safeMax*2/3),Math.round(safeMax)];
+  ticks.forEach(v=>{
+    const y=PAD.top+cH*(1-v/safeMax);
+    svgEl.appendChild(mk('line',{x1:PAD.left,y1:y,x2:PAD.left+cW,y2:y,stroke:'var(--border)','stroke-width':'0.75','stroke-dasharray':'3 4'}));
+    const lbl=mk('text',{x:PAD.left-3,y:y+3,'text-anchor':'end','font-size':'8',fill:'var(--text-dimmer)','font-family':'DM Mono,monospace'});
+    lbl.textContent=Number.isInteger(v)?v:v.toFixed(1);
+    svgEl.appendChild(lbl);
+  });
+  const getX=i=>PAD.left+(i/(dataPoints.length-1||1))*cW;
+  const getY=v=>PAD.top+cH*(1-Math.min(v,safeMax)/safeMax);
+  // Gradient fill
+  const defs=mk('defs');
+  const gid='dwg'+svgEl.id;
+  defs.innerHTML=`<linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="${color}" stop-opacity="0.22"/><stop offset="100%" stop-color="${color}" stop-opacity="0"/></linearGradient>`;
+  svgEl.appendChild(defs);
+  const nonZero=dataPoints.filter(p=>p.val>0);
+  if(nonZero.length>1){
+    let area=`M ${getX(dataPoints.indexOf(nonZero[0]))} ${PAD.top+cH}`;
+    nonZero.forEach(p=>{area+=` L ${getX(dataPoints.indexOf(p))} ${getY(p.val)}`;});
+    area+=` L ${getX(dataPoints.indexOf(nonZero[nonZero.length-1]))} ${PAD.top+cH} Z`;
+    svgEl.appendChild(mk('path',{d:area,fill:`url(#${gid})`}));
+    let line=`M ${getX(dataPoints.indexOf(nonZero[0]))} ${getY(nonZero[0].val)}`;
+    for(let i=1;i<nonZero.length;i++){
+      const pi=dataPoints.indexOf(nonZero[i-1]),ci=dataPoints.indexOf(nonZero[i]);
+      const mx=(getX(pi)+getX(ci))/2;
+      line+=` C ${mx} ${getY(nonZero[i-1].val)} ${mx} ${getY(nonZero[i].val)} ${getX(ci)} ${getY(nonZero[i].val)}`;
+    }
+    svgEl.appendChild(mk('path',{d:line,fill:'none',stroke:color,'stroke-width':'1.5','stroke-linecap':'round'}));
+    nonZero.forEach(p=>{svgEl.appendChild(mk('circle',{cx:getX(dataPoints.indexOf(p)),cy:getY(p.val),r:'2',fill:color}));});
+  } else if(nonZero.length===1){
+    const xi=dataPoints.indexOf(nonZero[0]);
+    svgEl.appendChild(mk('circle',{cx:getX(xi),cy:getY(nonZero[0].val),r:'3',fill:color}));
+  } else {
+    const empty=mk('text',{x:PAD.left+cW/2,y:PAD.top+cH/2,'text-anchor':'middle','font-size':'9',fill:'var(--text-dimmer)','font-family':'DM Mono,monospace'});
+    empty.textContent='no data yet';svgEl.appendChild(empty);
+  }
+  // X date labels
+  const every=dataPoints.length<=14?7:dataPoints.length<=30?10:30;
+  dataPoints.forEach((p,i)=>{
+    if(i%every!==0&&i!==dataPoints.length-1)return;
+    const[,m,d]=p.day.split('-');
+    const lbl=mk('text',{x:getX(i),y:H-3,'text-anchor':'middle','font-size':'8',fill:'var(--text-dimmer)','font-family':'DM Mono,monospace'});
+    lbl.textContent=`${Number(m)}/${Number(d)}`;svgEl.appendChild(lbl);
+  });
+}
+
+function renderDurationWellnessCharts(){
+  const durHabits=habits.filter(h=>h.durationEnabled);
+  const section=document.getElementById('durationWellnessSection');
+  if(!section)return;
+  if(!durHabits.length){section.style.display='none';return;}
+  section.style.display='';
+  // Default habit selection
+  if(!durWellHabitId||!durHabits.find(h=>h.id===durWellHabitId))durWellHabitId=durHabits[0].id;
+  // Range buttons
+  document.querySelectorAll('[data-dur-range]').forEach(btn=>{
+    btn.classList.toggle('active',Number(btn.dataset.durRange)===durWellRange);
+    btn.onclick=()=>{durWellRange=Number(btn.dataset.durRange);renderDurationWellnessCharts();};
+  });
+  // Habit chips
+  const chipsEl=document.getElementById('durWellChips');
+  if(chipsEl){
+    chipsEl.innerHTML='';
+    durHabits.forEach(h=>{
+      const chip=document.createElement('button');
+      chip.className='dur-well-chip'+(h.id===durWellHabitId?' active':'');
+      if(h.id===durWellHabitId){chip.style.background='var(--accent)';chip.style.borderColor='var(--accent)';chip.style.color='var(--bg)';}
+      chip.textContent=(h.emoji?h.emoji+' ':'')+h.name;
+      chip.onclick=()=>{durWellHabitId=h.id;renderDurationWellnessCharts();};
+      chipsEl.appendChild(chip);
+    });
+  }
+  // Title
+  const selHabit=durHabits.find(h=>h.id===durWellHabitId);
+  const titleEl=document.getElementById('durWellTitle');
+  if(titleEl&&selHabit)titleEl.textContent=selHabit.name;
+  // Data
+  const durPoints=[],wellPoints=[];
+  for(let i=durWellRange-1;i>=0;i--){
+    const day=dateKey(-i);
+    durPoints.push({day,val:getHabitDurationMins(durWellHabitId,day)/60});
+    wellPoints.push({day,val:getDayData(day).wellness||0});
+  }
+  // Duration chart color
+  const habitColor=(selHabit&&selHabit.color&&!selHabit.color.startsWith('var('))?selHabit.color:getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()||'#0a84ff';
+  const maxDur=Math.max(1,...durPoints.map(p=>p.val))*1.2;
+  renderDurSvgChart(document.getElementById('durChartSvg'),durPoints,habitColor,maxDur);
+  const dotEl=document.getElementById('durChartDot');if(dotEl)dotEl.style.background=habitColor;
+  const nonZeroDur=durPoints.filter(p=>p.val>0);
+  const avgDur=nonZeroDur.length?nonZeroDur.reduce((s,p)=>s+p.val,0)/nonZeroDur.length:0;
+  const durAvgEl=document.getElementById('durChartAvg');if(durAvgEl)durAvgEl.textContent=avgDur>0?`avg ${avgDur.toFixed(1)}h`:'';
+  // Wellness chart
+  const accent2=getComputedStyle(document.documentElement).getPropertyValue('--accent2').trim()||'#f0c4a0';
+  renderDurSvgChart(document.getElementById('wellChart2Svg'),wellPoints,accent2,10);
+  const nonZeroWell=wellPoints.filter(p=>p.val>0);
+  const avgWell=nonZeroWell.length?nonZeroWell.reduce((s,p)=>s+p.val,0)/nonZeroWell.length:0;
+  const wellAvgEl=document.getElementById('wellChart2Avg');if(wellAvgEl)wellAvgEl.textContent=avgWell>0?`avg ${avgWell.toFixed(1)}/10`:'';
 }
 
 // ══ SETTINGS & THEMING ══
