@@ -216,20 +216,20 @@
   .reflection-save.saved{border-color:var(--accent3);color:var(--accent3)}
   .home-wellness-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px;margin-bottom:4px}
 
-  /* DAY SCROLLER */
-  .day-scroller{display:flex;align-items:center;gap:0;padding:8px 24px 4px;flex-shrink:0;background:var(--bg);overflow:hidden}
-  .day-scroller-track{display:flex;gap:6px;overflow-x:auto;flex:1;scrollbar-width:none;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;padding:2px 0}
-  .day-scroller-track::-webkit-scrollbar{display:none}
-  .day-pill{flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:2px;padding:7px 10px;border-radius:10px;border:1px solid transparent;cursor:pointer;transition:all .15s;scroll-snap-align:center;min-width:44px;background:none;font-family:'DM Mono',monospace}
-  .day-pill-name{font-size:9px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-dimmer)}
-  .day-pill-num{font-family:'DM Serif Display',serif;font-size:18px;line-height:1;color:var(--text-dim)}
-  .day-pill-dots{display:flex;gap:2px;height:5px;align-items:center;margin-top:2px}
-  .day-pill-dot{width:4px;height:4px;border-radius:50%;background:var(--border)}
+  /* DAY SCROLLER — fixed 7-day week strip */
+  .day-scroller{display:flex;align-items:stretch;flex-shrink:0;background:var(--bg);padding:0 8px;border-bottom:1px solid var(--border)}
+  .day-scroller-track{display:flex;flex:1;gap:0}
+  .day-pill{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:1px;padding:8px 2px 0;border:none;border-bottom:2.5px solid transparent;background:none;cursor:pointer;font-family:'DM Mono',monospace;-webkit-tap-highlight-color:transparent;transition:border-color .15s}
+  .day-pill-name{font-size:8px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-dimmer)}
+  .day-pill-num{font-family:'DM Serif Display',serif;font-size:17px;line-height:1;color:var(--text-dim);margin-bottom:4px}
+  .day-pill-dots{display:flex;gap:2px;height:5px;align-items:center;margin-bottom:6px}
+  .day-pill-dot{width:3px;height:3px;border-radius:50%;background:var(--border)}
   .day-pill.is-today .day-pill-name{color:var(--accent)}
   .day-pill.is-today .day-pill-num{color:var(--text)}
-  .day-pill.selected{background:var(--surface);border-color:var(--border)}
+  .day-pill.selected{border-bottom-color:var(--accent)}
   .day-pill.selected .day-pill-name{color:var(--accent)}
   .day-pill.selected .day-pill-num{color:var(--text)}
+  .day-pill.is-future{opacity:.3;cursor:default;pointer-events:none}
   .past-day-banner{display:none;align-items:center;justify-content:space-between;padding:6px 24px;background:rgba(200,180,240,.07);border-bottom:1px solid rgba(200,180,240,.12);flex-shrink:0}
   .past-day-banner.visible{display:flex}
   .past-day-banner-text{font-family:'DM Mono',monospace;font-size:11px;color:var(--accent);letter-spacing:.04em}
@@ -564,9 +564,38 @@
   .wk-popup-item:active{background:var(--surface);color:var(--text)}
   .wk-popup-item.danger{color:#f08080}
   .wk-popup-item svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
-  /* Card drag ghost */
-  .wk-drag-ghost{position:fixed;pointer-events:none;z-index:9999;opacity:.95;border-radius:var(--r);box-shadow:0 8px 40px rgba(0,0,0,.65);left:0;top:0;will-change:transform}
-  .wk-card.is-dragging{opacity:0;pointer-events:none}
+  .wk-popup-item.disabled{opacity:.35;cursor:not-allowed}
+
+  /* BIRTH PROFILE */
+  .birth-profile-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px;margin-bottom:4px}
+  .birth-profile-row{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+  .birth-profile-label{font-family:'DM Mono',monospace;font-size:10px;color:var(--text-dimmer);letter-spacing:.04em;min-width:72px;flex-shrink:0}
+  .birth-profile-input{flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-sm);padding:8px 10px;color:var(--text);font-family:'DM Mono',monospace;font-size:12px;outline:none;transition:border-color .15s;min-width:0}
+  .birth-profile-input:focus{border-color:var(--accent)}
+  .birth-profile-save{width:100%;padding:10px;border-radius:var(--r);border:1px solid var(--accent);background:none;color:var(--accent);font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.06em;cursor:pointer;transition:all .2s;margin-top:4px}
+  .birth-profile-save:active,.birth-profile-save.saved{background:var(--accent);color:var(--bg)}
+  .birth-profile-signs{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+  .birth-sign-chip{background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:5px 12px;font-family:'DM Mono',monospace;font-size:11px;color:var(--text-dim);letter-spacing:.04em}
+
+  /* COSMIC READING CARDS */
+  .cosmic-reading-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px;margin-bottom:4px}
+  .cosmic-reading-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px}
+  .cosmic-reading-title{font-family:'DM Serif Display',serif;font-size:17px;color:var(--text);line-height:1.2}
+  .cosmic-reading-subtitle{font-size:11px;color:var(--text-dimmer);font-family:'DM Mono',monospace;letter-spacing:.04em;margin-top:2px}
+  .cosmic-reading-text{font-size:13px;color:var(--text-dim);line-height:1.65;white-space:pre-wrap;word-break:break-word}
+  .cosmic-reading-loading{font-family:'DM Mono',monospace;font-size:11px;color:var(--accent);letter-spacing:.04em;padding:8px 0;animation:cosmicPulse 1.5s ease-in-out infinite}
+  @keyframes cosmicPulse{0%,100%{opacity:.35}50%{opacity:1}}
+  .cosmic-reading-error{font-family:'DM Mono',monospace;font-size:11px;color:#f08080;letter-spacing:.04em;padding:4px 0}
+  .cosmic-reading-cached{font-family:'DM Mono',monospace;font-size:9px;color:var(--text-dimmer);letter-spacing:.04em;margin-top:8px}
+  .cosmic-get-btn{width:100%;padding:10px;border-radius:var(--r);border:1px solid var(--border);background:none;color:var(--text-dim);font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.06em;cursor:pointer;transition:all .2s;margin-top:12px;display:flex;align-items:center;justify-content:center;gap:6px}
+  .cosmic-get-btn:hover{border-color:var(--accent);color:var(--accent)}
+  .cosmic-get-btn:disabled{opacity:.35;cursor:not-allowed}
+  .cosmic-hd-select{background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-sm);padding:8px 10px;color:var(--text);font-family:'DM Mono',monospace;font-size:11px;outline:none;width:100%;margin-bottom:10px;cursor:pointer}
+  .cosmic-mayan-signs{display:flex;gap:8px;margin-bottom:12px}
+  .cosmic-mayan-chip{background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-sm);padding:10px 12px;flex:1;min-width:0}
+  .cosmic-mayan-chip-label{font-size:9px;color:var(--text-dimmer);font-family:'DM Mono',monospace;letter-spacing:.04em;margin-bottom:4px;text-transform:uppercase}
+  .cosmic-mayan-chip-value{font-family:'DM Serif Display',serif;font-size:15px;color:var(--text);line-height:1.2}
+  .cosmic-mayan-chip-sub{font-size:10px;color:var(--text-dimmer);font-family:'DM Mono',monospace;margin-top:3px}
 
   /* DAY DETAIL MODAL */
   .day-detail-overlay{position:fixed;inset:0;background:rgba(10,10,15,.85);backdrop-filter:blur(8px);z-index:300;display:flex;align-items:flex-end;opacity:0;pointer-events:none;transition:opacity .3s}
@@ -851,6 +880,69 @@
 
   <!-- COSMOS VIEW -->
   <div class="scroll-area view" id="cosmosView">
+
+    <!-- BIRTH PROFILE -->
+    <div class="section-label">birth profile</div>
+    <div class="birth-profile-card">
+      <div class="birth-profile-row">
+        <label class="birth-profile-label" for="birthDate">date of birth</label>
+        <input type="date" id="birthDate" class="birth-profile-input"/>
+      </div>
+      <div class="birth-profile-row">
+        <label class="birth-profile-label" for="birthTime">time of birth</label>
+        <input type="time" id="birthTime" class="birth-profile-input" placeholder="optional"/>
+      </div>
+      <div class="birth-profile-row">
+        <label class="birth-profile-label" for="birthLocation">location</label>
+        <input type="text" id="birthLocation" class="birth-profile-input" placeholder="City, Country (optional)" maxlength="64" autocomplete="off"/>
+      </div>
+      <button class="birth-profile-save" id="saveBirthProfileBtn">Save profile</button>
+      <div class="birth-profile-signs" id="birthProfileSigns" style="display:none">
+        <div class="birth-sign-chip" id="birthSignSolar"></div>
+        <div class="birth-sign-chip" id="birthSignMayan"></div>
+      </div>
+    </div>
+
+    <!-- DAILY HOROSCOPE -->
+    <div class="section-label">daily horoscope</div>
+    <div class="cosmic-reading-card">
+      <div class="cosmic-reading-header">
+        <div>
+          <div class="cosmic-reading-title" id="horoscopeSignTitle">Add your birth date to get started</div>
+          <div class="cosmic-reading-subtitle" id="horoscopeSignDate"></div>
+        </div>
+      </div>
+      <div id="horoscopeReadingEl"></div>
+      <button class="cosmic-get-btn" id="getHoroscopeBtn">✦ Get today's reading</button>
+    </div>
+
+    <!-- HUMAN DESIGN -->
+    <div class="section-label">human design</div>
+    <div class="cosmic-reading-card">
+      <div style="font-size:11px;color:var(--text-dimmer);margin-bottom:12px;font-family:'DM Mono',monospace;line-height:1.6;letter-spacing:.02em">A synthesis of astrology, I Ching, Kabbalah, and the chakra system — your energetic blueprint.</div>
+      <label style="font-size:10px;color:var(--text-dimmer);font-family:'DM Mono',monospace;letter-spacing:.04em;display:block;margin-bottom:6px;text-transform:uppercase">your type</label>
+      <select class="cosmic-hd-select" id="hdTypeSelect">
+        <option value="">Select your type…</option>
+        <option value="Manifestor">Manifestor</option>
+        <option value="Generator">Generator</option>
+        <option value="Manifesting Generator">Manifesting Generator</option>
+        <option value="Projector">Projector</option>
+        <option value="Reflector">Reflector</option>
+      </select>
+      <div id="hdReadingEl"></div>
+      <button class="cosmic-get-btn" id="getHdBtn">✦ Get today's reading</button>
+    </div>
+
+    <!-- MAYAN CALENDAR -->
+    <div class="section-label">mayan calendar</div>
+    <div class="cosmic-reading-card">
+      <div id="mayanSignsEl">
+        <div style="font-size:11px;color:var(--text-dimmer);font-family:'DM Mono',monospace;line-height:1.6;letter-spacing:.02em">Add your birth date above to see your Tzolkin birth sign and today's day energy.</div>
+      </div>
+      <div id="mayanReadingEl"></div>
+      <button class="cosmic-get-btn" id="getMayanBtn">✦ Get today's reading</button>
+    </div>
+
     <div class="section-label">moon phase &amp; wellness</div>
     <div class="trends-card" id="trendsMoonCard">
       <div class="moon-chart-wrap">
@@ -1305,43 +1397,48 @@ function renderDayScroller(){
   const track=document.getElementById('dayScrollerTrack');
   if(!track)return;
   track.innerHTML='';
+
   const today=todayKey();
   const selected=activeDay();
-  const DAYS=14; // how many past days to show
-  for(let i=DAYS;i>=0;i--){
-    const key=dateKey(-i);
-    const[y,m,d]=key.split('-').map(Number);
-    const dateObj=new Date(y,m-1,d);
-    const dayName=DAYS_S[dateObj.getDay()];
+  const DAY_ABBREVS=['Su','Mo','Tu','We','Th','Fr','Sa'];
+
+  // Always show Sun–Sat of the current (today's) week
+  const todayParts=today.split('-').map(Number);
+  const todayDate=new Date(todayParts[0],todayParts[1]-1,todayParts[2]);
+  const weekStartDate=new Date(todayDate);
+  weekStartDate.setDate(todayDate.getDate()-todayDate.getDay());
+
+  for(let i=0;i<7;i++){
+    const dt=new Date(weekStartDate);
+    dt.setDate(weekStartDate.getDate()+i);
+    const key=fmtKey(dt.getFullYear(),dt.getMonth()+1,dt.getDate());
+    const dayNum=dt.getDate();
     const isToday=key===today;
     const isSel=key===selected;
+    const isFuture=key>today;
 
-    // completion dots for this day
-    const done=habits.filter(h=>isCompleted(h.id,key));
     const dotsHtml=habits.length?habits.slice(0,5).map(h=>{
       const isDone=isCompleted(h.id,key);
       return `<div class="day-pill-dot" style="${isDone?`background:${COLOR_HEX[h.color]||'var(--accent)'}`:''};opacity:${isDone?1:0.3}"></div>`;
     }).join(''):'';
 
     const pill=document.createElement('button');
-    pill.className='day-pill'+(isToday?' is-today':'')+(isSel?' selected':'');
-    pill.setAttribute('aria-label',`${dayName} ${m}/${d}`);
+    pill.className='day-pill'+(isToday?' is-today':'')+(isSel?' selected':'')+(isFuture?' is-future':'');
+    pill.setAttribute('aria-label',`${DAY_ABBREVS[i]} ${dt.getMonth()+1}/${dayNum}`);
     pill.innerHTML=`
-      <div class="day-pill-name">${isToday?'today':dayName.slice(0,2)}</div>
-      <div class="day-pill-num">${d}</div>
+      <div class="day-pill-name">${isToday?'now':DAY_ABBREVS[i]}</div>
+      <div class="day-pill-num">${dayNum}</div>
       <div class="day-pill-dots">${dotsHtml}</div>`;
-    pill.addEventListener('click',()=>{
-      viewingDay=isToday?null:key;
-      renderDayScroller();
-      renderHomeForDay();
-    });
+    if(!isFuture){
+      pill.addEventListener('click',()=>{
+        viewingDay=isToday?null:key;
+        renderDayScroller();
+        renderHomeForDay();
+        renderWeeklyGrid();
+      });
+    }
     track.appendChild(pill);
   }
-
-  // scroll selected pill into view
-  const pills=[...track.querySelectorAll('.day-pill')];
-  const selPill=pills.find(p=>p.classList.contains('selected'));
-  if(selPill)setTimeout(()=>selPill.scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'}),50);
 
   // banner
   const banner=document.getElementById('pastDayBanner');
@@ -2769,6 +2866,236 @@ function switchView(view){
 function renderCosmos(){
   renderMoonChart(trendsRange||14);
   renderWellnessChart();
+  initCosmosSection();
+  renderBirthProfile();
+}
+
+// ── BIRTH PROFILE & COSMIC READINGS ──
+const TZOLKIN_SIGNS=['Imix','Ik','Akbal','Kan','Chicchan','Cimi','Manik','Lamat','Muluc','Oc','Chuen','Eb','Ben','Ix','Men','Cib','Caban','Etznab','Cauac','Ahau'];
+const TZOLKIN_GLYPHS=['🌊','🌬️','🌙','🌽','🐍','💀','🦌','⭐','🌧️','🐾','🐒','📿','🌿','🐆','🦅','🦉','⚡','🔮','⛈️','☀️'];
+
+function getSunSign(dateStr){
+  if(!dateStr)return null;
+  const[,m,d]=dateStr.split('-').map(Number);
+  if((m===12&&d>=22)||(m===1&&d<=19))return{name:'Capricorn',emoji:'♑'};
+  if((m===1&&d>=20)||(m===2&&d<=18))return{name:'Aquarius',emoji:'♒'};
+  if((m===2&&d>=19)||(m===3&&d<=20))return{name:'Pisces',emoji:'♓'};
+  if((m===3&&d>=21)||(m===4&&d<=19))return{name:'Aries',emoji:'♈'};
+  if((m===4&&d>=20)||(m===5&&d<=20))return{name:'Taurus',emoji:'♉'};
+  if((m===5&&d>=21)||(m===6&&d<=20))return{name:'Gemini',emoji:'♊'};
+  if((m===6&&d>=21)||(m===7&&d<=22))return{name:'Cancer',emoji:'♋'};
+  if((m===7&&d>=23)||(m===8&&d<=22))return{name:'Leo',emoji:'♌'};
+  if((m===8&&d>=23)||(m===9&&d<=22))return{name:'Virgo',emoji:'♍'};
+  if((m===9&&d>=23)||(m===10&&d<=22))return{name:'Libra',emoji:'♎'};
+  if((m===10&&d>=23)||(m===11&&d<=21))return{name:'Scorpio',emoji:'♏'};
+  if((m===11&&d>=22)||(m===12&&d<=21))return{name:'Sagittarius',emoji:'♐'};
+  return{name:'Capricorn',emoji:'♑'};
+}
+
+function getTzolkinDay(dateStr){
+  if(!dateStr)return null;
+  const[y,m,d]=dateStr.split('-').map(Number);
+  const ref=new Date(2000,0,1);
+  const target=new Date(y,m-1,d);
+  const diff=Math.round((target-ref)/86400000);
+  const signIdx=((19+diff)%20+20)%20;
+  const tone=((10+diff)%13+13)%13+1;
+  return{sign:TZOLKIN_SIGNS[signIdx],glyph:TZOLKIN_GLYPHS[signIdx],tone};
+}
+
+function loadBirthProfile(){
+  try{return JSON.parse(localStorage.getItem('ritualBirthProfile')||'{}');}catch{return{};}
+}
+
+function renderBirthProfile(){
+  const bp=loadBirthProfile();
+
+  // Populate form fields
+  const bdEl=document.getElementById('birthDate');
+  const btEl=document.getElementById('birthTime');
+  const blEl=document.getElementById('birthLocation');
+  if(bdEl&&bp.date)bdEl.value=bp.date;
+  if(btEl&&bp.time)btEl.value=bp.time;
+  if(blEl&&bp.location)blEl.value=bp.location;
+  const hdSel=document.getElementById('hdTypeSelect');
+  if(hdSel&&bp.hdType)hdSel.value=bp.hdType;
+
+  // Signs chips
+  const signsEl=document.getElementById('birthProfileSigns');
+  const solarEl=document.getElementById('birthSignSolar');
+  const mayanEl=document.getElementById('birthSignMayan');
+  if(signsEl){
+    if(bp.date){
+      const sun=getSunSign(bp.date);
+      const tzolk=getTzolkinDay(bp.date);
+      signsEl.style.display='flex';
+      if(solarEl&&sun)solarEl.textContent=`${sun.emoji} ${sun.name}`;
+      if(mayanEl&&tzolk)mayanEl.textContent=`🗓 ${tzolk.tone} ${tzolk.sign}`;
+    } else {
+      signsEl.style.display='none';
+    }
+  }
+
+  // Horoscope card header
+  const hsTitle=document.getElementById('horoscopeSignTitle');
+  const hsDate=document.getElementById('horoscopeSignDate');
+  if(bp.date){
+    const sun=getSunSign(bp.date);
+    if(hsTitle&&sun)hsTitle.textContent=`${sun.emoji} ${sun.name}`;
+    const[y,m,d]=bp.date.split('-').map(Number);
+    if(hsDate)hsDate.textContent=`Born ${MON_S[m-1]} ${d}, ${y}`;
+  } else {
+    if(hsTitle)hsTitle.textContent='Add your birth date to get started';
+    if(hsDate)hsDate.textContent='';
+  }
+
+  // Mayan signs display
+  const mayanSignsEl=document.getElementById('mayanSignsEl');
+  if(mayanSignsEl){
+    if(bp.date){
+      const birth=getTzolkinDay(bp.date);
+      const todayTzolk=getTzolkinDay(todayKey());
+      mayanSignsEl.innerHTML=`<div class="cosmic-mayan-signs">
+        <div class="cosmic-mayan-chip">
+          <div class="cosmic-mayan-chip-label">birth sign</div>
+          <div class="cosmic-mayan-chip-value">${birth.glyph} ${birth.sign}</div>
+          <div class="cosmic-mayan-chip-sub">Tone ${birth.tone}</div>
+        </div>
+        <div class="cosmic-mayan-chip">
+          <div class="cosmic-mayan-chip-label">today's energy</div>
+          <div class="cosmic-mayan-chip-value">${todayTzolk.glyph} ${todayTzolk.sign}</div>
+          <div class="cosmic-mayan-chip-sub">Tone ${todayTzolk.tone}</div>
+        </div>
+      </div>`;
+    } else {
+      mayanSignsEl.innerHTML='<div style="font-size:11px;color:var(--text-dimmer);font-family:\'DM Mono\',monospace;line-height:1.6;letter-spacing:.02em">Add your birth date above to see your Tzolkin birth sign and today\'s day energy.</div>';
+    }
+  }
+
+  // Restore any cached readings for today
+  const today=todayKey();
+  const readingMap={horoscope:'horoscopeReadingEl',humandesign:'hdReadingEl',mayan:'mayanReadingEl'};
+  Object.entries(readingMap).forEach(([section,elId])=>{
+    const cache=localStorage.getItem(`cosmicCache_${section}_${today}`);
+    const el=document.getElementById(elId);
+    if(el&&cache&&!el.innerHTML)el.innerHTML=cache;
+  });
+}
+
+async function getCosmicReading(section,prompt,displayElId,btnElId){
+  const apiKey=localStorage.getItem('claudeApiKey');
+  if(!apiKey){
+    document.getElementById(displayElId).innerHTML='<div class="cosmic-reading-error">Add your Claude API key in Settings to unlock readings.</div>';
+    return;
+  }
+  const btn=document.getElementById(btnElId);
+  if(btn)btn.disabled=true;
+  document.getElementById(displayElId).innerHTML='<div class="cosmic-reading-loading">✦ reading the cosmos…</div>';
+  try{
+    const resp=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true','content-type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:450,messages:[{role:'user',content:prompt}]})
+    });
+    const data=await resp.json();
+    if(data.error)throw new Error(data.error.message);
+    const text=data.content[0].text;
+    const html=`<div class="cosmic-reading-text">${escapeHtml(text)}</div><div class="cosmic-reading-cached">cached for today · tap to regenerate</div>`;
+    document.getElementById(displayElId).innerHTML=html;
+    localStorage.setItem(`cosmicCache_${section}_${todayKey()}`,html);
+  }catch(e){
+    document.getElementById(displayElId).innerHTML=`<div class="cosmic-reading-error">Error: ${escapeHtml(e.message)}</div>`;
+  }finally{
+    if(btn)btn.disabled=false;
+  }
+}
+
+let cosmosInitialized=false;
+function initCosmosSection(){
+  if(cosmosInitialized)return;
+  cosmosInitialized=true;
+
+  // Save birth profile
+  document.getElementById('saveBirthProfileBtn')?.addEventListener('click',()=>{
+    const bp={
+      date:document.getElementById('birthDate')?.value||'',
+      time:document.getElementById('birthTime')?.value||'',
+      location:document.getElementById('birthLocation')?.value||'',
+      hdType:document.getElementById('hdTypeSelect')?.value||loadBirthProfile().hdType||''
+    };
+    localStorage.setItem('ritualBirthProfile',JSON.stringify(bp));
+    const today=todayKey();
+    ['horoscope','humandesign','mayan'].forEach(s=>{
+      localStorage.removeItem(`cosmicCache_${s}_${today}`);
+      const elMap={horoscope:'horoscopeReadingEl',humandesign:'hdReadingEl',mayan:'mayanReadingEl'};
+      const el=document.getElementById(elMap[s]);
+      if(el)el.innerHTML='';
+    });
+    const btn=document.getElementById('saveBirthProfileBtn');
+    if(btn){btn.textContent='Saved ✓';btn.classList.add('saved');setTimeout(()=>{btn.textContent='Save profile';btn.classList.remove('saved');},1500);}
+    renderBirthProfile();
+  });
+
+  // Save HD type on change
+  document.getElementById('hdTypeSelect')?.addEventListener('change',e=>{
+    const bp=loadBirthProfile();
+    bp.hdType=e.target.value;
+    localStorage.setItem('ritualBirthProfile',JSON.stringify(bp));
+  });
+
+  // Horoscope reading
+  document.getElementById('getHoroscopeBtn')?.addEventListener('click',()=>{
+    const bp=loadBirthProfile();
+    if(!bp.date){document.getElementById('horoscopeReadingEl').innerHTML='<div class="cosmic-reading-error">Please save your birth date first.</div>';return;}
+    localStorage.removeItem(`cosmicCache_horoscope_${todayKey()}`);
+    document.getElementById('horoscopeReadingEl').innerHTML='';
+    const sun=getSunSign(bp.date);
+    const today=todayKey();
+    const[y,m,d]=today.split('-').map(Number);
+    const habitsSummary=habits.slice(0,6).map(h=>h.name).join(', ')||'wellness habits';
+    const prompt=`You are a thoughtful, modern astrologer. Write an insightful daily horoscope for ${sun?.name||'this person'} (${sun?.emoji||''}) for ${MON_S[m-1]} ${d}, ${y}. Their birth info: ${bp.time?`born at ${bp.time}`:''}${bp.location?`, in ${bp.location}`:''}.
+
+This person tracks these habits: ${habitsSummary}.
+
+Write 2-3 paragraphs. Cover today's cosmic energy, themes of growth, and practical guidance that connects to their habits. Warm, specific, encouraging — avoid generic filler.`;
+    getCosmicReading('horoscope',prompt,'horoscopeReadingEl','getHoroscopeBtn');
+  });
+
+  // Human Design reading
+  document.getElementById('getHdBtn')?.addEventListener('click',()=>{
+    const bp=loadBirthProfile();
+    const hdType=document.getElementById('hdTypeSelect')?.value||bp.hdType||'';
+    if(!hdType){document.getElementById('hdReadingEl').innerHTML='<div class="cosmic-reading-error">Please select your Human Design type above.</div>';return;}
+    localStorage.removeItem(`cosmicCache_humandesign_${todayKey()}`);
+    document.getElementById('hdReadingEl').innerHTML='';
+    const today=todayKey();
+    const[y,m,d]=today.split('-').map(Number);
+    const habitsSummary=habits.slice(0,6).map(h=>h.name).join(', ')||'wellness habits';
+    const prompt=`You are a Human Design guide. Write practical daily guidance for a ${hdType} type for ${MON_S[m-1]} ${d}, ${y}.
+
+Their active habits: ${habitsSummary}.
+
+Write 2-3 short paragraphs covering: how a ${hdType} should direct their energy today, what to watch for, and how their design type relates to building consistent habits. Warm, grounded, actionable.`;
+    getCosmicReading('humandesign',prompt,'hdReadingEl','getHdBtn');
+  });
+
+  // Mayan Calendar reading
+  document.getElementById('getMayanBtn')?.addEventListener('click',()=>{
+    const bp=loadBirthProfile();
+    localStorage.removeItem(`cosmicCache_mayan_${todayKey()}`);
+    document.getElementById('mayanReadingEl').innerHTML='';
+    const today=todayKey();
+    const[y,m,d]=today.split('-').map(Number);
+    const todayTzolk=getTzolkinDay(today);
+    const birthPart=bp.date?` The person's birth Tzolkin sign is ${getTzolkinDay(bp.date).sign} (Tone ${getTzolkinDay(bp.date).tone}).`:'';
+    const habitsSummary=habits.slice(0,6).map(h=>h.name).join(', ')||'wellness habits';
+    const prompt=`You are a Mayan calendar guide. Today in the Tzolkin calendar is ${todayTzolk.sign} (Tone ${todayTzolk.tone}), ${MON_S[m-1]} ${d}, ${y}.${birthPart}
+
+Their active habits: ${habitsSummary}.
+
+Write a meaningful daily reading (2-3 paragraphs): explain today's Tzolkin day energy and its qualities${bp.date?', how it interacts with their birth sign,':''} and what this means practically for the day ahead. Spiritual, grounded, accessible tone.`;
+    getCosmicReading('mayan',prompt,'mayanReadingEl','getMayanBtn');
+  });
 }
 
 document.getElementById('navHome').addEventListener('click',()=>switchView('home'));
@@ -3635,65 +3962,12 @@ function fmtKeyFromDate(dt){
   return fmtKey(dt.getFullYear(),dt.getMonth()+1,dt.getDate());
 }
 
-// ── Weekly grid drag state ──
-let wkDragSrcIdx=-1,wkDragGhost=null,wkDragOverIdx=-1,wkDragActive=false,wkDragGhostRect=null;
-
-function clearWkDragMarkers(){
-  document.querySelectorAll('#weeklyGrid .wk-card').forEach(el=>{
-    el.classList.remove('is-dragging');
-    el.style.marginTop='';el.style.marginBottom='';
-  });
-}
-
-function getWkDropIdx(clientY){
-  const cards=[...document.querySelectorAll('#weeklyGrid .wk-card')];
-  for(let i=0;i<cards.length;i++){
-    const r=cards[i].getBoundingClientRect();
-    if(clientY<r.top+r.height/2)return i;
-  }
-  return cards.length;
-}
-
-function onWkDragMove(clientX,clientY){
-  if(!wkDragActive||!wkDragGhost)return;
-  const gridEl=document.getElementById('weeklyGrid');
-  const lx=gridEl?gridEl.getBoundingClientRect().left:0;
-  wkDragGhost.style.transform=`translate(${lx}px,${clientY-wkDragGhostRect.height/2}px)`;
-  clearWkDragMarkers();
-  const allCards=document.querySelectorAll('#weeklyGrid .wk-card');
-  if(allCards[wkDragSrcIdx])allCards[wkDragSrcIdx].classList.add('is-dragging');
-  wkDragOverIdx=getWkDropIdx(clientY);
-}
-
-function onWkDragEnd(){
-  if(!wkDragActive)return;
-  wkDragActive=false;
-  if(wkDragGhost){wkDragGhost.remove();wkDragGhost=null;}
-  clearWkDragMarkers();
-  const from=wkDragSrcIdx,to=wkDragOverIdx;
-  wkDragSrcIdx=-1;wkDragOverIdx=-1;
-  if(to>=0&&to!==from&&to!==from+1){
-    const moved=habits.splice(from,1)[0];
-    const insertAt=to>from?to-1:to;
-    habits.splice(insertAt,0,moved);
-    save();
-  }
-  renderWeeklyGrid();
-}
-
-function startWkDrag(card,idx,clientX,clientY){
-  wkDragActive=true;
-  wkDragSrcIdx=idx;
-  wkDragOverIdx=idx;
-  wkDragGhostRect=card.getBoundingClientRect();
-  const ghost=card.cloneNode(true);
-  ghost.className='wk-drag-ghost';
-  ghost.style.width=wkDragGhostRect.width+'px';
-  ghost.style.height=wkDragGhostRect.height+'px';
-  ghost.style.transform=`translate(${wkDragGhostRect.left}px,${clientY-wkDragGhostRect.height/2}px)`;
-  document.body.appendChild(ghost);
-  wkDragGhost=ghost;
-  if(navigator.vibrate)navigator.vibrate(40);
+// ── Weekly grid habit reorder ──
+function moveHabit(idx,dir){
+  const newIdx=idx+dir;
+  if(newIdx<0||newIdx>=habits.length)return;
+  const tmp=habits[idx];habits[idx]=habits[newIdx];habits[newIdx]=tmp;
+  save();renderWeeklyGrid();
 }
 
 function renderWeeklyGrid(){
@@ -3818,7 +4092,6 @@ function renderWeeklyGrid(){
     // Habit title tap → edit
     header.querySelector('.wk-card-title').style.cursor='pointer';
     header.querySelector('.wk-card-title').addEventListener('click',e=>{
-      if(wkDragActive)return;
       e.stopPropagation();
       openEditModal(idx);
     });
@@ -3826,62 +4099,39 @@ function renderWeeklyGrid(){
     // Three-dot menu
     menuBtn.addEventListener('click',e=>{
       e.stopPropagation();
-      // close any existing popups
       document.querySelectorAll('.wk-popup').forEach(p=>p.remove());
+      const isFirst=idx===0, isLast=idx===habits.length-1;
       const popup=document.createElement('div');
       popup.className='wk-popup';
       popup.innerHTML=`
-        <button class="wk-popup-item"><svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Edit</button>
-        <button class="wk-popup-item danger"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>Delete</button>`;
+        <button class="wk-popup-item" data-action="edit"><svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Edit</button>
+        <button class="wk-popup-item${isFirst?' disabled':''}" data-action="up"><svg viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"/></svg>Move Up</button>
+        <button class="wk-popup-item${isLast?' disabled':''}" data-action="down"><svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>Move Down</button>
+        <button class="wk-popup-item danger" data-action="delete"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>Delete</button>`;
       card.appendChild(popup);
-      popup.querySelectorAll('.wk-popup-item')[0].addEventListener('click',e2=>{e2.stopPropagation();popup.remove();openEditModal(idx);});
-      popup.querySelectorAll('.wk-popup-item')[1].addEventListener('click',e2=>{
-        e2.stopPropagation();popup.remove();
-        const overlay=document.createElement('div');
-        overlay.className='delete-confirm';
-        overlay.innerHTML=`<p>Delete <strong>${escapeHtml(h.name)}</strong>?</p><div class="delete-confirm-btns"><button class="del-yes">Delete</button><button class="del-no">Cancel</button></div>`;
-        card.appendChild(overlay);
-        overlay.querySelector('.del-yes').onclick=()=>{habits.splice(idx,1);save();renderAll();};
-        overlay.querySelector('.del-no').onclick=()=>overlay.remove();
+      popup.addEventListener('click',e2=>{
+        e2.stopPropagation();
+        const action=e2.target.closest('[data-action]')?.dataset.action;
+        if(!action)return;
+        popup.remove();
+        if(action==='edit'){openEditModal(idx);}
+        else if(action==='up'&&!isFirst){moveHabit(idx,-1);}
+        else if(action==='down'&&!isLast){moveHabit(idx,1);}
+        else if(action==='delete'){
+          const overlay=document.createElement('div');
+          overlay.className='delete-confirm';
+          overlay.innerHTML=`<p>Delete <strong>${escapeHtml(h.name)}</strong>?</p><div class="delete-confirm-btns"><button class="del-yes">Delete</button><button class="del-no">Cancel</button></div>`;
+          card.appendChild(overlay);
+          overlay.querySelector('.del-yes').onclick=()=>{habits.splice(idx,1);save();renderAll();};
+          overlay.querySelector('.del-no').onclick=()=>overlay.remove();
+        }
       });
-      // close on outside click
       setTimeout(()=>{
         const closePopup=ev=>{if(!popup.contains(ev.target)){popup.remove();document.removeEventListener('click',closePopup);}};
         document.addEventListener('click',closePopup);
       },0);
     });
 
-    // Card long-press drag (1000ms hold, not on day boxes or menu btn)
-    let wkHoldTimer=null,wkLiveX=0,wkLiveY=0;
-    const beginWkHold=(sx,sy)=>{
-      wkLiveX=sx;wkLiveY=sy;
-      wkHoldTimer=setTimeout(()=>{
-        wkHoldTimer=null;
-        if(navigator.vibrate)navigator.vibrate([20,30,40]);
-        startWkDrag(card,idx,wkLiveX,wkLiveY);
-      },1000);
-    };
-    const cancelWkHold=()=>{if(wkHoldTimer){clearTimeout(wkHoldTimer);wkHoldTimer=null;}};
-
-    card.addEventListener('touchstart',e=>{
-      if(e.target.closest('.wk-day-box')||e.target.closest('.wk-card-menu-btn')||e.target.closest('.wk-popup'))return;
-      const t=e.touches[0];beginWkHold(t.clientX,t.clientY);
-    },{passive:true});
-    card.addEventListener('touchmove',e=>{
-      const t=e.touches[0];wkLiveX=t.clientX;wkLiveY=t.clientY;
-      if(wkDragActive){e.preventDefault();onWkDragMove(t.clientX,t.clientY);}
-    },{passive:false});
-    card.addEventListener('touchend',()=>{cancelWkHold();if(wkDragActive)onWkDragEnd();},{passive:true});
-    card.addEventListener('touchcancel',()=>{cancelWkHold();if(wkDragActive)onWkDragEnd();},{passive:true});
-
-    card.addEventListener('mousedown',e=>{
-      if(e.target.closest('.wk-day-box')||e.target.closest('.wk-card-menu-btn')||e.target.closest('.wk-popup'))return;
-      beginWkHold(e.clientX,e.clientY);
-      const onMove=ev=>{wkLiveX=ev.clientX;wkLiveY=ev.clientY;if(wkDragActive)onWkDragMove(ev.clientX,ev.clientY);};
-      const onUp=()=>{cancelWkHold();if(wkDragActive)onWkDragEnd();document.removeEventListener('mousemove',onMove);document.removeEventListener('mouseup',onUp);};
-      document.addEventListener('mousemove',onMove);
-      document.addEventListener('mouseup',onUp);
-    });
 
     grid.appendChild(card);
   });
