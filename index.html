@@ -605,8 +605,11 @@
   .day-detail-overlay.open .day-detail-sheet{transform:translateY(0)}
   .day-detail-toggle{width:100%;padding:14px;border-radius:var(--r);border:2px solid var(--border);background:transparent;color:var(--text-dim);font-family:'DM Mono',monospace;font-size:12px;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;transition:all .2s;margin-bottom:16px}
   .day-detail-toggle.is-done{background:var(--accent);border-color:transparent;color:var(--bg)}
-  .font-picker-btn{flex:1;padding:9px 4px;background:var(--surface2);border:1.5px solid var(--border);border-radius:var(--r-sm);color:var(--text-dim);font-size:11px;letter-spacing:.04em;cursor:pointer;transition:all .15s;text-align:center}
+  .font-picker-btn{flex:1;padding:14px 8px;background:var(--surface2);border:1.5px solid var(--border);border-radius:var(--r-sm);color:var(--text-dim);font-size:13px;cursor:pointer;transition:all .15s;display:flex;flex-direction:column;align-items:center;gap:4px;letter-spacing:.02em;min-height:64px;justify-content:center}
+  .font-picker-btn .font-sample{font-size:17px;color:var(--text);line-height:1}
+  .font-picker-btn .font-label{font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-dimmer);font-family:'DM Mono',monospace}
   .font-picker-btn.active{border-color:var(--accent);color:var(--accent);background:var(--accent-glow)}
+  .font-picker-btn.active .font-sample{color:var(--accent)}
   .insight-card{position:relative;overflow:hidden;background:linear-gradient(135deg,rgba(200,180,240,.08),rgba(200,180,240,.04));border:1px solid rgba(200,180,240,.2);border-radius:var(--r);padding:12px 14px;margin-bottom:6px;display:flex;gap:10px;align-items:flex-start;transition:transform .3s ease,opacity .3s ease}
   .insight-card.dismissed{transform:translateX(110%);opacity:0;pointer-events:none}
   .insight-card-icon{font-size:16px;flex-shrink:0;margin-top:1px}
@@ -802,6 +805,22 @@
         </div>
       </div>
     </div>
+    <div class="section-label">wellness over time</div>
+    <div class="wellness-chart-wrap">
+      <div class="wellness-chart-header">
+        <div class="wellness-chart-title">Daily Wellness</div>
+        <div class="wellness-range-btns">
+          <button class="wellness-range-btn active" data-range="7">7D</button>
+          <button class="wellness-range-btn" data-range="30">1M</button>
+          <button class="wellness-range-btn" data-range="365">1Y</button>
+        </div>
+      </div>
+      <div class="wellness-svg-wrap" id="wellnessSvgWrap">
+        <svg class="wellness-svg" id="wellnessSvg" height="240"></svg>
+        <div class="wellness-tooltip" id="wellnessTooltip"></div>
+      </div>
+      <div id="wellnessOverlayChips" style="display:flex;gap:6px;flex-wrap:wrap;padding:8px 0 4px"></div>
+    </div>
     <div class="section-label">rolling completion rate</div>
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:4px" id="trendsRollingGrid"></div>
     <div class="section-label">habit quality <span style="font-style:italic;text-transform:none;letter-spacing:0;color:var(--text-dimmer);font-size:9px">- selected range</span></div>
@@ -929,6 +948,7 @@
         <option value="Reflector">Reflector</option>
       </select>
       <div id="hdReadingEl"></div>
+      <button class="cosmic-get-btn" id="hdAutoDetectBtn" style="background:var(--surface2);color:var(--text-dim);border:1px solid var(--border);margin-bottom:6px">✦ Auto-detect my type from birth data</button>
       <button class="cosmic-get-btn" id="getHdBtn">✦ Get today's reading</button>
     </div>
 
@@ -959,22 +979,6 @@
         <div class="moon-legend-item">🌗 Last quarter</div>
         <div class="moon-legend-item">🌘 Waning crescent</div>
       </div>
-    </div>
-    <div class="section-label">wellness over time</div>
-    <div class="wellness-chart-wrap">
-      <div class="wellness-chart-header">
-        <div class="wellness-chart-title">Daily Wellness</div>
-        <div class="wellness-range-btns">
-          <button class="wellness-range-btn active" data-range="7">7D</button>
-          <button class="wellness-range-btn" data-range="30">1M</button>
-          <button class="wellness-range-btn" data-range="365">1Y</button>
-        </div>
-      </div>
-      <div class="wellness-svg-wrap" id="wellnessSvgWrap">
-        <svg class="wellness-svg" id="wellnessSvg" height="160"></svg>
-        <div class="wellness-tooltip" id="wellnessTooltip"></div>
-      </div>
-      <div id="wellnessOverlayChips" style="display:flex;gap:6px;flex-wrap:wrap;padding:8px 0 4px"></div>
     </div>
     <div class="section-label">ask ai</div>
     <div class="ai-section" id="aiSectionCosmos">
@@ -1063,15 +1067,22 @@
       <div class="color-grid" id="editColorGrid"></div>
       <div class="field-label">Time</div>
       <input class="field-input" id="editTimeInput" placeholder="e.g. 7:00 am" maxlength="16" autocomplete="off"/>
-      <div class="field-label">Goal <span style="color:var(--text-dimmer);font-size:9px;letter-spacing:.04em">— days per week</span></div>
-      <div style="display:flex;gap:6px;margin-bottom:20px" id="editGoalPicker">
-        <button class="settings-size-btn goal-btn" data-goal="1">1</button>
-        <button class="settings-size-btn goal-btn" data-goal="2">2</button>
-        <button class="settings-size-btn goal-btn" data-goal="3">3</button>
-        <button class="settings-size-btn goal-btn" data-goal="4">4</button>
-        <button class="settings-size-btn goal-btn" data-goal="5">5</button>
-        <button class="settings-size-btn goal-btn" data-goal="6">6</button>
-        <button class="settings-size-btn goal-btn active" data-goal="7">7</button>
+      <div class="field-label">Goal</div>
+      <div style="display:flex;gap:6px;margin-bottom:14px" id="editModeSelector">
+        <button class="settings-size-btn mode-btn" data-mode="goal">Goal</button>
+        <button class="settings-size-btn mode-btn" data-mode="track">Tracking only</button>
+      </div>
+      <div id="editGoalSection">
+        <div style="font-size:10px;color:var(--text-dimmer);letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px">Days per week</div>
+        <div style="display:flex;gap:6px;margin-bottom:20px" id="editGoalPicker">
+          <button class="settings-size-btn goal-btn" data-goal="1">1</button>
+          <button class="settings-size-btn goal-btn" data-goal="2">2</button>
+          <button class="settings-size-btn goal-btn" data-goal="3">3</button>
+          <button class="settings-size-btn goal-btn" data-goal="4">4</button>
+          <button class="settings-size-btn goal-btn" data-goal="5">5</button>
+          <button class="settings-size-btn goal-btn" data-goal="6">6</button>
+          <button class="settings-size-btn goal-btn active" data-goal="7">7</button>
+        </div>
       </div>
       <div class="field-label">Subcategories <span style="color:var(--text-dimmer);font-size:9px;letter-spacing:.04em">(optional)</span></div>
       <div class="subcat-manager" id="editSubcatManager">
@@ -1169,13 +1180,6 @@
       <!-- rendered by renderSettings -->
     </div>
 
-    <div class="section-label">card corners</div>
-    <div style="display:flex;gap:8px;margin-bottom:20px">
-      <button class="settings-radius-btn" data-r="6px">Sharp</button>
-      <button class="settings-radius-btn" data-r="14px">Default</button>
-      <button class="settings-radius-btn" data-r="22px">Round</button>
-    </div>
-
     <div class="section-label">account</div>
     <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px;margin-bottom:10px">
       <div style="font-size:12px;color:var(--text-dim);margin-bottom:12px" id="settingsEmail"></div>
@@ -1249,15 +1253,22 @@
     </div>
     <div class="field-label">Time</div>
     <input class="field-input" id="habitTimeInput" placeholder="e.g. 7:00 am" maxlength="16" autocomplete="off"/>
-    <div class="field-label">Goal <span style="color:var(--text-dimmer);font-size:9px;letter-spacing:.04em">— days per week</span></div>
-    <div style="display:flex;gap:6px;margin-bottom:20px" id="goalPicker">
-      <button class="settings-size-btn goal-btn" data-goal="1">1</button>
-      <button class="settings-size-btn goal-btn" data-goal="2">2</button>
-      <button class="settings-size-btn goal-btn" data-goal="3">3</button>
-      <button class="settings-size-btn goal-btn" data-goal="4">4</button>
-      <button class="settings-size-btn goal-btn" data-goal="5">5</button>
-      <button class="settings-size-btn goal-btn" data-goal="6">6</button>
-      <button class="settings-size-btn goal-btn active" data-goal="7">7</button>
+    <div class="field-label">Goal</div>
+    <div style="display:flex;gap:6px;margin-bottom:14px" id="modeSelector">
+      <button class="settings-size-btn mode-btn" data-mode="goal">Goal</button>
+      <button class="settings-size-btn mode-btn" data-mode="track">Tracking only</button>
+    </div>
+    <div id="goalSection">
+      <div style="font-size:10px;color:var(--text-dimmer);letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px">Days per week</div>
+      <div style="display:flex;gap:6px;margin-bottom:20px" id="goalPicker">
+        <button class="settings-size-btn goal-btn" data-goal="1">1</button>
+        <button class="settings-size-btn goal-btn" data-goal="2">2</button>
+        <button class="settings-size-btn goal-btn" data-goal="3">3</button>
+        <button class="settings-size-btn goal-btn" data-goal="4">4</button>
+        <button class="settings-size-btn goal-btn" data-goal="5">5</button>
+        <button class="settings-size-btn goal-btn" data-goal="6">6</button>
+        <button class="settings-size-btn goal-btn active" data-goal="7">7</button>
+      </div>
     </div>
     <button class="save-btn" id="saveBtn">Add to Ritual</button>
   </div>
@@ -1835,8 +1846,9 @@ function renderProgress(day){
   const today=todayKey();
   const weekDays=[];
   for(let i=0;i<7;i++){const dt=new Date(weekStart);dt.setDate(weekStart.getDate()+i);weekDays.push(fmtKeyFromDate(dt));}
-  const total=habits.length;
-  const onTrack=habits.filter(h=>{
+  const goalHabits=habits.filter(h=>h.targetDaysPerWeek!==0);
+  const total=goalHabits.length;
+  const onTrack=goalHabits.filter(h=>{
     const goal=h.targetDaysPerWeek||7;
     const done=weekDays.filter(dk=>dk<=today&&isCompleted(h.id,dk)).length;
     return done>=goal;
@@ -1845,7 +1857,8 @@ function renderProgress(day){
   document.getElementById('ringFill').style.strokeDashoffset=188.5-(188.5*pct);
   document.getElementById('ringNum').textContent=onTrack;
   document.getElementById('ringDenom').textContent=`/ ${total}`;
-  if(!total){document.getElementById('progressTitle').textContent='Build your ritual';document.getElementById('progressSub').textContent='Tap + to add your first habit.';}
+  if(!habits.length){document.getElementById('progressTitle').textContent='Build your ritual';document.getElementById('progressSub').textContent='Tap + to add your first habit.';}
+  else if(!total){document.getElementById('progressTitle').textContent='Tracking';document.getElementById('progressSub').textContent='All habits are in tracking mode — just observe the patterns.';}
   else if(onTrack===total){document.getElementById('progressTitle').textContent='Week complete!';document.getElementById('progressSub').textContent='All goals met this week. Amazing!';}
   else if(!onTrack){document.getElementById('progressTitle').textContent="This Week";document.getElementById('progressSub').textContent='Tap a cell to log a habit. Keep the streak alive.';}
   else{document.getElementById('progressTitle').textContent='Keep going.';document.getElementById('progressSub').textContent=`${total-onTrack} habit${total-onTrack>1?'s':''} below goal this week.`;}
@@ -2080,7 +2093,7 @@ function renderWellnessChart(){
   }
 
   const W=wrap.getBoundingClientRect().width||300;
-  const H=160;
+  const H=240;
   const PAD={top:16,right:16,bottom:28,left:24};
   const chartW=W-PAD.left-PAD.right;
   const chartH=H-PAD.top-PAD.bottom;
@@ -3023,7 +3036,7 @@ function renderBirthProfile(){
 }
 
 async function getCosmicReading(section,prompt,displayElId,btnElId){
-  const apiKey=localStorage.getItem('claudeApiKey');
+  const apiKey=getApiKey();
   if(!apiKey){
     document.getElementById(displayElId).innerHTML='<div class="cosmic-reading-error">Add your Claude API key in Settings to unlock readings.</div>';
     return;
@@ -3081,6 +3094,39 @@ function initCosmosSection(){
     const bp=loadBirthProfile();
     bp.hdType=e.target.value;
     localStorage.setItem('ritualBirthProfile',JSON.stringify(bp));
+  });
+
+  // Auto-detect HD type
+  document.getElementById('hdAutoDetectBtn')?.addEventListener('click',async ()=>{
+    const bp=loadBirthProfile();
+    if(!bp.date){document.getElementById('hdReadingEl').innerHTML='<div class="cosmic-reading-error">Please save your birth date first.</div>';return;}
+    const apiKey=getApiKey();
+    if(!apiKey){document.getElementById('hdReadingEl').innerHTML='<div class="cosmic-reading-error">Add your Claude API key in Settings first.</div>';return;}
+    const btn=document.getElementById('hdAutoDetectBtn');
+    btn.disabled=true;
+    document.getElementById('hdReadingEl').innerHTML='<div class="cosmic-reading-loading">✦ consulting the bodygraph…</div>';
+    try{
+      const resp=await fetch('https://api.anthropic.com/v1/messages',{
+        method:'POST',
+        headers:{'x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true','content-type':'application/json'},
+        body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:200,messages:[{role:'user',content:`Based on birth date ${bp.date}${bp.time?`, time ${bp.time}`:''}${bp.location?`, location ${bp.location}`:''}, estimate the most likely Human Design type. Reply with ONLY one of these exact words: Generator, Manifesting Generator, Projector, Manifestor, Reflector. No explanation needed.`}]})
+      });
+      const data=await resp.json();
+      if(data.error)throw new Error(data.error.message);
+      const raw=data.content[0].text.trim();
+      const types=['Generator','Manifesting Generator','Projector','Manifestor','Reflector'];
+      const detected=types.find(t=>raw.includes(t))||'';
+      if(detected){
+        const sel=document.getElementById('hdTypeSelect');
+        if(sel)sel.value=detected;
+        const bp2=loadBirthProfile();bp2.hdType=detected;localStorage.setItem('ritualBirthProfile',JSON.stringify(bp2));
+        document.getElementById('hdReadingEl').innerHTML=`<div class="cosmic-reading-text">Detected type: <strong>${escapeHtml(detected)}</strong> (based on birth data — for precise results use a professional HD chart). Tap "Get today's reading" to continue.</div>`;
+      } else {
+        document.getElementById('hdReadingEl').innerHTML='<div class="cosmic-reading-error">Could not determine type. Please select manually above.</div>';
+      }
+    }catch(e){
+      document.getElementById('hdReadingEl').innerHTML=`<div class="cosmic-reading-error">Error: ${escapeHtml(e.message)}</div>`;
+    }finally{btn.disabled=false;}
   });
 
   // Horoscope reading
@@ -3642,7 +3688,7 @@ function applyTheme(prefs){
   root.setProperty('--text',        prefs.text        ||DEFAULT_TEXT.text);
   root.setProperty('--text-dim',    prefs.textDim     ||DEFAULT_TEXT.textDim);
   root.setProperty('--text-dimmer', prefs.textDimmer  ||DEFAULT_TEXT.textDimmer);
-  if(prefs.fontSize)  root.fontSize=prefs.fontSize+'px';
+  if(prefs.fontSize){document.body.style.zoom=(prefs.fontSize/14).toFixed(3);}
   if(prefs.radius)    root.setProperty('--r', prefs.radius);
   // Font
   if(prefs.fontId){
@@ -3763,12 +3809,6 @@ function renderSettings(){
     btn.onclick=()=>{themePrefs={...themePrefs,fontSize:s};saveThemePrefs();applyTheme(themePrefs);renderSettings();};
   });
 
-  // Border radius
-  document.querySelectorAll('.settings-radius-btn').forEach(btn=>{
-    btn.classList.toggle('active',(themePrefs.radius||'14px')===btn.dataset.r);
-    btn.onclick=()=>{themePrefs={...themePrefs,radius:btn.dataset.r};saveThemePrefs();applyTheme(themePrefs);renderSettings();};
-  });
-
   // Font picker
   const fontEl=document.getElementById('fontPicker');
   if(fontEl){
@@ -3776,8 +3816,7 @@ function renderSettings(){
     FONT_OPTIONS.forEach(f=>{
       const btn=document.createElement('button');
       btn.className='font-picker-btn'+(themePrefs.fontId===f.id?' active':'');
-      btn.style.fontFamily=f.value;
-      btn.textContent=f.name;
+      btn.innerHTML=`<span class="font-sample" style="font-family:${f.value}">Aa</span><span class="font-label">${f.name}</span>`;
       btn.addEventListener('click',()=>{
         themePrefs={...themePrefs,fontId:f.id};
         saveThemePrefs();applyTheme(themePrefs);renderSettings();
@@ -3836,7 +3875,17 @@ function openModal(){
     renderSubcatList('subcatList',selSubcats,(i)=>{selSubcats.splice(i,1);renderSubcatList('subcatList',selSubcats,null);});
   };
   document.getElementById('subcatInput').onkeydown=e=>{if(e.key==='Enter')addBtn.click();};
-  // goal picker
+  // mode toggle + goal picker
+  selTrackingOnly=false;
+  document.getElementById('goalSection').style.display='';
+  document.getElementById('modeSelector').querySelectorAll('.mode-btn').forEach(btn=>{
+    btn.classList.toggle('active',btn.dataset.mode==='goal');
+    btn.onclick=()=>{
+      selTrackingOnly=btn.dataset.mode==='track';
+      document.getElementById('modeSelector').querySelectorAll('.mode-btn').forEach(b=>b.classList.toggle('active',b===btn));
+      document.getElementById('goalSection').style.display=selTrackingOnly?'none':'';
+    };
+  });
   selGoal=7;
   document.getElementById('goalPicker').querySelectorAll('.goal-btn').forEach(btn=>{
     btn.classList.toggle('active',Number(btn.dataset.goal)===selGoal);
@@ -3884,8 +3933,18 @@ function openEditModal(idx){
   };
   document.getElementById('editSubcatInput').onkeydown=e=>{if(e.key==='Enter')document.getElementById('editSubcatAddBtn').click();};
   renderEditEmojiGrid();renderEditColorGrid();updateEditAbstainToggle();
-  // goal picker
-  editGoal=h.targetDaysPerWeek||7;
+  // mode toggle + goal picker
+  editTrackingOnly=h.targetDaysPerWeek===0;
+  document.getElementById('editGoalSection').style.display=editTrackingOnly?'none':'';
+  document.getElementById('editModeSelector').querySelectorAll('.mode-btn').forEach(btn=>{
+    btn.classList.toggle('active',(btn.dataset.mode==='track')===editTrackingOnly||(btn.dataset.mode==='goal')===!editTrackingOnly);
+    btn.onclick=()=>{
+      editTrackingOnly=btn.dataset.mode==='track';
+      document.getElementById('editModeSelector').querySelectorAll('.mode-btn').forEach(b=>b.classList.toggle('active',b===btn));
+      document.getElementById('editGoalSection').style.display=editTrackingOnly?'none':'';
+    };
+  });
+  editGoal=editTrackingOnly?7:(h.targetDaysPerWeek||7);
   document.getElementById('editGoalPicker').querySelectorAll('.goal-btn').forEach(btn=>{
     btn.classList.toggle('active',Number(btn.dataset.goal)===editGoal);
     btn.onclick=()=>{editGoal=Number(btn.dataset.goal);document.getElementById('editGoalPicker').querySelectorAll('.goal-btn').forEach(b=>b.classList.toggle('active',Number(b.dataset.goal)===editGoal));};
@@ -3919,7 +3978,7 @@ function renderEditColorGrid(){
 document.getElementById('editSaveBtn').addEventListener('click',()=>{
   const name=document.getElementById('editNameInput').value.trim();
   if(!name){document.getElementById('editNameInput').focus();return;}
-  habits[editIdx]={...habits[editIdx],name,emoji:editEmoji,color:editColor,abstain:editAbstain,subcategories:[...editSubcats],durationEnabled:editDurationEnabled,ratingEnabled:editRatingEnabled,ratingLabel:document.getElementById('editRatingLabel').value.trim(),time:document.getElementById('editTimeInput').value.trim(),note:document.getElementById('editHabitNote').value.trim(),targetDaysPerWeek:editGoal||7};
+  habits[editIdx]={...habits[editIdx],name,emoji:editEmoji,color:editColor,abstain:editAbstain,subcategories:[...editSubcats],durationEnabled:editDurationEnabled,ratingEnabled:editRatingEnabled,ratingLabel:document.getElementById('editRatingLabel').value.trim(),time:document.getElementById('editTimeInput').value.trim(),note:document.getElementById('editHabitNote').value.trim(),targetDaysPerWeek:editTrackingOnly?0:(editGoal||7)};
   save();closeEditModal();renderAll();
 });
 document.getElementById('fabBtn').addEventListener('click',openModal);
@@ -3930,7 +3989,7 @@ function renderColorGrid(){const g=document.getElementById('colorGrid');g.innerH
 document.getElementById('saveBtn').addEventListener('click',()=>{
   const name=document.getElementById('habitNameInput').value.trim();
   if(!name){document.getElementById('habitNameInput').focus();return;}
-  habits.push({id:Date.now().toString(36)+Math.random().toString(36).slice(2),name,emoji:selEmoji,color:selColor,abstain:selAbstain,subcategories:[...selSubcats],time:document.getElementById('habitTimeInput').value.trim(),targetDaysPerWeek:selGoal||7,created:todayKey()});
+  habits.push({id:Date.now().toString(36)+Math.random().toString(36).slice(2),name,emoji:selEmoji,color:selColor,abstain:selAbstain,subcategories:[...selSubcats],time:document.getElementById('habitTimeInput').value.trim(),targetDaysPerWeek:selTrackingOnly?0:(selGoal||7),created:todayKey()});
   save();closeModal();renderAll();
 });
 
@@ -4093,6 +4152,7 @@ document.getElementById('signOutBtn').addEventListener('click',async()=>{
 
 // ══ WEEKLY GRID ══
 function freqLabel(n){
+  if(n===0)return 'Tracking only';
   if(n>=7)return 'Every day';
   if(n===2)return 'At least twice per week';
   if(n===1)return 'At least once per week';
@@ -4180,7 +4240,8 @@ function renderWeeklyGrid(){
   // One card per habit
   habits.forEach((h,idx)=>{
     const accentHex=COLOR_HEX[h.color]||'var(--accent)';
-    const goal=h.targetDaysPerWeek||7;
+    const isTrackingOnly=h.targetDaysPerWeek===0;
+    const goal=isTrackingOnly?0:(h.targetDaysPerWeek||7);
 
     const card=document.createElement('div');
     card.className='wk-card';
@@ -4250,9 +4311,14 @@ function renderWeeklyGrid(){
       e.stopPropagation();
       document.querySelectorAll('.wk-popup').forEach(p=>p.remove());
       const isFirst=idx===0, isLast=idx===habits.length-1;
+      const isTracking=h.targetDaysPerWeek===0;
       const popup=document.createElement('div');
       popup.className='wk-popup';
       popup.innerHTML=`
+        <div style="display:flex;gap:4px;padding:0 0 6px;border-bottom:1px solid var(--border);margin-bottom:4px">
+          <button class="wk-popup-item mode-toggle${!isTracking?' mode-active':''}" data-action="set-goal" style="flex:1;justify-content:center;gap:4px;padding:8px 4px;${!isTracking?'border-color:var(--accent);color:var(--accent);background:var(--accent-glow)':''}"><svg viewBox="0 0 24 24" width="13" height="13"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Goal</button>
+          <button class="wk-popup-item mode-toggle${isTracking?' mode-active':''}" data-action="set-track" style="flex:1;justify-content:center;gap:4px;padding:8px 4px;${isTracking?'border-color:var(--accent);color:var(--accent);background:var(--accent-glow)':''}"><svg viewBox="0 0 24 24" width="13" height="13"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Tracking</button>
+        </div>
         <button class="wk-popup-item" data-action="edit"><svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Edit</button>
         <button class="wk-popup-item${isFirst?' disabled':''}" data-action="up"><svg viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"/></svg>Move Up</button>
         <button class="wk-popup-item${isLast?' disabled':''}" data-action="down"><svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>Move Down</button>
@@ -4264,6 +4330,8 @@ function renderWeeklyGrid(){
         if(!action)return;
         popup.remove();
         if(action==='edit'){openEditModal(idx);}
+        else if(action==='set-goal'){habits[idx]={...habits[idx],targetDaysPerWeek:habits[idx]._lastGoal||7};save();renderWeeklyGrid();renderProgress(activeDay());}
+        else if(action==='set-track'){habits[idx]={...habits[idx],_lastGoal:habits[idx].targetDaysPerWeek||7,targetDaysPerWeek:0};save();renderWeeklyGrid();renderProgress(activeDay());}
         else if(action==='up'&&!isFirst){moveHabit(idx,-1);}
         else if(action==='down'&&!isLast){moveHabit(idx,1);}
         else if(action==='delete'){
@@ -4437,6 +4505,8 @@ document.getElementById('dayDetailOverlay').addEventListener('click',e=>{
 // ══ GOAL PICKER HELPERS ══
 let selGoal=7; // for new habit modal
 let editGoal=7; // for edit modal
+let selTrackingOnly=false;
+let editTrackingOnly=false;
 
 function initGoalPicker(containerId,initialVal,onChange){
   const container=document.getElementById(containerId);
