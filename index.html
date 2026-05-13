@@ -121,6 +121,15 @@
   .progress-text h3{font-family:'DM Serif Display',serif;font-size:20px;color:var(--text);margin-bottom:4px}
   .progress-text p{font-size:12px;color:var(--text-dim);line-height:1.5}
   .swipe-hint{font-size:10px;color:var(--text-dimmer);text-align:center;padding:8px 0 0;letter-spacing:.04em}
+  /* Date navigator (above wellness) */
+  .date-nav{display:flex;align-items:center;justify-content:space-between;margin:20px 0 10px;padding:0}
+  .date-nav-btn{width:34px;height:34px;border-radius:50%;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .15s cubic-bezier(.34,1.56,.64,1);flex-shrink:0;color:var(--text-dim)}
+  .date-nav-btn:hover:not(:disabled){background:var(--surface);border-color:var(--text-dimmer);transform:scale(1.08);color:var(--text)}
+  .date-nav-btn:disabled{opacity:.25;cursor:default}
+  .date-nav-btn svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+  .date-nav-center{display:flex;flex-direction:column;align-items:center;gap:1px}
+  .date-nav-day{font-family:'DM Serif Display',serif;font-size:18px;color:var(--text);line-height:1}
+  .date-nav-date{font-size:10px;color:var(--text-dimmer);letter-spacing:.08em;text-transform:uppercase}
   .sort-opt{display:flex;align-items:center;gap:8px;padding:9px 12px;border-radius:var(--r-sm);font-size:11px;font-family:'DM Mono',monospace;letter-spacing:.04em;color:var(--text-dim);cursor:pointer;transition:background .12s,color .12s;user-select:none;position:relative}
   .sort-opt svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0;opacity:.7}
   .sort-opt:hover{background:var(--surface);color:var(--text)}
@@ -614,10 +623,8 @@
   .day-detail-overlay.open .day-detail-sheet{transform:translateY(0)}
   .day-detail-toggle{width:100%;padding:14px;border-radius:var(--r);border:2px solid var(--border);background:transparent;color:var(--text-dim);font-family:'DM Mono',monospace;font-size:12px;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;transition:all .2s;margin-bottom:16px}
   .day-detail-toggle.is-done{background:var(--accent);border-color:transparent;color:var(--bg)}
-  .font-picker-btn{flex:1;padding:16px 6px 12px;background:var(--surface2);border:1.5px solid var(--border);border-radius:var(--r-sm);color:var(--text-dim);font-size:13px;cursor:pointer;transition:all .18s cubic-bezier(.34,1.56,.64,1);display:flex;flex-direction:column;align-items:center;gap:6px;letter-spacing:.02em;min-height:76px;justify-content:center}
-  .font-picker-btn:hover{transform:translateY(-2px);border-color:var(--text-dimmer)}
-  .font-picker-btn .font-sample{font-size:20px;color:var(--text);line-height:1}
-  .font-picker-btn .font-label{font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-dimmer);font-family:'DM Mono',monospace}
+  .font-picker-btn{flex:1;padding:14px 8px;background:var(--surface2);border:1.5px solid var(--border);border-radius:var(--r-sm);cursor:pointer;transition:all .18s cubic-bezier(.34,1.56,.64,1);display:flex;align-items:center;justify-content:center;min-height:52px}
+  .font-picker-btn:hover{transform:translateY(-2px);border-color:var(--text-dimmer);background:var(--surface)}
   .font-picker-btn.active{border-color:var(--accent);color:var(--accent);background:var(--accent-glow)}
   .font-picker-btn.active .font-sample{color:var(--accent)}
   .insight-card{position:relative;overflow:hidden;background:linear-gradient(135deg,rgba(200,180,240,.08),rgba(200,180,240,.04));border:1px solid rgba(200,180,240,.2);border-radius:var(--r);padding:12px 14px;margin-bottom:6px;display:flex;gap:10px;align-items:flex-start;transition:transform .3s ease,opacity .3s ease}
@@ -690,13 +697,27 @@
     <div class="weekly-grid" id="weeklyGrid"></div>
 
 
-    <div class="section-label" id="homeWellnessLabel">today's wellness</div>
+    <!-- Date navigator -->
+    <div class="date-nav" id="dateNavRow">
+      <button class="date-nav-btn" id="dateNavPrev" aria-label="Previous day">
+        <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <div class="date-nav-center">
+        <div class="date-nav-day" id="dateNavDay">Today</div>
+        <div class="date-nav-date" id="dateNavDate"></div>
+      </div>
+      <button class="date-nav-btn" id="dateNavNext" aria-label="Next day" disabled>
+        <svg viewBox="0 0 24 24"><polyline points="9 6 15 12 9 18"/></svg>
+      </button>
+    </div>
+
+    <div class="section-label" id="homeWellnessLabel">wellness</div>
     <div class="home-wellness-card">
       <div class="wellness-row" id="homeWellnessRow"></div>
       <div class="wellness-score-lbl" id="homeWellnessLbl">tap to rate your day</div>
     </div>
 
-    <div class="section-label" id="homeNotesLabel">daily notes</div>
+    <div class="section-label" id="homeNotesLabel">notes</div>
     <textarea class="reflection-box" id="homeNotes" placeholder="How are you feeling? What's on your mind..." rows="4"></textarea>
     <button class="reflection-save" id="homeNotesSave">Save note</button>
 
@@ -2679,9 +2700,24 @@ async function askAI(question,suffix){
   }
 }
 
+function renderDateNav(){
+  const today=todayKey();
+  const key=activeDay();
+  const isToday=key===today;
+  const[y,m,d]=key.split('-').map(Number);
+  const dateObj=new Date(y,m-1,d);
+  const dayEl=document.getElementById('dateNavDay');
+  const dateEl=document.getElementById('dateNavDate');
+  const nextBtn=document.getElementById('dateNavNext');
+  if(dayEl)dayEl.textContent=isToday?'Today':DAYS_S[dateObj.getDay()];
+  if(dateEl)dateEl.textContent=`${MON_S[m-1]} ${d}`;
+  if(nextBtn)nextBtn.disabled=isToday;
+}
+
 let _notesDebounce=null;
 function renderHomeWellness(key){
   key=key||todayKey();
+  renderDateNav();
   const dayData=getDayData(key);
   const row=document.getElementById('homeWellnessRow');
   const lbl=document.getElementById('homeWellnessLbl');
@@ -3239,6 +3275,38 @@ document.getElementById('pastDayBannerReturn').addEventListener('click',()=>{
   renderHomeForDay();
 });
 
+// Date navigator — prev/next day for wellness & notes
+document.getElementById('dateNavPrev').addEventListener('click',()=>{
+  const today=todayKey();
+  const cur=activeDay();
+  const[y,m,d]=cur.split('-').map(Number);
+  const dt=new Date(y,m-1,d);dt.setDate(dt.getDate()-1);
+  const newKey=fmtKeyFromDate(dt);
+  viewingDay=newKey===today?null:newKey;
+  renderDayScroller();
+  renderHomeWellness(activeDay());
+  // Also keep weekly grid & past-day banner in sync
+  const wLbl=document.getElementById('homeWellnessLabel');
+  const nLbl=document.getElementById('homeNotesLabel');
+  if(wLbl)wLbl.textContent=viewingDay?'wellness that day':'wellness';
+  if(nLbl)nLbl.textContent=viewingDay?'notes that day':'notes';
+});
+document.getElementById('dateNavNext').addEventListener('click',()=>{
+  const today=todayKey();
+  const cur=activeDay();
+  if(cur>=today)return;
+  const[y,m,d]=cur.split('-').map(Number);
+  const dt=new Date(y,m-1,d);dt.setDate(dt.getDate()+1);
+  const newKey=fmtKeyFromDate(dt);
+  viewingDay=newKey===today?null:newKey;
+  renderDayScroller();
+  renderHomeWellness(activeDay());
+  const wLbl=document.getElementById('homeWellnessLabel');
+  const nLbl=document.getElementById('homeNotesLabel');
+  if(wLbl)wLbl.textContent=viewingDay?'wellness that day':'wellness';
+  if(nLbl)nLbl.textContent=viewingDay?'notes that day':'notes';
+});
+
 // ══ TRENDS VIEW ══
 let trendsRange=14;
 
@@ -3686,45 +3754,59 @@ function renderTrends(){
 // ══ SETTINGS & THEMING ══
 const DEFAULT_TEXT={text:'#f4f4fa',textDim:'#9898b0',textDimmer:'#5a5a78'};
 const THEMES=[
-  {id:'midnight', name:'Midnight', bg:'#0a0a0f', surface:'#16161f', surface2:'#1e1e2a', border:'#2a2a3a', accent:'#c8b4f0', ...DEFAULT_TEXT},
-  {id:'noir',     name:'Noir',     bg:'#050508', surface:'#111114', surface2:'#19191e', border:'#282830', accent:'#e8e0ff', ...DEFAULT_TEXT},
-  {id:'abyss',    name:'Abyss',    bg:'#03090e', surface:'#0a1520', surface2:'#102030', border:'#183050', accent:'#40b0e8', ...DEFAULT_TEXT},
-  {id:'wine',     name:'Wine',     bg:'#120408', surface:'#1e0c14', surface2:'#2a1420', border:'#401828', accent:'#f07090', ...DEFAULT_TEXT},
-  {id:'ember',    name:'Ember',    bg:'#0e0600', surface:'#1c0e04', surface2:'#2c1a0c', border:'#482a14', accent:'#ffb060', ...DEFAULT_TEXT},
-  {id:'chalk',    name:'Chalk',    bg:'#f2f2ee', surface:'#ffffff',  surface2:'#eaeae4', border:'#d8d8d0', accent:'#7040c0', text:'#1a1a1a', textDim:'#505050', textDimmer:'#959590'},
+  // Apple Dark Mode — true black bg, system gray surface, Apple Blue accent
+  {id:'midnight', name:'Midnight', bg:'#000000', surface:'#1c1c1e', surface2:'#2c2c2e', border:'#38383a', accent:'#0a84ff', ...DEFAULT_TEXT},
+  // Vercel/Emil — near-black warm zinc, violet accent
+  {id:'obsidian', name:'Obsidian', bg:'#09090b', surface:'#18181b', surface2:'#27272a', border:'#3f3f46', accent:'#a78bfa', ...DEFAULT_TEXT},
+  // Shadcn dark — slate-tinted deep navy, sky accent
+  {id:'abyss',    name:'Abyss',    bg:'#020817', surface:'#0f172a', surface2:'#1e293b', border:'#334155', accent:'#38bdf8', ...DEFAULT_TEXT},
+  // Warm dusk — deep purple-black, fuchsia accent
+  {id:'dusk',     name:'Dusk',     bg:'#0d0a14', surface:'#1a1428', surface2:'#261e3c', border:'#3d3060', accent:'#e879f9', ...DEFAULT_TEXT},
+  // Warm ember — deep brown-black, golden accent
+  {id:'ember',    name:'Ember',    bg:'#0c0800', surface:'#1c1408', surface2:'#2c2010', border:'#4a3418', accent:'#fbbf24', ...DEFAULT_TEXT},
+  // Apple Light — system background, iOS gray surface, Apple Blue accent
+  {id:'chalk',    name:'Chalk',    bg:'#f5f5f7', surface:'#ffffff',  surface2:'#f2f2f7', border:'#d1d1d6', accent:'#007aff', text:'#1d1d1f', textDim:'#515154', textDimmer:'#a1a1a6'},
 ];
 
 const FONT_OPTIONS=[
-  {id:'dm-mono',       name:'Mono',      sample:'Aa 01',  value:"'DM Mono',monospace",          url:null},
-  {id:'playfair',      name:'Playfair',  sample:'Ritual', value:"'Playfair Display',serif",      url:'https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;1,400&display=swap'},
-  {id:'fraunces',      name:'Fraunces',  sample:'Ritual', value:"'Fraunces',serif",              url:'https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;1,300&display=swap'},
-  {id:'outfit',        name:'Outfit',    sample:'Ritual', value:"'Outfit',sans-serif",           url:'https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500&display=swap'},
-  {id:'space-grotesk', name:'Grotesk',   sample:'Aa Rg',  value:"'Space Grotesk',sans-serif",   url:'https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500&display=swap'},
-  {id:'jetbrains',     name:'JetBrains', sample:'Aa_01',  value:"'JetBrains Mono',monospace",   url:'https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500&display=swap'},
+  {id:'dm-mono',       name:'DM Mono',         value:"'DM Mono',monospace",          url:null},
+  {id:'playfair',      name:'Playfair Display', value:"'Playfair Display',serif",      url:'https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;1,400&display=swap'},
+  {id:'fraunces',      name:'Fraunces',         value:"'Fraunces',serif",              url:'https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;1,300&display=swap'},
+  {id:'outfit',        name:'Outfit',           value:"'Outfit',sans-serif",           url:'https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500&display=swap'},
+  {id:'space-grotesk', name:'Space Grotesk',    value:"'Space Grotesk',sans-serif",   url:'https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500&display=swap'},
+  {id:'jetbrains',     name:'JetBrains Mono',   value:"'JetBrains Mono',monospace",   url:'https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500&display=swap'},
 ];
 
-const ACCENT_SWATCHES=['#c8b4f0','#f0a0c0','#a0e4c8','#6cc4f5','#f0b060','#d4a8fc','#7dd9a0','#f0b0a0','#b0d4a0','#6050b8'];
+const ACCENT_SWATCHES=['#0a84ff','#30d158','#ffd60a','#ff375f','#a78bfa','#38bdf8','#e879f9','#fbbf24','#34d399','#f472b6'];
 const SURFACE_OPTIONS=[
-  {surface:'#16161f',surface2:'#1e1e2a',label:'Carbon'},
-  {surface:'#181818',surface2:'#242424',label:'Void'},
-  {surface:'#1c1c24',surface2:'#26263a',label:'Slate'},
-  {surface:'#1e1014',surface2:'#2a1820',label:'Wine'},
-  {surface:'#0e1a10',surface2:'#162318',label:'Moss'},
-  {surface:'#10181e',surface2:'#162430',label:'Abyss'},
-  {surface:'#1e1a10',surface2:'#2c2618',label:'Amber'},
-  {surface:'#f8f8f4',surface2:'#eeeeea',label:'Paper'},
+  // Apple system grays
+  {surface:'#1c1c1e',surface2:'#2c2c2e',label:'System'},
+  {surface:'#18181b',surface2:'#27272a',label:'Zinc'},
+  // Warm
+  {surface:'#1c1408',surface2:'#2c2010',label:'Ember'},
+  {surface:'#1e0c14',surface2:'#2e1822',label:'Rose'},
+  // Cool
+  {surface:'#0f172a',surface2:'#1e293b',label:'Slate'},
+  {surface:'#0c1a14',surface2:'#162a20',label:'Forest'},
+  // Mid-tone
+  {surface:'#1a1428',surface2:'#261e3c',label:'Dusk'},
+  // Light
+  {surface:'#ffffff', surface2:'#f2f2f7',label:'White'},
 ];
 const BG_OPTIONS=[
-  {bg:'#0a0a0f',label:'Black'},
-  {bg:'#050508',label:'Void'},
-  {bg:'#0f0f1a',label:'Navy'},
-  {bg:'#060e09',label:'Forest'},
-  {bg:'#14080e',label:'Wine'},
-  {bg:'#080614',label:'Grape'},
-  {bg:'#100804',label:'Ember'},
-  {bg:'#04100e',label:'Deep Sea'},
-  {bg:'#e8e8ed',label:'Gray'},
-  {bg:'#f2f2ee',label:'Chalk'},
+  // True blacks
+  {bg:'#000000',label:'Black'},
+  {bg:'#09090b',label:'Zinc'},
+  // Tinted darks
+  {bg:'#020817',label:'Slate'},
+  {bg:'#0d0a14',label:'Dusk'},
+  {bg:'#0c0800',label:'Ember'},
+  {bg:'#080012',label:'Grape'},
+  {bg:'#001a0c',label:'Forest'},
+  {bg:'#00080d',label:'Abyss'},
+  // Light
+  {bg:'#f5f5f7',label:'Apple'},
+  {bg:'#fafaf9',label:'Cream'},
 ];
 
 let themePrefs = JSON.parse(localStorage.getItem('ritualTheme')||'{}');
@@ -3886,7 +3968,7 @@ function renderSettings(){
     FONT_OPTIONS.forEach(f=>{
       const btn=document.createElement('button');
       btn.className='font-picker-btn'+(themePrefs.fontId===f.id?' active':'');
-      btn.innerHTML=`<span class="font-sample" style="font-family:${f.value};font-size:20px;letter-spacing:.01em">${f.sample||'Aa'}</span><span class="font-label">${f.name}</span>`;
+      btn.innerHTML=`<span style="font-family:${f.value};font-size:15px;color:var(--text);line-height:1.3;text-align:center;letter-spacing:.01em;padding:0 4px">${f.name}</span>`;
       btn.addEventListener('click',()=>{
         themePrefs={...themePrefs,fontId:f.id};
         saveThemePrefs();applyTheme(themePrefs);renderSettings();
