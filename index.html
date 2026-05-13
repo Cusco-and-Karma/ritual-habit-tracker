@@ -13,8 +13,8 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;-webkit-font-smoothing:antialiased}
-  :root{--bg:#0a0a0f;--surface:#16161f;--surface2:#1e1e2a;--border:#2e2e3e;--text:#f4f4fa;--text-dim:#9898b0;--text-dimmer:#5a5a78;--accent:#c8b4f0;--accent-glow:rgba(200,180,240,.15);--accent2:#f0c4a0;--accent3:#a0e4c8;--accent4:#f0a0b4;--accent5:#a0c8f0;--accent6:#f0e0a0;--accent7:#e0a0f0;--accent8:#a0f0e0;--accent9:#f0b0a0;--accent10:#b0d4a0;--r:14px;--r-sm:8px}
-  html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:'DM Mono',monospace;font-size:14px;touch-action:pan-y}
+  :root{--bg:#0a0a0f;--surface:#16161f;--surface2:#1e1e2a;--border:#2e2e3e;--text:#f4f4fa;--text-dim:#9898b0;--text-dimmer:#5a5a78;--accent:#c8b4f0;--accent-glow:rgba(200,180,240,.15);--accent2:#f0c4a0;--accent3:#a0e4c8;--accent4:#f0a0b4;--accent5:#a0c8f0;--accent6:#f0e0a0;--accent7:#e0a0f0;--accent8:#a0f0e0;--accent9:#f0b0a0;--accent10:#b0d4a0;--r:14px;--r-sm:8px;--font-body:'DM Mono',monospace}
+  html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:var(--font-body);font-size:14px;touch-action:pan-y}
   #app{height:100vh;display:flex;flex-direction:column;max-width:420px;margin:0 auto;position:relative;overflow:hidden}
   .header{padding:52px 24px 12px;flex-shrink:0;background:var(--bg);position:relative;z-index:10}
   .header-top{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:4px}
@@ -460,9 +460,9 @@
   .rating-enable-pill::after{content:'';position:absolute;top:3px;left:3px;width:14px;height:14px;border-radius:50%;background:var(--text-dim);transition:transform .2s,background .2s}
   .rating-enable-toggle.active .rating-enable-pill{background:var(--accent)}
   .rating-enable-toggle.active .rating-enable-pill::after{transform:translateX(16px);background:#fff}
-  #healthTabPill{width:36px;height:20px;border-radius:99px;position:relative;transition:background .2s;flex-shrink:0}
-  #healthTabPill::after{content:'';position:absolute;top:3px;left:3px;width:14px;height:14px;border-radius:50%;background:#fff;transition:transform .2s}
-  #healthTabPill.active-pill::after{transform:translateX(16px)}
+  #healthTabPill,#cosmosTabPill{width:36px;height:20px;border-radius:99px;position:relative;transition:background .2s;flex-shrink:0}
+  #healthTabPill::after,#cosmosTabPill::after{content:'';position:absolute;top:3px;left:3px;width:14px;height:14px;border-radius:50%;background:#fff;transition:transform .2s}
+  #healthTabPill.active-pill::after,#cosmosTabPill.active-pill::after{transform:translateX(16px)}
 
   /* SUBCATEGORIES */
   .subcat-manager{margin-bottom:16px}
@@ -605,6 +605,14 @@
   .day-detail-overlay.open .day-detail-sheet{transform:translateY(0)}
   .day-detail-toggle{width:100%;padding:14px;border-radius:var(--r);border:2px solid var(--border);background:transparent;color:var(--text-dim);font-family:'DM Mono',monospace;font-size:12px;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;transition:all .2s;margin-bottom:16px}
   .day-detail-toggle.is-done{background:var(--accent);border-color:transparent;color:var(--bg)}
+  .font-picker-btn{flex:1;padding:9px 4px;background:var(--surface2);border:1.5px solid var(--border);border-radius:var(--r-sm);color:var(--text-dim);font-size:11px;letter-spacing:.04em;cursor:pointer;transition:all .15s;text-align:center}
+  .font-picker-btn.active{border-color:var(--accent);color:var(--accent);background:var(--accent-glow)}
+  .insight-card{position:relative;overflow:hidden;background:linear-gradient(135deg,rgba(200,180,240,.08),rgba(200,180,240,.04));border:1px solid rgba(200,180,240,.2);border-radius:var(--r);padding:12px 14px;margin-bottom:6px;display:flex;gap:10px;align-items:flex-start;transition:transform .3s ease,opacity .3s ease}
+  .insight-card.dismissed{transform:translateX(110%);opacity:0;pointer-events:none}
+  .insight-card-icon{font-size:16px;flex-shrink:0;margin-top:1px}
+  .insight-card-text{font-size:12px;color:var(--text-dim);line-height:1.55;flex:1}
+  .insight-card-text strong{color:var(--text);font-weight:500}
+  .insight-dismiss{background:none;border:none;color:var(--text-dimmer);font-size:16px;cursor:pointer;padding:0 0 0 8px;flex-shrink:0;line-height:1;align-self:center}
 </style>
 <!-- Firebase compat SDKs -->
 <script src="https://www.gstatic.com/firebasejs/10.12.1/firebase-app-compat.js"></script>
@@ -736,12 +744,6 @@
   <div style="height:1px;background:var(--border);margin:4px 0 16px"></div>
   <!-- STATS section -->
   <div id="statsView">
-    <div class="section-label">overview</div>
-    <div class="stat-grid" id="statGrid"></div>
-
-    <div class="section-label">7-day history</div>
-    <div id="historyList"></div>
-
     <div class="section-label" id="subcatStatsSectionLabel" style="display:none">subcategory breakdown <span style="font-style:italic;text-transform:none;letter-spacing:0;color:var(--text-dimmer);font-size:9px">- last 30 days</span></div>
     <div id="subcatStatsSection"></div>
 
@@ -853,9 +855,6 @@
       <div class="bar-chart-title">completions by month</div>
       <div class="bars" id="monthBars"></div>
     </div>
-    <div class="section-label">per habit</div>
-    <div id="habitYearList"></div>
-
     <div class="section-label">ask ai</div>
     <div class="ai-section" id="aiSectionYear">
       <div class="ai-chips">
@@ -975,6 +974,7 @@
         <svg class="wellness-svg" id="wellnessSvg" height="160"></svg>
         <div class="wellness-tooltip" id="wellnessTooltip"></div>
       </div>
+      <div id="wellnessOverlayChips" style="display:flex;gap:6px;flex-wrap:wrap;padding:8px 0 4px"></div>
     </div>
     <div class="section-label">ask ai</div>
     <div class="ai-section" id="aiSectionCosmos">
@@ -1137,6 +1137,14 @@
       <div class="rating-enable-pill" id="healthTabPill"></div>
     </div>
 
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;cursor:pointer" id="cosmosTabToggle">
+      <div>
+        <div style="font-size:13px;color:var(--text);font-family:'DM Serif Display',serif">Cosmos Tab</div>
+        <div style="font-size:11px;color:var(--text-dimmer);margin-top:2px">Show horoscope &amp; cosmic readings</div>
+      </div>
+      <div class="rating-enable-pill" id="cosmosTabPill"></div>
+    </div>
+
     <div class="section-label">theme</div>
 
     <!-- Preset themes -->
@@ -1154,6 +1162,11 @@
       <button class="settings-size-btn" data-size="14">Default</button>
       <button class="settings-size-btn" data-size="16">Large</button>
       <button class="settings-size-btn" data-size="18">XL</button>
+    </div>
+
+    <div class="section-label">font</div>
+    <div style="display:flex;gap:6px;margin-bottom:20px;flex-wrap:wrap" id="fontPicker">
+      <!-- rendered by renderSettings -->
     </div>
 
     <div class="section-label">card corners</div>
@@ -1180,24 +1193,6 @@
       <div id="apiKeyStatus" style="font-size:11px;margin-top:8px;display:none"></div>
     </div>
 
-    <div class="section-label">ask ai</div>
-    <div class="ai-section" id="aiSectionSettings">
-      <div class="ai-chips">
-        <button class="ai-chip" onclick="askAI('How am I doing overall?','Settings')">How am I doing overall?</button>
-        <button class="ai-chip" onclick="askAI('What habit needs most work?','Settings')">What habit needs most work?</button>
-        <button class="ai-chip" onclick="askAI('Give me a tip for today','Settings')">Give me a tip for today</button>
-        <button class="ai-chip" onclick="askAI('What patterns do you see?','Settings')">What patterns do you see?</button>
-        <button class="ai-chip" onclick="askAI('How can I improve my wellness?','Settings')">How can I improve my wellness?</button>
-        <button class="ai-chip" onclick="askAI('Motivate me','Settings')">Motivate me</button>
-      </div>
-      <div class="ai-input-row">
-        <input class="ai-input" id="aiInputSettings" placeholder="Ask anything about your habits..." autocomplete="off" maxlength="300" onkeydown="if(event.key==='Enter')askAI(this.value,'Settings')"/>
-        <button class="ai-send" id="aiSendSettings" onclick="askAI(document.getElementById('aiInputSettings').value,'Settings')" aria-label="Send">
-          <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-        </button>
-      </div>
-      <div class="ai-messages" id="aiMessagesSettings"></div>
-    </div>
   </div>
 
   <button class="fab" id="fabBtn" aria-label="Add habit">
@@ -2060,6 +2055,7 @@ function showCardMenu(wrap,h,idx){
 
 // ══ WELLNESS CHART ══
 let wellnessChartRange=7;
+let wellnessOverlayHabits=new Set();
 
 function renderWellnessChart(){
   const svg=document.getElementById('wellnessSvg');
@@ -2206,6 +2202,47 @@ function renderWellnessChart(){
   wrap.addEventListener('touchstart',e=>{
     if(!e.target.closest('circle'))tooltip.classList.remove('visible');
   },{passive:true});
+
+  // ── Habit overlays ──
+  if(wellnessOverlayHabits.size>0&&hasData){
+    habits.forEach(h=>{
+      if(!wellnessOverlayHabits.has(h.id))return;
+      const color=COLOR_HEX[h.color]||'var(--accent)';
+      const mk2=(tag,attrs={})=>{const el=document.createElementNS('http://www.w3.org/2000/svg',tag);Object.entries(attrs).forEach(([k,v])=>el.setAttribute(k,v));return el;};
+      let lineD='';
+      points.forEach((p,i)=>{
+        const x=PAD.left+(i/(points.length-1||1))*chartW;
+        const done=isCompleted(h.id,p.day)?1:0;
+        const y=PAD.top+chartH-(done*chartH);
+        lineD+=i===0?`M ${x} ${y}`:`L ${x} ${y}`;
+      });
+      svg.appendChild(mk2('path',{d:lineD,fill:'none',stroke:color,'stroke-width':'1.5','stroke-dasharray':'4,3','stroke-linecap':'round','stroke-linejoin':'round','opacity':'0.7'}));
+    });
+  }
+
+  // ── Overlay chips ──
+  const chipsEl=document.getElementById('wellnessOverlayChips');
+  if(chipsEl){
+    chipsEl.innerHTML='';
+    habits.forEach(h=>{
+      const color=COLOR_HEX[h.color]||'var(--accent)';
+      const active=wellnessOverlayHabits.has(h.id);
+      const chip=document.createElement('button');
+      chip.className='cal-chip'+(active?' active':'');
+      chip.style.borderColor=active?color:'';
+      chip.style.color=active?color:'';
+      chip.style.fontFamily='var(--font-body)';
+      chip.style.fontSize='10px';
+      chip.style.padding='4px 9px';
+      chip.textContent=h.emoji?h.emoji+' '+h.name:h.name;
+      chip.addEventListener('click',()=>{
+        if(wellnessOverlayHabits.has(h.id))wellnessOverlayHabits.delete(h.id);
+        else wellnessOverlayHabits.add(h.id);
+        renderWellnessChart();
+      });
+      chipsEl.appendChild(chip);
+    });
+  }
 }
 
 function renderStats(){
@@ -2217,14 +2254,16 @@ function renderStats(){
   let best=0,totalDone=0;
   habits.forEach(h=>{const s=getStreak(h.id);if(s>best)best=s;});
   Object.values(completions).forEach(day=>{totalDone+=Object.values(day).filter(Boolean).length;});
-  document.getElementById('statGrid').innerHTML=`<div class="stat-card"><div class="stat-val">${doneToday}<span style="font-size:16px;color:var(--text-dim)">/${total}</span></div><div class="stat-lbl">today</div></div><div class="stat-card"><div class="stat-val">${best}</div><div class="stat-lbl">best streak</div></div><div class="stat-card"><div class="stat-val">${totalDone}</div><div class="stat-lbl">total done</div></div><div class="stat-card"><div class="stat-val">${total}</div><div class="stat-lbl">habits</div></div>`;
-  const hl=document.getElementById('historyList');hl.innerHTML='';
+  const sgEl=document.getElementById('statGrid');
+  if(sgEl)sgEl.innerHTML=`<div class="stat-card"><div class="stat-val">${doneToday}<span style="font-size:16px;color:var(--text-dim)">/${total}</span></div><div class="stat-lbl">today</div></div><div class="stat-card"><div class="stat-val">${best}</div><div class="stat-lbl">best streak</div></div><div class="stat-card"><div class="stat-val">${totalDone}</div><div class="stat-lbl">total done</div></div><div class="stat-card"><div class="stat-val">${total}</div><div class="stat-lbl">habits</div></div>`;
+  const hl=document.getElementById('historyList');
+  if(hl){hl.innerHTML='';
   habits.forEach(h=>{
     const row=document.createElement('div');row.className='habit-history-row';
     const dots=Array.from({length:7},(_,i)=>`<div class="hist-dot ${isCompleted(h.id,dateKey(-(6-i)))?'done':''}" data-color="${h.color}"></div>`).join('');
     row.innerHTML=`<div style="font-size:18px;display:flex;align-items:center">${emojiHTML(h.emoji,18,h.abstain)}</div><div style="font-family:'DM Serif Display',serif;font-size:14px;flex:1;color:var(--text)">${escapeHtml(h.name)}</div><div class="hist-dots">${dots}</div>`;
     hl.appendChild(row);
-  });
+  });}
 
   // ── Subcategory breakdown ──
   const habitsWithSubcats=habits.filter(h=>h.subcategories&&h.subcategories.length);
@@ -2484,7 +2523,8 @@ function renderYearly(){
     bars.appendChild(col);
   });
 
-  const hl=document.getElementById('habitYearList');hl.innerHTML='';
+  const hl=document.getElementById('habitYearList');
+  if(hl){hl.innerHTML='';
   habits.forEach(h=>{
     let total=0,done=0;
     for(let mo=0;mo<12;mo++){const days=getDIM(yearYear,mo);for(let d=1;d<=days;d++){const cd=new Date(yearYear,mo,d);if(cd>today)continue;total++;if(isCompleted(h.id,fmtKey(yearYear,mo+1,d)))done++;}}
@@ -2492,7 +2532,7 @@ function renderYearly(){
     const row=document.createElement('div');row.className='habit-year-row';row.dataset.color=h.color;
     row.innerHTML=`<div class="habit-year-top"><span style="font-size:18px;display:inline-flex;align-items:center">${emojiHTML(h.emoji,18,h.abstain)}</span><div class="habit-year-name">${escapeHtml(h.name)}</div><div class="habit-year-pct">${pct}%</div></div><div class="habit-year-bar"><div class="habit-year-fill" style="width:${pct}%"></div></div>`;
     hl.appendChild(row);
-  });
+  });}
 }
 
 // ══ ASK AI ══
@@ -3344,11 +3384,12 @@ function renderTrends(){
     points.push({key,wellness:dd.wellness||0,reflection:dd.reflection||'',done,total,pct:total?Math.round((done/total)*100):0});
   }
 
-  // ── Insight banner ──
+  // ── Insight cards ──
   const banner=document.getElementById('trendsInsightBanner');
   if(banner){
     const scored=points.filter(p=>p.wellness>0&&p.total>0);
-    let insightText='';
+    const insightsList=[];
+    // Insight 1: completion vs wellness correlation
     if(scored.length>=5){
       const lowComp=scored.filter(p=>p.pct<50);
       const highComp=scored.filter(p=>p.pct>=80);
@@ -3356,11 +3397,12 @@ function renderTrends(){
         const avgWellLow=lowComp.reduce((s,p)=>s+p.wellness,0)/lowComp.length;
         const avgWellHigh=highComp.reduce((s,p)=>s+p.wellness,0)/highComp.length;
         if(avgWellHigh-avgWellLow>=1.5){
-          insightText=`On days with 80%+ completion your wellness averages <strong>${avgWellHigh.toFixed(1)}</strong>, vs <strong>${avgWellLow.toFixed(1)}</strong> on low-completion days.`;
+          insightsList.push({id:'corr_'+trendsRange,icon:'⚡',text:`On days with 80%+ completion your wellness averages <strong>${avgWellHigh.toFixed(1)}</strong>, vs <strong>${avgWellLow.toFixed(1)}</strong> on low-completion days.`});
         }
       }
     }
-    if(!insightText&&habits.length){
+    // Insight 2: lowest habit
+    if(habits.length){
       let worst=null,worstPct=101;
       habits.forEach(h=>{
         let done=0;
@@ -3368,9 +3410,55 @@ function renderTrends(){
         const pct=Math.round((done/trendsRange)*100);
         if(pct<worstPct){worstPct=pct;worst=h;}
       });
-      if(worst)insightText=`<strong>${worst.name}</strong> has the lowest completion at <strong>${worstPct}%</strong> over the last ${trendsRange} days.`;
+      if(worst)insightsList.push({id:'worst_'+worst.id+'_'+trendsRange,icon:'📉',text:`<strong>${escapeHtml(worst.name)}</strong> has the lowest completion at <strong>${worstPct}%</strong> over the last ${trendsRange} days.`});
     }
-    banner.innerHTML=insightText?`<div class="trends-insight"><div class="trends-insight-icon">&#9889;</div><div class="trends-insight-text">${insightText}</div></div>`:'';
+    // Insight 3: best streak habit
+    if(habits.length){
+      let best=null,bestStreak=0;
+      habits.forEach(h=>{const s=getStreak(h.id);if(s>bestStreak){bestStreak=s;best=h;}});
+      if(best&&bestStreak>2)insightsList.push({id:'streak_'+best.id,icon:'🔥',text:`<strong>${escapeHtml(best.name)}</strong> is on a <strong>${bestStreak}-day</strong> streak — keep it going!`});
+    }
+    // Insight 4: avg wellness
+    if(scored.length>=3){
+      const avg=scored.reduce((s,p)=>s+p.wellness,0)/scored.length;
+      insightsList.push({id:'avgwell_'+trendsRange,icon:'🌿',text:`Your average wellness over the last ${trendsRange} days is <strong>${avg.toFixed(1)}/10</strong>.`});
+    }
+    // Filter dismissed
+    const dismissKey='insightsDismissed_'+todayKey();
+    const dismissed=JSON.parse(localStorage.getItem(dismissKey)||'[]');
+    const visible=insightsList.filter(ins=>!dismissed.includes(ins.id));
+    banner.innerHTML='';
+    visible.forEach(ins=>{
+      const card=document.createElement('div');
+      card.className='insight-card';
+      card.dataset.id=ins.id;
+      card.innerHTML=`<div class="insight-card-icon">${ins.icon}</div><div class="insight-card-text">${ins.text}</div><button class="insight-dismiss" aria-label="Dismiss">&#x2715;</button>`;
+      const dismissBtn=card.querySelector('.insight-dismiss');
+      const doDissmiss=()=>{
+        card.classList.add('dismissed');
+        const dl=JSON.parse(localStorage.getItem(dismissKey)||'[]');
+        if(!dl.includes(ins.id))dl.push(ins.id);
+        localStorage.setItem(dismissKey,JSON.stringify(dl));
+        setTimeout(()=>{if(card.parentNode)card.parentNode.removeChild(card);},320);
+      };
+      dismissBtn.addEventListener('click',doDissmiss);
+      // Swipe right to dismiss
+      let tx0=0,ty0=0,swiping=false;
+      card.addEventListener('touchstart',e=>{tx0=e.touches[0].clientX;ty0=e.touches[0].clientY;swiping=true;},{passive:true});
+      card.addEventListener('touchmove',e=>{
+        if(!swiping)return;
+        const dx=e.touches[0].clientX-tx0;
+        const dy=Math.abs(e.touches[0].clientY-ty0);
+        if(dy>dx)return;
+        if(dx>0)card.style.transform=`translateX(${dx}px)`;
+      },{passive:true});
+      card.addEventListener('touchend',e=>{
+        if(!swiping)return;swiping=false;
+        const dx=e.changedTouches[0].clientX-tx0;
+        if(dx>60){doDissmiss();}else{card.style.transform='';}
+      },{passive:true});
+      banner.appendChild(card);
+    });
   }
 
   // ── Dual chart ──
@@ -3497,8 +3585,8 @@ function renderTrends(){
         const item=document.createElement('div');item.className='trends-note-item';
         const combinedText=wk.notes.map(n=>{
           const[y,m,d]=n.day.split('-');const dateObj=new Date(Number(y),Number(m)-1,Number(d));
-          return `<span style="color:var(--text-dimmer);font-size:10px">${DAYS_S[dateObj.getDay()]}:</span> ${n.text}`;
-        }).join('<br>');
+          return `<span style="color:var(--text-dimmer);font-size:10px">${DAYS_S[dateObj.getDay()]}:</span> ${n.text.replace(/\n/g,'<br>')}`;
+        }).join('<br><br>');
         item.innerHTML=`<div class="trends-note-dot">W${wk.weekNum}</div><div class="trends-note-body"><div class="trends-note-text">${combinedText}</div></div>`;
         notesTimeline.appendChild(item);
       });
@@ -3507,44 +3595,73 @@ function renderTrends(){
 }
 
 // ══ SETTINGS & THEMING ══
-const THEMES = [
-  {id:'midnight', name:'Midnight', bg:'#0a0a0f', surface:'#16161f', surface2:'#1e1e2a', border:'#2e2e3e', accent:'#c8b4f0'},
-  {id:'obsidian', name:'Obsidian', bg:'#0d0d0d', surface:'#181818', surface2:'#222222', border:'#333333', accent:'#e0e0e0'},
-  {id:'forest',   name:'Forest',   bg:'#0a0f0a', surface:'#141f14', surface2:'#1a271a', border:'#253525', accent:'#a0e4a0'},
-  {id:'ocean',    name:'Ocean',    bg:'#080d14', surface:'#0f1620', surface2:'#162030', border:'#1e2e42', accent:'#80c8f0'},
-  {id:'rose',     name:'Rose',     bg:'#140a0f', surface:'#1f1016', surface2:'#2a161e', border:'#3e2030', accent:'#f0a0c0'},
-  {id:'ember',    name:'Ember',    bg:'#120a04', surface:'#1e1208', surface2:'#2a1a0c', border:'#3e2a18', accent:'#f0c080'},
+const DEFAULT_TEXT={text:'#f4f4fa',textDim:'#9898b0',textDimmer:'#5a5a78'};
+const THEMES=[
+  // dark
+  {id:'midnight', name:'Midnight', bg:'#0a0a0f', surface:'#16161f', surface2:'#1e1e2a', border:'#2e2e3e', accent:'#c8b4f0', ...DEFAULT_TEXT},
+  {id:'obsidian', name:'Obsidian', bg:'#0d0d0d', surface:'#181818', surface2:'#222222', border:'#333333', accent:'#e0e0e0', ...DEFAULT_TEXT},
+  {id:'forest',   name:'Forest',   bg:'#0a0f0a', surface:'#141f14', surface2:'#1a271a', border:'#253525', accent:'#a0e4a0', ...DEFAULT_TEXT},
+  {id:'ocean',    name:'Ocean',    bg:'#080d14', surface:'#0f1620', surface2:'#162030', border:'#1e2e42', accent:'#80c8f0', ...DEFAULT_TEXT},
+  {id:'rose',     name:'Rose',     bg:'#140a0f', surface:'#1f1016', surface2:'#2a161e', border:'#3e2030', accent:'#f0a0c0', ...DEFAULT_TEXT},
+  {id:'ember',    name:'Ember',    bg:'#120a04', surface:'#1e1208', surface2:'#2a1a0c', border:'#3e2a18', accent:'#f0c080', ...DEFAULT_TEXT},
+  {id:'dusk',     name:'Dusk',     bg:'#1e1828', surface:'#2a2238', surface2:'#342c44', border:'#44385c', accent:'#e0c0f8', ...DEFAULT_TEXT},
+  // light/gray
+  {id:'ash',      name:'Ash',      bg:'#3a3a42', surface:'#46464f', surface2:'#52525c', border:'#62626e', accent:'#c8b4f0', text:'#f4f4fa', textDim:'#c0c0d0', textDimmer:'#8888a0'},
+  {id:'slate',    name:'Slate',    bg:'#e8e8ed', surface:'#f4f4f7', surface2:'#ffffff', border:'#d2d2da', accent:'#6050b8', text:'#1a1a2e', textDim:'#4a4a6a', textDimmer:'#8888a8'},
+  {id:'chalk',    name:'Chalk',    bg:'#f5f5f0', surface:'#ffffff',  surface2:'#efefea', border:'#e0e0d8', accent:'#8050c0', text:'#1a1a1a', textDim:'#555555', textDimmer:'#999999'},
 ];
 
-const ACCENT_SWATCHES = ['#c8b4f0','#f0a0c0','#a0e4c8','#80c8f0','#f0c080','#e0a0f0','#a0f0e0','#f0b0a0','#b0d4a0','#f4f4fa'];
-const BG_OPTIONS = [
-  {bg:'#0a0a0f', label:'Black'},
-  {bg:'#0f0f1a', label:'Navy'},
-  {bg:'#0a0f0a', label:'Forest'},
-  {bg:'#14080e', label:'Wine'},
-  {bg:'#0d0d0d', label:'Void'},
-  {bg:'#12100a', label:'Earth'},
+const FONT_OPTIONS=[
+  {id:'dm-mono',       name:'Mono',     value:"'DM Mono',monospace",         url:null},
+  {id:'inter',         name:'Inter',    value:"'Inter',sans-serif",          url:'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&display=swap'},
+  {id:'space-grotesk', name:'Grotesk',  value:"'Space Grotesk',sans-serif",  url:'https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500&display=swap'},
+  {id:'ibm-plex-mono', name:'IBM Plex', value:"'IBM Plex Mono',monospace",   url:'https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500&display=swap'},
+  {id:'jetbrains',     name:'JetBrains',value:"'JetBrains Mono',monospace",  url:'https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500&display=swap'},
+];
+
+const ACCENT_SWATCHES=['#c8b4f0','#f0a0c0','#a0e4c8','#80c8f0','#f0c080','#e0a0f0','#a0f0e0','#f0b0a0','#b0d4a0','#6050b8'];
+const BG_OPTIONS=[
+  {bg:'#0a0a0f',label:'Black'},
+  {bg:'#0f0f1a',label:'Navy'},
+  {bg:'#0a0f0a',label:'Forest'},
+  {bg:'#14080e',label:'Wine'},
+  {bg:'#0d0d0d',label:'Void'},
+  {bg:'#e8e8ed',label:'Gray'},
+  {bg:'#f5f5f0',label:'Chalk'},
 ];
 
 let themePrefs = JSON.parse(localStorage.getItem('ritualTheme')||'{}');
 
 function applyTheme(prefs){
   const root=document.documentElement.style;
-  if(prefs.bg)      root.setProperty('--bg',      prefs.bg);
-  if(prefs.surface) root.setProperty('--surface', prefs.surface);
-  if(prefs.surface2)root.setProperty('--surface2',prefs.surface2);
-  if(prefs.border)  root.setProperty('--border',  prefs.border);
-  if(prefs.accent)  root.setProperty('--accent',  prefs.accent);
-  if(prefs.fontSize)document.documentElement.style.fontSize=prefs.fontSize+'px';
-  if(prefs.radius)  root.setProperty('--r',       prefs.radius);
+  if(prefs.bg)        root.setProperty('--bg',         prefs.bg);
+  if(prefs.surface)   root.setProperty('--surface',    prefs.surface);
+  if(prefs.surface2)  root.setProperty('--surface2',   prefs.surface2);
+  if(prefs.border)    root.setProperty('--border',     prefs.border);
+  if(prefs.accent)    root.setProperty('--accent',     prefs.accent);
+  root.setProperty('--text',        prefs.text        ||DEFAULT_TEXT.text);
+  root.setProperty('--text-dim',    prefs.textDim     ||DEFAULT_TEXT.textDim);
+  root.setProperty('--text-dimmer', prefs.textDimmer  ||DEFAULT_TEXT.textDimmer);
+  if(prefs.fontSize)  root.fontSize=prefs.fontSize+'px';
+  if(prefs.radius)    root.setProperty('--r', prefs.radius);
+  // Font
+  if(prefs.fontId){
+    const font=FONT_OPTIONS.find(f=>f.id===prefs.fontId);
+    if(font){
+      root.setProperty('--font-body',font.value);
+      if(font.url&&!document.querySelector(`link[data-font="${font.id}"]`)){
+        const lk=document.createElement('link');
+        lk.rel='stylesheet';lk.href=font.url;lk.setAttribute('data-font',font.id);
+        document.head.appendChild(lk);
+      }
+    }
+  }
 }
 
 // Apply saved theme on load
 applyTheme(themePrefs);
-// Apply health tab visibility
-if(themePrefs.healthTabEnabled){
-  document.getElementById('navHealth').style.display='';
-}
+if(themePrefs.healthTabEnabled){document.getElementById('navHealth').style.display='';}
+if(themePrefs.cosmosTabEnabled===false){document.getElementById('navCosmos').style.display='none';}
 
 function saveThemePrefs(){
   localStorage.setItem('ritualTheme',JSON.stringify(themePrefs));
@@ -3624,6 +3741,21 @@ function renderSettings(){
     };
   }
 
+  // Cosmos tab toggle
+  const cosmosEnabled=themePrefs.cosmosTabEnabled!==false;
+  const cosmosToggle=document.getElementById('cosmosTabToggle');
+  const cosmosPill=document.getElementById('cosmosTabPill');
+  if(cosmosToggle&&cosmosPill){
+    cosmosPill.classList.toggle('active-pill',cosmosEnabled);
+    cosmosPill.style.background=cosmosEnabled?'var(--accent)':'var(--border)';
+    document.getElementById('navCosmos').style.display=cosmosEnabled?'':'none';
+    cosmosToggle.onclick=()=>{
+      themePrefs.cosmosTabEnabled=(themePrefs.cosmosTabEnabled===false?true:false);
+      saveThemePrefs();renderSettings();
+      if(themePrefs.cosmosTabEnabled===false&&currentView==='cosmos')switchView('home');
+    };
+  }
+
   // Font size
   document.querySelectorAll('.settings-size-btn').forEach(btn=>{
     const s=Number(btn.dataset.size);
@@ -3636,6 +3768,23 @@ function renderSettings(){
     btn.classList.toggle('active',(themePrefs.radius||'14px')===btn.dataset.r);
     btn.onclick=()=>{themePrefs={...themePrefs,radius:btn.dataset.r};saveThemePrefs();applyTheme(themePrefs);renderSettings();};
   });
+
+  // Font picker
+  const fontEl=document.getElementById('fontPicker');
+  if(fontEl){
+    fontEl.innerHTML='';
+    FONT_OPTIONS.forEach(f=>{
+      const btn=document.createElement('button');
+      btn.className='font-picker-btn'+(themePrefs.fontId===f.id?' active':'');
+      btn.style.fontFamily=f.value;
+      btn.textContent=f.name;
+      btn.addEventListener('click',()=>{
+        themePrefs={...themePrefs,fontId:f.id};
+        saveThemePrefs();applyTheme(themePrefs);renderSettings();
+      });
+      fontEl.appendChild(btn);
+    });
+  }
 }
 
 document.getElementById('calPrev').addEventListener('click',()=>{calMonth--;if(calMonth<0){calMonth=11;calYear--;}selectedCalDay=null;renderCalendar();});
@@ -4149,8 +4298,7 @@ function wkToggleDay(hid,dk,box,accentHex){
   box.style.background=isDone?accentHex:'';
   const checkEl=box.querySelector('.wk-day-check');
   if(checkEl)checkEl.innerHTML=isDone?'&#10003;':'';
-  // Refresh grid + progress
-  renderWeeklyGrid();
+  // Refresh progress
   renderProgress(activeDay());
   renderDayScroller();
   renderStreakBar();
