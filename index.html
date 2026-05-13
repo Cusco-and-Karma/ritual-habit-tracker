@@ -166,8 +166,8 @@
   .ai-send svg{width:16px;height:16px;stroke:var(--bg);fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
   .ai-messages{margin-top:10px;display:flex;flex-direction:column;gap:8px}
   .ai-msg{border-radius:var(--r-sm);padding:10px 12px;font-size:12px;line-height:1.6;animation:fadeSlideIn .2s ease}
-  .ai-msg.user{background:var(--accent-glow);border:1px solid rgba(200,180,240,.2);color:var(--text);align-self:flex-end;max-width:85%;border-radius:var(--r-sm) var(--r-sm) 4px var(--r-sm)}
-  .ai-msg.assistant{background:var(--surface2);border:1px solid var(--border);color:var(--text);align-self:flex-start;max-width:95%;border-radius:4px var(--r-sm) var(--r-sm) var(--r-sm)}
+  .ai-msg.user{background:var(--accent-glow);border:1px solid rgba(200,180,240,.2);color:var(--text);align-self:flex-end;max-width:85%;border-radius:var(--r-sm) var(--r-sm) 4px var(--r-sm);white-space:pre-wrap;word-break:break-word}
+  .ai-msg.assistant{background:var(--surface2);border:1px solid var(--border);color:var(--text);align-self:flex-start;max-width:95%;border-radius:4px var(--r-sm) var(--r-sm) var(--r-sm);white-space:pre-wrap;word-break:break-word}
   .ai-msg.thinking{color:var(--text-dimmer);font-style:italic;background:transparent;border:none;padding:4px 0}
 
   /* CALENDAR */
@@ -538,27 +538,35 @@
   .week-nav-btn{width:30px;height:30px;border-radius:50%;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .15s;flex-shrink:0}
   .week-nav-btn:active{background:var(--border)}
   .week-nav-btn svg{width:14px;height:14px;stroke:var(--text-dim);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-  .week-grid-table{width:100%;border-collapse:separate;border-spacing:0}
-  .week-day-header{text-align:center;font-size:9px;letter-spacing:.07em;text-transform:uppercase;color:var(--text-dimmer);padding:4px 2px;width:40px}
-  .week-day-header.is-today{color:var(--accent)}
-  .week-habit-row{border-bottom:1px solid rgba(255,255,255,.04)}
-  .week-habit-row:last-child{border-bottom:none}
-  .week-habit-info{padding:8px 6px 8px 0;display:flex;align-items:center;gap:7px;min-width:0;cursor:pointer}
-  .week-habit-emoji{font-size:15px;flex-shrink:0;width:22px;text-align:center}
-  .week-habit-text{min-width:0;flex:1}
-  .week-habit-name{font-size:12px;font-family:'DM Serif Display',serif;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.2}
-  .week-habit-goal{font-size:9px;color:var(--text-dimmer);letter-spacing:.03em;margin-top:1px}
-  .week-cell{width:40px;text-align:center;padding:4px 2px;vertical-align:middle}
-  .week-cell-btn{width:32px;height:32px;border-radius:50%;border:1.5px solid var(--border);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;transition:all .2s cubic-bezier(.34,1.56,.64,1);background:none;position:relative;-webkit-tap-highlight-color:transparent}
-  .week-cell-btn.is-done{border-color:transparent}
-  .week-cell-btn.is-today{border-color:var(--accent)}
-  .week-cell-btn.is-future{opacity:.25;pointer-events:none}
-  .week-cell-btn.is-done.is-today{border-color:transparent}
-  .week-cell-check{width:10px;height:10px;stroke:#0a0a0f;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;opacity:0;transition:opacity .15s}
-  .week-cell-btn.is-done .week-cell-check{opacity:1}
-  .week-freq-bar{height:3px;border-radius:99px;background:var(--border);margin-top:1px;overflow:hidden}
-  .week-freq-fill{height:100%;border-radius:99px;transition:width .4s}
   .week-empty{color:var(--text-dimmer);font-size:12px;text-align:center;padding:24px 0}
+  /* Card per habit */
+  .wk-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px 14px 12px;margin-bottom:8px;position:relative;animation:fadeSlideIn .3s ease both;user-select:none}
+  .wk-card-header{display:flex;align-items:flex-start;gap:8px;margin-bottom:3px}
+  .wk-card-emoji{font-size:16px;flex-shrink:0;margin-top:2px}
+  .wk-card-title{font-family:'DM Serif Display',serif;font-size:17px;line-height:1.2;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .wk-card-menu-btn{width:28px;height:28px;border-radius:50%;background:none;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text-dimmer);font-size:20px;line-height:1;flex-shrink:0;transition:background .15s;margin-top:-2px;letter-spacing:0}
+  .wk-card-menu-btn:active{background:var(--surface2)}
+  .wk-card-freq{font-size:11px;color:var(--text-dimmer);letter-spacing:.03em;margin-bottom:10px;padding-left:24px}
+  .wk-card-days{display:flex;gap:4px}
+  .wk-day-box{flex:1;min-width:0;border-radius:8px;border:1.5px solid var(--border);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:7px 2px 5px;cursor:pointer;transition:all .2s cubic-bezier(.34,1.56,.64,1);-webkit-tap-highlight-color:transparent;gap:1px}
+  .wk-day-box.is-done{border-color:transparent}
+  .wk-day-box.is-today:not(.is-done){border-color:var(--accent)}
+  .wk-day-box.is-future{opacity:.25;pointer-events:none}
+  .wk-day-name{font-size:8px;letter-spacing:.07em;text-transform:uppercase;color:var(--text-dimmer);line-height:1}
+  .wk-day-box.is-done .wk-day-name,.wk-day-box.is-done .wk-day-num,.wk-day-box.is-done .wk-day-check{color:rgba(10,10,15,.85)}
+  .wk-day-box.is-today:not(.is-done) .wk-day-name{color:var(--accent)}
+  .wk-day-num{font-family:'DM Serif Display',serif;font-size:15px;line-height:1;color:var(--text-dim)}
+  .wk-day-box.is-today:not(.is-done) .wk-day-num{color:var(--text)}
+  .wk-day-check{font-size:10px;line-height:1;height:11px;color:transparent;display:flex;align-items:center;justify-content:center}
+  /* Popup menu */
+  .wk-popup{position:absolute;top:38px;right:8px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);padding:6px;z-index:60;min-width:140px;box-shadow:0 8px 32px rgba(0,0,0,.5);animation:fadeSlideIn .12s ease}
+  .wk-popup-item{display:flex;align-items:center;gap:8px;padding:9px 12px;border-radius:var(--r-sm);border:none;background:none;color:var(--text-dim);font-family:'DM Mono',monospace;font-size:12px;cursor:pointer;width:100%;text-align:left;letter-spacing:.03em;transition:background .1s,color .1s}
+  .wk-popup-item:active{background:var(--surface);color:var(--text)}
+  .wk-popup-item.danger{color:#f08080}
+  .wk-popup-item svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+  /* Card drag ghost */
+  .wk-drag-ghost{position:fixed;pointer-events:none;z-index:9999;opacity:.95;border-radius:var(--r);box-shadow:0 8px 40px rgba(0,0,0,.65);left:0;top:0;will-change:transform}
+  .wk-card.is-dragging{opacity:0;pointer-events:none}
 
   /* DAY DETAIL MODAL */
   .day-detail-overlay{position:fixed;inset:0;background:rgba(10,10,15,.85);backdrop-filter:blur(8px);z-index:300;display:flex;align-items:flex-end;opacity:0;pointer-events:none;transition:opacity .3s}
@@ -676,8 +684,11 @@
     </div>
   </div>
 
-  <!-- CALENDAR -->
-  <div class="scroll-area view" id="calView">
+  <!-- INSIGHTS (merged Stats + Trends + Year + Calendar) -->
+  <div class="scroll-area view" id="insightsView">
+  <!-- CALENDAR section (moved from calView) -->
+  <div id="calView">
+    <div class="section-label">calendar</div>
     <div class="cal-nav">
       <button class="cal-arrow" id="calPrev" aria-label="Previous month"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></button>
       <div class="cal-nav-title" id="calTitle"></div>
@@ -691,48 +702,13 @@
     <div class="cal-grid" id="calGrid"></div>
     <div class="section-label">day detail</div>
     <div class="cal-detail" id="calDetail"><div style="color:var(--text-dimmer);font-size:12px">Tap a day to see details.</div></div>
-
-    <div class="section-label">ask ai</div>
-    <div class="ai-section" id="aiSectionCal">
-      <div class="ai-chips">
-        <button class="ai-chip" onclick="askAI('How am I doing overall?','Cal')">How am I doing overall?</button>
-        <button class="ai-chip" onclick="askAI('What habit needs most work?','Cal')">What habit needs most work?</button>
-        <button class="ai-chip" onclick="askAI('Give me a tip for today','Cal')">Give me a tip for today</button>
-        <button class="ai-chip" onclick="askAI('What patterns do you see?','Cal')">What patterns do you see?</button>
-        <button class="ai-chip" onclick="askAI('How can I improve my wellness?','Cal')">How can I improve my wellness?</button>
-        <button class="ai-chip" onclick="askAI('Motivate me','Cal')">Motivate me</button>
-      </div>
-      <div class="ai-input-row">
-        <input class="ai-input" id="aiInputCal" placeholder="Ask anything about your habits..." autocomplete="off" maxlength="300" onkeydown="if(event.key==='Enter')askAI(this.value,'Cal')"/>
-        <button class="ai-send" id="aiSendCal" onclick="askAI(document.getElementById('aiInputCal').value,'Cal')" aria-label="Send">
-          <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-        </button>
-      </div>
-      <div class="ai-messages" id="aiMessagesCal"></div>
-    </div>
   </div>
-
-  <!-- INSIGHTS (merged Stats + Trends + Year) -->
-  <div class="scroll-area view" id="insightsView">
+  <!-- Divider -->
+  <div style="height:1px;background:var(--border);margin:4px 0 16px"></div>
   <!-- STATS section -->
   <div id="statsView">
     <div class="section-label">overview</div>
     <div class="stat-grid" id="statGrid"></div>
-    <div class="section-label">wellness over time</div>
-    <div class="wellness-chart-wrap">
-      <div class="wellness-chart-header">
-        <div class="wellness-chart-title">Daily Wellness</div>
-        <div class="wellness-range-btns">
-          <button class="wellness-range-btn active" data-range="7">7D</button>
-          <button class="wellness-range-btn" data-range="30">1M</button>
-          <button class="wellness-range-btn" data-range="365">1Y</button>
-        </div>
-      </div>
-      <div class="wellness-svg-wrap" id="wellnessSvgWrap">
-        <svg class="wellness-svg" id="wellnessSvg" height="160"></svg>
-        <div class="wellness-tooltip" id="wellnessTooltip"></div>
-      </div>
-    </div>
 
     <div class="section-label">7-day history</div>
     <div id="historyList"></div>
@@ -799,24 +775,6 @@
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:4px" id="trendsRollingGrid"></div>
     <div class="section-label">habit quality <span style="font-style:italic;text-transform:none;letter-spacing:0;color:var(--text-dimmer);font-size:9px">- selected range</span></div>
     <div class="trends-card" id="trendsHabitQuality"></div>
-    <div class="section-label">moon phase &amp; wellness</div>
-    <div class="trends-card" id="trendsMoonCard">
-      <div class="moon-chart-wrap">
-        <svg id="trendsMoonSvg" width="100%" height="160"></svg>
-      </div>
-      <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap" id="trendsMoonStats"></div>
-      <div class="moon-insight" id="trendsMoonInsight"></div>
-      <div class="moon-phase-legend">
-        <div class="moon-legend-item">🌑 New</div>
-        <div class="moon-legend-item">🌒 Waxing crescent</div>
-        <div class="moon-legend-item">🌓 First quarter</div>
-        <div class="moon-legend-item">🌔 Waxing gibbous</div>
-        <div class="moon-legend-item">🌕 Full</div>
-        <div class="moon-legend-item">🌖 Waning gibbous</div>
-        <div class="moon-legend-item">🌗 Last quarter</div>
-        <div class="moon-legend-item">🌘 Waning crescent</div>
-      </div>
-    </div>
     <div class="section-label">weekly notes</div>
     <div class="trends-card" id="trendsNotesTimeline"></div>
     <div class="section-label">ask ai</div>
@@ -890,6 +848,59 @@
   </div>
   </div><!-- end insightsView -->
 
+
+  <!-- COSMOS VIEW -->
+  <div class="scroll-area view" id="cosmosView">
+    <div class="section-label">moon phase &amp; wellness</div>
+    <div class="trends-card" id="trendsMoonCard">
+      <div class="moon-chart-wrap">
+        <svg id="trendsMoonSvg" width="100%" height="160"></svg>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap" id="trendsMoonStats"></div>
+      <div class="moon-insight" id="trendsMoonInsight"></div>
+      <div class="moon-phase-legend">
+        <div class="moon-legend-item">🌑 New</div>
+        <div class="moon-legend-item">🌒 Waxing crescent</div>
+        <div class="moon-legend-item">🌓 First quarter</div>
+        <div class="moon-legend-item">🌔 Waxing gibbous</div>
+        <div class="moon-legend-item">🌕 Full</div>
+        <div class="moon-legend-item">🌖 Waning gibbous</div>
+        <div class="moon-legend-item">🌗 Last quarter</div>
+        <div class="moon-legend-item">🌘 Waning crescent</div>
+      </div>
+    </div>
+    <div class="section-label">wellness over time</div>
+    <div class="wellness-chart-wrap">
+      <div class="wellness-chart-header">
+        <div class="wellness-chart-title">Daily Wellness</div>
+        <div class="wellness-range-btns">
+          <button class="wellness-range-btn active" data-range="7">7D</button>
+          <button class="wellness-range-btn" data-range="30">1M</button>
+          <button class="wellness-range-btn" data-range="365">1Y</button>
+        </div>
+      </div>
+      <div class="wellness-svg-wrap" id="wellnessSvgWrap">
+        <svg class="wellness-svg" id="wellnessSvg" height="160"></svg>
+        <div class="wellness-tooltip" id="wellnessTooltip"></div>
+      </div>
+    </div>
+    <div class="section-label">ask ai</div>
+    <div class="ai-section" id="aiSectionCosmos">
+      <div class="ai-chips">
+        <button class="ai-chip" onclick="askAI('How does the moon phase affect my wellness?','Cosmos')">Moon &amp; wellness?</button>
+        <button class="ai-chip" onclick="askAI('What patterns do you see in my wellness over time?','Cosmos')">Wellness patterns?</button>
+        <button class="ai-chip" onclick="askAI('Which moon phase is best for my habits?','Cosmos')">Best moon phase?</button>
+        <button class="ai-chip" onclick="askAI('How can I improve my wellness score?','Cosmos')">Improve wellness?</button>
+      </div>
+      <div class="ai-input-row">
+        <input class="ai-input" id="aiInputCosmos" placeholder="Ask about your cosmic patterns..." autocomplete="off" maxlength="300" onkeydown="if(event.key==='Enter')askAI(this.value,'Cosmos')"/>
+        <button class="ai-send" id="aiSendCosmos" onclick="askAI(document.getElementById('aiInputCosmos').value,'Cosmos')" aria-label="Send">
+          <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        </button>
+      </div>
+      <div class="ai-messages" id="aiMessagesCosmos"></div>
+    </div>
+  </div>
 
   <!-- HEALTH VIEW -->
   <div class="scroll-area view" id="healthView">
@@ -1105,8 +1116,8 @@
     <button class="nav-btn active" id="navHome" aria-label="Home">
       <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Home
     </button>
-    <button class="nav-btn" id="navCal" aria-label="Calendar">
-      <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Month
+    <button class="nav-btn" id="navCosmos" aria-label="Cosmos">
+      <svg viewBox="0 0 24 24"><path d="M12 2L9.09 8.26L2 9.27l5 4.87L5.82 21 12 17.77 18.18 21l-1.18-6.86L22 9.27l-7.09-1.01z"/></svg>Cosmos
     </button>
     <button class="nav-btn" id="navInsights" aria-label="Insights">
       <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Insights
@@ -1284,8 +1295,8 @@ function toggleHabit(hid, cardEl){
   renderWeeklyGrid();
   if(cardEl){cardEl.classList.toggle('completed', done);}
   renderProgress(day);renderStreakBar();
-  if(currentView==='insights'){renderStats();renderTrends();renderYearly();}
-  if(currentView==='cal')renderCalendar();
+  if(currentView==='insights'){renderStats();renderTrends();renderYearly();renderCalendar();}
+  if(currentView==='cosmos')renderCosmos();
 }
 
 function activeDay(){return viewingDay||todayKey();}
@@ -2101,7 +2112,6 @@ function renderWellnessChart(){
 }
 
 function renderStats(){
-  renderWellnessChart();
   // show/hide subcat section label
   const hasSubcats=habits.some(h=>h.subcategories&&h.subcategories.length);
   const lbl=document.getElementById('subcatStatsSectionLabel');
@@ -2295,7 +2305,7 @@ function renderCalDetail(key){
       dd.wellness=dd.wellness===score?0:score;
       saveDayData(key,dd);
       renderCalDetail(key);
-      if(currentView==='year')renderYearly();
+      if(currentView==='insights')renderYearly();
     });
   });
 
@@ -2485,7 +2495,7 @@ async function askAI(question,suffix){
     const reply=data.content&&data.content[0]?data.content[0].text:'Sorry, could not get a response.';
     thinking.remove();
     const aBubble=document.createElement('div');
-    aBubble.className='ai-msg assistant';aBubble.textContent=reply;
+    aBubble.className='ai-msg assistant';aBubble.textContent=reply;aBubble.style.whiteSpace='pre-wrap';
     msgs.appendChild(aBubble);
   }catch(err){
     thinking.className='ai-msg assistant';
@@ -2547,12 +2557,12 @@ function renderHomeWellness(key){
       dd.wellness=dd.wellness===score?0:score;
       saveDayData(key,dd);
       renderHomeWellness(key);
-      if(currentView==='cal')renderCalendar();
+      if(currentView==='insights')renderCalendar();
     });
   });
 }
 
-function renderAll(){renderHeader();renderStreakBar();renderDayScroller();renderHomeForDay();if(currentView==='insights'){renderStats();renderTrends();renderYearly();}if(currentView==='cal')renderCalendar();}
+function renderAll(){renderHeader();renderStreakBar();renderDayScroller();renderHomeForDay();if(currentView==='insights'){renderStats();renderTrends();renderYearly();renderCalendar();}if(currentView==='cosmos')renderCosmos();}
 
 // ══ HEALTH VIEW ══
 const HEALTH_APPS = [
@@ -2745,19 +2755,24 @@ function switchView(view){
   currentView=view;
   document.querySelectorAll('.view').forEach(el=>el.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(el=>el.classList.remove('active'));
-  const vmap={home:'homeView',cal:'calView',insights:'insightsView',health:'healthView',settings:'settingsView'};
-  const nmap={home:'navHome',cal:'navCal',insights:'navInsights',health:'navHealth',settings:'navSettings'};
+  const vmap={home:'homeView',cosmos:'cosmosView',insights:'insightsView',health:'healthView',settings:'settingsView'};
+  const nmap={home:'navHome',cosmos:'navCosmos',insights:'navInsights',health:'navHealth',settings:'navSettings'};
   document.getElementById(vmap[view]).classList.add('active');
   document.getElementById(nmap[view]).classList.add('active');
   document.getElementById('fabBtn').style.display=view==='home'?'':'none';
-  if(view==='insights'){renderStats();renderTrends();renderYearly();}
-  if(view==='cal')renderCalendar();
+  if(view==='insights'){renderStats();renderTrends();renderYearly();renderCalendar();}
+  if(view==='cosmos')renderCosmos();
   if(view==='settings')renderSettings();
   if(view==='health')renderHealth();
 }
 
+function renderCosmos(){
+  renderMoonChart(trendsRange||14);
+  renderWellnessChart();
+}
+
 document.getElementById('navHome').addEventListener('click',()=>switchView('home'));
-document.getElementById('navCal').addEventListener('click',()=>switchView('cal'));
+document.getElementById('navCosmos').addEventListener('click',()=>switchView('cosmos'));
 document.getElementById('navInsights').addEventListener('click',()=>switchView('insights'));
 document.getElementById('navHealth').addEventListener('click',()=>switchView('health'));
 document.getElementById('navSettings').addEventListener('click',()=>switchView('settings'));
@@ -3131,9 +3146,6 @@ function renderTrends(){
       });
     }
   }
-
-  // ── Moon chart ──
-  renderMoonChart(Math.max(trendsRange,28)); // always show at least one full lunar cycle
 
   // ── Weekly notes ──
   const notesTimeline=document.getElementById('trendsNotesTimeline');
@@ -3604,6 +3616,13 @@ document.getElementById('signOutBtn').addEventListener('click',async()=>{
 })();
 
 // ══ WEEKLY GRID ══
+function freqLabel(n){
+  if(n>=7)return 'Every day';
+  if(n===2)return 'At least twice per week';
+  if(n===1)return 'At least once per week';
+  return 'At least '+n+' times per week';
+}
+
 // Returns Sunday of the week that contains the given dateKey ('YYYY-MM-DD')
 function getWeekStart(dayKey){
   const[y,m,d]=dayKey.split('-').map(Number);
@@ -3616,6 +3635,67 @@ function fmtKeyFromDate(dt){
   return fmtKey(dt.getFullYear(),dt.getMonth()+1,dt.getDate());
 }
 
+// ── Weekly grid drag state ──
+let wkDragSrcIdx=-1,wkDragGhost=null,wkDragOverIdx=-1,wkDragActive=false,wkDragGhostRect=null;
+
+function clearWkDragMarkers(){
+  document.querySelectorAll('#weeklyGrid .wk-card').forEach(el=>{
+    el.classList.remove('is-dragging');
+    el.style.marginTop='';el.style.marginBottom='';
+  });
+}
+
+function getWkDropIdx(clientY){
+  const cards=[...document.querySelectorAll('#weeklyGrid .wk-card')];
+  for(let i=0;i<cards.length;i++){
+    const r=cards[i].getBoundingClientRect();
+    if(clientY<r.top+r.height/2)return i;
+  }
+  return cards.length;
+}
+
+function onWkDragMove(clientX,clientY){
+  if(!wkDragActive||!wkDragGhost)return;
+  const gridEl=document.getElementById('weeklyGrid');
+  const lx=gridEl?gridEl.getBoundingClientRect().left:0;
+  wkDragGhost.style.transform=`translate(${lx}px,${clientY-wkDragGhostRect.height/2}px)`;
+  clearWkDragMarkers();
+  const allCards=document.querySelectorAll('#weeklyGrid .wk-card');
+  if(allCards[wkDragSrcIdx])allCards[wkDragSrcIdx].classList.add('is-dragging');
+  wkDragOverIdx=getWkDropIdx(clientY);
+}
+
+function onWkDragEnd(){
+  if(!wkDragActive)return;
+  wkDragActive=false;
+  if(wkDragGhost){wkDragGhost.remove();wkDragGhost=null;}
+  clearWkDragMarkers();
+  const from=wkDragSrcIdx,to=wkDragOverIdx;
+  wkDragSrcIdx=-1;wkDragOverIdx=-1;
+  if(to>=0&&to!==from&&to!==from+1){
+    const moved=habits.splice(from,1)[0];
+    const insertAt=to>from?to-1:to;
+    habits.splice(insertAt,0,moved);
+    save();
+  }
+  renderWeeklyGrid();
+}
+
+function startWkDrag(card,idx,clientX,clientY){
+  wkDragActive=true;
+  wkDragSrcIdx=idx;
+  wkDragOverIdx=idx;
+  wkDragGhostRect=card.getBoundingClientRect();
+  const ghost=card.cloneNode(true);
+  ghost.className='wk-drag-ghost';
+  ghost.style.width=wkDragGhostRect.width+'px';
+  ghost.style.height=wkDragGhostRect.height+'px';
+  ghost.style.transform=`translate(${wkDragGhostRect.left}px,${clientY-wkDragGhostRect.height/2}px)`;
+  document.body.appendChild(ghost);
+  wkDragGhost=ghost;
+  if(navigator.vibrate)navigator.vibrate(40);
+}
+
 function renderWeeklyGrid(){
   const grid=document.getElementById('weeklyGrid');
   if(!grid)return;
@@ -3626,7 +3706,7 @@ function renderWeeklyGrid(){
     return;
   }
 
-  const anchor=activeDay(); // the day the user is viewing
+  const anchor=activeDay();
   const weekStart=getWeekStart(anchor);
   const today=todayKey();
 
@@ -3638,10 +3718,14 @@ function renderWeeklyGrid(){
     weekDays.push(fmtKeyFromDate(dt));
   }
 
-  // Week label
+  // Week nav row
   const start=weekStart;
   const end=new Date(weekStart);end.setDate(weekStart.getDate()+6);
-  const weekLbl=`${MON_S[start.getMonth()]} ${start.getDate()} – ${end.getDate()===start.getDate()?'':MON_S[end.getMonth()]+' '}${end.getDate()}`;
+  const startMon=MON_S[start.getMonth()];
+  const endMon=MON_S[end.getMonth()];
+  const weekLbl=startMon===endMon
+    ?`${startMon} ${start.getDate()} – ${end.getDate()}`
+    :`${startMon} ${start.getDate()} – ${endMon} ${end.getDate()}`;
   const navRow=document.createElement('div');
   navRow.className='week-nav-row';
   navRow.innerHTML=`
@@ -3654,7 +3738,6 @@ function renderWeeklyGrid(){
     </button>`;
   grid.appendChild(navRow);
 
-  // Prev / Next week navigation
   navRow.querySelector('#weekPrevBtn').addEventListener('click',()=>{
     const[y,m,d]=anchor.split('-').map(Number);
     const dt=new Date(y,m-1,d);dt.setDate(dt.getDate()-7);
@@ -3664,135 +3747,165 @@ function renderWeeklyGrid(){
   navRow.querySelector('#weekNextBtn').addEventListener('click',()=>{
     const[y,m,d]=anchor.split('-').map(Number);
     const dt=new Date(y,m-1,d);dt.setDate(dt.getDate()+7);
-    // Don't navigate into the future beyond today
     if(fmtKeyFromDate(dt)>today)return;
     viewingDay=fmtKeyFromDate(dt)===today?null:fmtKeyFromDate(dt);
     renderDayScroller();renderWeeklyGrid();renderProgress(activeDay());
   });
 
-  // Table
-  const table=document.createElement('table');
-  table.className='week-grid-table';
-  // Header row (S M T W T F S)
-  const thead=document.createElement('thead');
-  const hrow=document.createElement('tr');
-  // Empty cell for habit name column
-  const thEmpty=document.createElement('th');
-  thEmpty.style.cssText='width:auto';
-  hrow.appendChild(thEmpty);
   const DAY_SHORTS=['Su','Mo','Tu','We','Th','Fr','Sa'];
-  weekDays.forEach((dk,i)=>{
-    const th=document.createElement('th');
-    th.className='week-day-header'+(dk===today?' is-today':'');
-    th.textContent=DAY_SHORTS[i];
-    hrow.appendChild(th);
-  });
-  thead.appendChild(hrow);
-  table.appendChild(thead);
 
-  // Body — one row per habit
-  const tbody=document.createElement('tbody');
-  habits.forEach(h=>{
-    const row=document.createElement('tr');
-    row.className='week-habit-row';
-
-    // Habit info cell
-    const infoTd=document.createElement('td');
-    const doneThisWeek=weekDays.filter(dk=>isCompleted(h.id,dk)).length;
-    const goal=h.targetDaysPerWeek||7;
-    const goalMet=doneThisWeek>=goal;
+  // One card per habit
+  habits.forEach((h,idx)=>{
     const accentHex=COLOR_HEX[h.color]||'var(--accent)';
-    infoTd.innerHTML=`
-      <div class="week-habit-info" title="${escapeHtml(h.name)}">
-        <div class="week-habit-emoji">${emojiHTML(h.emoji,16,h.abstain)}</div>
-        <div class="week-habit-text">
-          <div class="week-habit-name">${escapeHtml(h.name)}</div>
-          <div class="week-habit-goal" style="color:${goalMet?accentHex:'var(--text-dimmer)'}">${doneThisWeek}/${goal} days</div>
-        </div>
-      </div>`;
-    // Tap habit name → open edit
-    infoTd.querySelector('.week-habit-info').addEventListener('click',()=>{
-      const idx=habits.findIndex(x=>x.id===h.id);
-      if(idx>=0)openEditModal(idx);
-    });
-    row.appendChild(infoTd);
+    const goal=h.targetDaysPerWeek||7;
 
-    // Day cells
-    weekDays.forEach(dk=>{
-      const td=document.createElement('td');
-      td.className='week-cell';
+    const card=document.createElement('div');
+    card.className='wk-card';
+    card.style.animationDelay=`${idx*.04}s`;
+
+    // Header
+    const header=document.createElement('div');
+    header.className='wk-card-header';
+    header.innerHTML=`<div class="wk-card-emoji">${emojiHTML(h.emoji,16,h.abstain)}</div><div class="wk-card-title" style="color:${accentHex}">${escapeHtml(h.name)}</div>`;
+    const menuBtn=document.createElement('button');
+    menuBtn.className='wk-card-menu-btn';
+    menuBtn.setAttribute('aria-label','More options');
+    menuBtn.innerHTML='&#8942;';
+    header.appendChild(menuBtn);
+    card.appendChild(header);
+
+    // Freq subtitle
+    const freqEl=document.createElement('div');
+    freqEl.className='wk-card-freq';
+    freqEl.textContent=freqLabel(goal);
+    card.appendChild(freqEl);
+
+    // Day boxes
+    const daysRow=document.createElement('div');
+    daysRow.className='wk-card-days';
+    weekDays.forEach((dk,i)=>{
       const isFuture=dk>today;
       const isDone=isCompleted(h.id,dk);
       const isToday=dk===today;
+      const[,, dayNum]=dk.split('-').map(Number);
 
-      const btn=document.createElement('button');
-      btn.className='week-cell-btn'+(isDone?' is-done':'')+(isToday?' is-today':'')+(isFuture?' is-future':'');
-      btn.setAttribute('aria-label',(isDone?'Unmark':'Mark')+' '+escapeHtml(h.name)+' '+dk);
-      btn.style.background=isDone?accentHex:'';
-      btn.innerHTML=`<svg class="week-cell-check" viewBox="0 0 14 14" width="10" height="10"><polyline points="2 7 6 11 12 3"/></svg>`;
-      td.appendChild(btn);
+      const box=document.createElement('div');
+      box.className='wk-day-box'+(isDone?' is-done':'')+(isToday&&!isDone?' is-today':'')+(isFuture?' is-future':'');
+      if(isDone)box.style.background=accentHex;
+      box.innerHTML=`<div class="wk-day-name">${DAY_SHORTS[i]}</div><div class="wk-day-num">${dayNum}</div><div class="wk-day-check">${isDone?'&#10003;':''}</div>`;
 
-      let longPressTimer=null;
-      let longPressFired=false;
+      if(!isFuture){
+        // Long press → day detail modal
+        let lpTimer=null,lpFired=false;
+        const startLp=()=>{lpFired=false;lpTimer=setTimeout(()=>{lpFired=true;if(navigator.vibrate)navigator.vibrate(30);openDayDetailModal(h.id,dk);},500);};
+        const cancelLp=()=>{if(lpTimer){clearTimeout(lpTimer);lpTimer=null;}};
 
-      const startLongPress=(clientX,clientY)=>{
-        longPressFired=false;
-        longPressTimer=setTimeout(()=>{
-          longPressFired=true;
-          if(navigator.vibrate)navigator.vibrate(30);
-          openDayDetailModal(h.id,dk);
-        },500);
-      };
-      const cancelLongPress=()=>{
-        if(longPressTimer){clearTimeout(longPressTimer);longPressTimer=null;}
-      };
+        box.addEventListener('touchstart',e=>{startLp();},{passive:true});
+        box.addEventListener('touchend',e=>{
+          cancelLp();
+          if(!lpFired){e.preventDefault();wkToggleDay(h.id,dk,box,accentHex);}
+        },{passive:false});
+        box.addEventListener('touchmove',cancelLp,{passive:true});
+        box.addEventListener('mousedown',startLp);
+        box.addEventListener('mouseup',()=>{cancelLp();if(!lpFired)wkToggleDay(h.id,dk,box,accentHex);});
+        box.addEventListener('mouseleave',cancelLp);
+        box.addEventListener('click',e=>e.stopPropagation());
+      }
+      daysRow.appendChild(box);
+    });
+    card.appendChild(daysRow);
 
-      btn.addEventListener('touchstart',e=>{startLongPress(e.touches[0].clientX,e.touches[0].clientY);},{passive:true});
-      btn.addEventListener('touchend',e=>{
-        cancelLongPress();
-        if(!longPressFired&&!isFuture){
-          e.preventDefault();
-          quickToggleCell(h.id,dk,btn,accentHex);
-        }
-      },{passive:false});
-      btn.addEventListener('touchmove',cancelLongPress,{passive:true});
-      btn.addEventListener('mousedown',e=>{startLongPress(e.clientX,e.clientY);});
-      btn.addEventListener('mouseup',e=>{
-        cancelLongPress();
-        if(!longPressFired&&!isFuture){
-          quickToggleCell(h.id,dk,btn,accentHex);
-        }
-      });
-      btn.addEventListener('mouseleave',cancelLongPress);
-      btn.addEventListener('click',e=>{e.stopPropagation();}); // prevent double-fire
-
-      row.appendChild(td);
+    // Habit title tap → edit
+    header.querySelector('.wk-card-title').style.cursor='pointer';
+    header.querySelector('.wk-card-title').addEventListener('click',e=>{
+      if(wkDragActive)return;
+      e.stopPropagation();
+      openEditModal(idx);
     });
 
-    tbody.appendChild(row);
+    // Three-dot menu
+    menuBtn.addEventListener('click',e=>{
+      e.stopPropagation();
+      // close any existing popups
+      document.querySelectorAll('.wk-popup').forEach(p=>p.remove());
+      const popup=document.createElement('div');
+      popup.className='wk-popup';
+      popup.innerHTML=`
+        <button class="wk-popup-item"><svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Edit</button>
+        <button class="wk-popup-item danger"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>Delete</button>`;
+      card.appendChild(popup);
+      popup.querySelectorAll('.wk-popup-item')[0].addEventListener('click',e2=>{e2.stopPropagation();popup.remove();openEditModal(idx);});
+      popup.querySelectorAll('.wk-popup-item')[1].addEventListener('click',e2=>{
+        e2.stopPropagation();popup.remove();
+        const overlay=document.createElement('div');
+        overlay.className='delete-confirm';
+        overlay.innerHTML=`<p>Delete <strong>${escapeHtml(h.name)}</strong>?</p><div class="delete-confirm-btns"><button class="del-yes">Delete</button><button class="del-no">Cancel</button></div>`;
+        card.appendChild(overlay);
+        overlay.querySelector('.del-yes').onclick=()=>{habits.splice(idx,1);save();renderAll();};
+        overlay.querySelector('.del-no').onclick=()=>overlay.remove();
+      });
+      // close on outside click
+      setTimeout(()=>{
+        const closePopup=ev=>{if(!popup.contains(ev.target)){popup.remove();document.removeEventListener('click',closePopup);}};
+        document.addEventListener('click',closePopup);
+      },0);
+    });
+
+    // Card long-press drag (1000ms hold, not on day boxes or menu btn)
+    let wkHoldTimer=null,wkLiveX=0,wkLiveY=0;
+    const beginWkHold=(sx,sy)=>{
+      wkLiveX=sx;wkLiveY=sy;
+      wkHoldTimer=setTimeout(()=>{
+        wkHoldTimer=null;
+        if(navigator.vibrate)navigator.vibrate([20,30,40]);
+        startWkDrag(card,idx,wkLiveX,wkLiveY);
+      },1000);
+    };
+    const cancelWkHold=()=>{if(wkHoldTimer){clearTimeout(wkHoldTimer);wkHoldTimer=null;}};
+
+    card.addEventListener('touchstart',e=>{
+      if(e.target.closest('.wk-day-box')||e.target.closest('.wk-card-menu-btn')||e.target.closest('.wk-popup'))return;
+      const t=e.touches[0];beginWkHold(t.clientX,t.clientY);
+    },{passive:true});
+    card.addEventListener('touchmove',e=>{
+      const t=e.touches[0];wkLiveX=t.clientX;wkLiveY=t.clientY;
+      if(wkDragActive){e.preventDefault();onWkDragMove(t.clientX,t.clientY);}
+    },{passive:false});
+    card.addEventListener('touchend',()=>{cancelWkHold();if(wkDragActive)onWkDragEnd();},{passive:true});
+    card.addEventListener('touchcancel',()=>{cancelWkHold();if(wkDragActive)onWkDragEnd();},{passive:true});
+
+    card.addEventListener('mousedown',e=>{
+      if(e.target.closest('.wk-day-box')||e.target.closest('.wk-card-menu-btn')||e.target.closest('.wk-popup'))return;
+      beginWkHold(e.clientX,e.clientY);
+      const onMove=ev=>{wkLiveX=ev.clientX;wkLiveY=ev.clientY;if(wkDragActive)onWkDragMove(ev.clientX,ev.clientY);};
+      const onUp=()=>{cancelWkHold();if(wkDragActive)onWkDragEnd();document.removeEventListener('mousemove',onMove);document.removeEventListener('mouseup',onUp);};
+      document.addEventListener('mousemove',onMove);
+      document.addEventListener('mouseup',onUp);
+    });
+
+    grid.appendChild(card);
   });
-  table.appendChild(tbody);
-  grid.appendChild(table);
 }
 
-function quickToggleCell(hid,dk,btn,accentHex){
-  const today=todayKey();
+function wkToggleDay(hid,dk,box,accentHex){
   if(!completions[dk])completions[dk]={};
   completions[dk][hid]?delete completions[dk][hid]:(completions[dk][hid]=true);
   const isDone=!!(completions[dk][hid]);
   save();
-  // Update button appearance in place (no full re-render for snappiness)
-  btn.classList.toggle('is-done',isDone);
-  btn.style.background=isDone?accentHex:'';
-  btn.setAttribute('aria-label',(isDone?'Unmark':'Mark'));
-  // Refresh grid row goal counts & progress ring
+  // Update box in place
+  box.classList.toggle('is-done',isDone);
+  const today=todayKey();
+  box.classList.toggle('is-today',dk===today&&!isDone);
+  box.style.background=isDone?accentHex:'';
+  const checkEl=box.querySelector('.wk-day-check');
+  if(checkEl)checkEl.innerHTML=isDone?'&#10003;':'';
+  // Refresh grid + progress
   renderWeeklyGrid();
   renderProgress(activeDay());
   renderDayScroller();
   renderStreakBar();
-  if(currentView==='insights'){renderStats();}
-  if(currentView==='cal')renderCalendar();
-  if(currentView==='year')renderYearly();
+  if(currentView==='insights'){renderStats();renderCalendar();}
+  if(currentView==='cosmos')renderCosmos();
 }
 
 // ══ DAY DETAIL MODAL ══
