@@ -13,8 +13,8 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&family=Playfair+Display:ital,wght@0,400;1,400&family=Fraunces:ital,wght@0,400;1,300&family=Outfit:wght@300;400;500&family=Space+Grotesk:wght@300;400;500&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;-webkit-font-smoothing:antialiased}
-  :root{--bg:#0a0a0f;--surface:#16161f;--surface2:#1e1e2a;--border:#2e2e3e;--text:#f4f4fa;--text-dim:#9898b0;--text-dimmer:#5a5a78;--accent:#c8b4f0;--accent-glow:rgba(200,180,240,.15);--accent2:#f0c4a0;--accent3:#a0e4c8;--accent4:#f0a0b4;--accent5:#a0c8f0;--accent6:#f0e0a0;--accent7:#e0a0f0;--accent8:#a0f0e0;--accent9:#f0b0a0;--accent10:#b0d4a0;--r:14px;--r-sm:8px;--font-body:'DM Mono',monospace}
-  html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:var(--font-body);font-size:14px;touch-action:pan-y}
+  :root{--bg:#0a0a0f;--bg-gradient:#0a0a0f;--surface:#16161f;--surface2:#1e1e2a;--border:#2e2e3e;--text:#f4f4fa;--text-dim:#9898b0;--text-dimmer:#5a5a78;--accent:#c8b4f0;--accent-glow:rgba(200,180,240,.15);--accent2:#f0c4a0;--accent3:#a0e4c8;--accent4:#f0a0b4;--accent5:#a0c8f0;--accent6:#f0e0a0;--accent7:#e0a0f0;--accent8:#a0f0e0;--accent9:#f0b0a0;--accent10:#b0d4a0;--r:14px;--r-sm:8px;--font-body:'DM Mono',monospace}
+  html,body{height:100%;overflow:hidden;background:var(--bg-gradient);color:var(--text);font-family:var(--font-body);font-size:14px;touch-action:pan-y}
   #app{height:100vh;display:flex;flex-direction:column;max-width:420px;margin:0 auto;position:relative;overflow:hidden}
   .header{padding:52px 24px 12px;flex-shrink:0;background:var(--bg);position:relative;z-index:10}
   .header-top{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:4px}
@@ -4229,18 +4229,12 @@ function renderDurationWellnessCharts(){
 // ══ SETTINGS & THEMING ══
 const DEFAULT_TEXT={text:'#f4f4fa',textDim:'#9898b0',textDimmer:'#5a5a78'};
 const THEMES=[
-  // Apple Dark Mode — true black bg, system gray surface, Apple Blue accent
-  {id:'midnight', name:'Midnight', bg:'#000000', surface:'#1c1c1e', surface2:'#2c2c2e', border:'#38383a', accent:'#0a84ff', ...DEFAULT_TEXT},
-  // Vercel/Emil — near-black warm zinc, violet accent
-  {id:'obsidian', name:'Obsidian', bg:'#09090b', surface:'#18181b', surface2:'#27272a', border:'#3f3f46', accent:'#a78bfa', ...DEFAULT_TEXT},
-  // Shadcn dark — slate-tinted deep navy, sky accent
-  {id:'abyss',    name:'Abyss',    bg:'#020817', surface:'#0f172a', surface2:'#1e293b', border:'#334155', accent:'#38bdf8', ...DEFAULT_TEXT},
-  // Warm dusk — deep purple-black, fuchsia accent
-  {id:'dusk',     name:'Dusk',     bg:'#0d0a14', surface:'#1a1428', surface2:'#261e3c', border:'#3d3060', accent:'#e879f9', ...DEFAULT_TEXT},
-  // Warm ember — deep brown-black, golden accent
-  {id:'ember',    name:'Ember',    bg:'#0c0800', surface:'#1c1408', surface2:'#2c2010', border:'#4a3418', accent:'#fbbf24', ...DEFAULT_TEXT},
-  // Apple Light — system background, iOS gray surface, Apple Blue accent
-  {id:'chalk',    name:'Chalk',    bg:'#f5f5f7', surface:'#ffffff',  surface2:'#f2f2f7', border:'#d1d1d6', accent:'#007aff', text:'#1d1d1f', textDim:'#515154', textDimmer:'#a1a1a6'},
+  {id:'midnight', name:'Midnight', bg:'#000000', bgGrad:'linear-gradient(160deg,#000000 0%,#0a0a0f 100%)', surface:'#1c1c1e', surface2:'#2c2c2e', border:'#38383a', accent:'#0a84ff', ...DEFAULT_TEXT},
+  {id:'obsidian', name:'Obsidian', bg:'#09090b', bgGrad:'linear-gradient(160deg,#000000 0%,#18181b 100%)', surface:'#18181b', surface2:'#27272a', border:'#3f3f46', accent:'#a78bfa', ...DEFAULT_TEXT},
+  {id:'abyss',    name:'Abyss',    bg:'#020817', bgGrad:'linear-gradient(160deg,#000000 0%,#030e28 100%)', surface:'#0f172a', surface2:'#1e293b', border:'#334155', accent:'#38bdf8', ...DEFAULT_TEXT},
+  {id:'dusk',     name:'Dusk',     bg:'#0d0a14', bgGrad:'linear-gradient(160deg,#000000 0%,#1c0a30 100%)', surface:'#1a1428', surface2:'#261e3c', border:'#3d3060', accent:'#e879f9', ...DEFAULT_TEXT},
+  {id:'ember',    name:'Ember',    bg:'#0c0800', bgGrad:'linear-gradient(160deg,#040100 0%,#221200 100%)', surface:'#1c1408', surface2:'#2c2010', border:'#4a3418', accent:'#fbbf24', ...DEFAULT_TEXT},
+  {id:'chalk',    name:'Chalk',    bg:'#f5f5f7', bgGrad:'linear-gradient(160deg,#dde4f0 0%,#f5f5f7 100%)', surface:'#ffffff',  surface2:'#f2f2f7', border:'#d1d1d6', accent:'#007aff', text:'#1d1d1f', textDim:'#515154', textDimmer:'#a1a1a6'},
 ];
 
 const FONT_OPTIONS=[
@@ -4254,41 +4248,41 @@ const FONT_OPTIONS=[
 
 const ACCENT_SWATCHES=['#0a84ff','#30d158','#ffd60a','#ff375f','#a78bfa','#38bdf8','#e879f9','#fbbf24','#34d399','#f472b6'];
 const SURFACE_OPTIONS=[
-  // Apple system grays
-  {surface:'#1c1c1e',surface2:'#2c2c2e',label:'System'},
-  {surface:'#18181b',surface2:'#27272a',label:'Zinc'},
-  // Warm
-  {surface:'#1c1408',surface2:'#2c2010',label:'Ember'},
-  {surface:'#1e0c14',surface2:'#2e1822',label:'Rose'},
-  // Cool
-  {surface:'#0f172a',surface2:'#1e293b',label:'Slate'},
-  {surface:'#0c1a14',surface2:'#162a20',label:'Forest'},
-  // Mid-tone
-  {surface:'#1a1428',surface2:'#261e3c',label:'Dusk'},
-  // Light
-  {surface:'#ffffff', surface2:'#f2f2f7',label:'White'},
+  // ── Darks ──
+  {surface:'#1c1c1e',surface2:'#2c2c2e',label:'Carbon'},   // Apple system dark
+  {surface:'#18181b',surface2:'#27272a',label:'Zinc'},      // Neutral zinc
+  {surface:'#1a1428',surface2:'#28204a',label:'Violet'},    // Deep purple
+  {surface:'#1c1408',surface2:'#2e1e08',label:'Amber'},     // Warm amber
+  {surface:'#0c1a14',surface2:'#142a1e',label:'Sage'},      // Forest green
+  {surface:'#1e0c14',surface2:'#2e1424',label:'Rose'},      // Deep rose
+  // ── Mids ──
+  {surface:'#2e2e32',surface2:'#3e3e44',label:'Pewter'},    // Mid charcoal
+  // ── Light ──
+  {surface:'#ffffff', surface2:'#f2f2f7',label:'White'},    // Pure white (pairs with Chalk/Cream bg)
 ];
 const BG_OPTIONS=[
-  // True blacks
-  {bg:'#000000',label:'Black'},
-  {bg:'#09090b',label:'Zinc'},
-  // Tinted darks
-  {bg:'#020817',label:'Slate'},
-  {bg:'#0d0a14',label:'Dusk'},
-  {bg:'#0c0800',label:'Ember'},
-  {bg:'#080012',label:'Grape'},
-  {bg:'#001a0c',label:'Forest'},
-  {bg:'#00080d',label:'Abyss'},
-  // Light
-  {bg:'#f5f5f7',label:'Apple'},
-  {bg:'#fafaf9',label:'Cream'},
+  // ── Pure black → colored darks ──
+  {bg:'#000000',bgGrad:'linear-gradient(160deg,#000000 0%,#0a0a0f 100%)',label:'Void'},
+  {bg:'#020817',bgGrad:'linear-gradient(160deg,#000000 0%,#030e28 100%)',label:'Abyss'},
+  {bg:'#080012',bgGrad:'linear-gradient(160deg,#000000 0%,#150030 100%)',label:'Nebula'},
+  {bg:'#0c0800',bgGrad:'linear-gradient(160deg,#040100 0%,#221200 100%)',label:'Ember'},
+  {bg:'#00100a',bgGrad:'linear-gradient(160deg,#000000 0%,#001c10 100%)',label:'Forest'},
+  {bg:'#0d0a14',bgGrad:'linear-gradient(160deg,#000000 0%,#1c0a30 100%)',label:'Dusk'},
+  // ── Neutral grays ──
+  {bg:'#141414',bgGrad:'linear-gradient(160deg,#080808 0%,#242424 100%)',label:'Graphite'},
+  {bg:'#3a3a3c',bgGrad:'linear-gradient(160deg,#1c1c1e 0%,#3e3e42 100%)',label:'Pewter'},
+  // ── Lights ──
+  {bg:'#f5f5f7',bgGrad:'linear-gradient(160deg,#dde4f0 0%,#f5f5f7 100%)',label:'Chalk'},
+  {bg:'#fafaf9',bgGrad:'linear-gradient(160deg,#e8e0d4 0%,#fafaf9 100%)',label:'Cream'},
 ];
 
 let themePrefs = JSON.parse(localStorage.getItem('ritualTheme')||'{}');
 
 function applyTheme(prefs){
   const root=document.documentElement.style;
-  if(prefs.bg)        root.setProperty('--bg',         prefs.bg);
+  if(prefs.bg)        root.setProperty('--bg',          prefs.bg);
+  // gradient: use bgGrad if present, else fall back to solid bg
+  root.setProperty('--bg-gradient', prefs.bgGrad || prefs.bg || '#0a0a0f');
   if(prefs.surface)   root.setProperty('--surface',    prefs.surface);
   if(prefs.surface2)  root.setProperty('--surface2',   prefs.surface2);
   if(prefs.border)    root.setProperty('--border',     prefs.border);
@@ -4368,10 +4362,12 @@ function renderSettings(){
   BG_OPTIONS.forEach(o=>{
     const sw=document.createElement('div');
     sw.className='bg-swatch'+(themePrefs.bg===o.bg?' active':'');
-    sw.style.background=o.bg;
+    sw.style.background=o.bgGrad||o.bg;
+    const isLight=parseInt(o.bg.slice(1),16)>0x888888;
+    sw.style.color=isLight?'rgba(0,0,0,.5)':'rgba(255,255,255,.55)';
     sw.textContent=o.label;
     sw.addEventListener('click',()=>{
-      themePrefs={...themePrefs,bg:o.bg,themeId:null};
+      themePrefs={...themePrefs,bg:o.bg,bgGrad:o.bgGrad||null,themeId:null};
       saveThemePrefs();applyTheme(themePrefs);renderSettings();
     });
     bgEl.appendChild(sw);
@@ -4385,8 +4381,8 @@ function renderSettings(){
       const sw=document.createElement('div');
       sw.className='surface-swatch'+(themePrefs.surface===o.surface?' active':'');
       const isLight=parseInt(o.surface.slice(1),16)>0x888888;
-      sw.style.background=o.surface;
-      sw.style.color=isLight?'rgba(0,0,0,.4)':'rgba(255,255,255,.45)';
+      sw.style.background=`linear-gradient(135deg,${o.surface} 0%,${o.surface2} 100%)`;
+      sw.style.color=isLight?'rgba(0,0,0,.45)':'rgba(255,255,255,.5)';
       sw.textContent=o.label;
       sw.addEventListener('click',()=>{
         themePrefs={...themePrefs,surface:o.surface,surface2:o.surface2,themeId:null};
