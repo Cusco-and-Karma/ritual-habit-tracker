@@ -4229,11 +4229,18 @@ function renderDurationWellnessCharts(){
 // ══ SETTINGS & THEMING ══
 const DEFAULT_TEXT={text:'#f4f4fa',textDim:'#9898b0',textDimmer:'#5a5a78'};
 const THEMES=[
-  {id:'midnight', name:'Midnight', bg:'#000000', bgGrad:'linear-gradient(160deg,#000000 0%,#0a0a0f 100%)', surface:'#1c1c1e', surface2:'#2c2c2e', border:'#38383a', accent:'#0a84ff', ...DEFAULT_TEXT},
+  // ── Keep ──
   {id:'obsidian', name:'Obsidian', bg:'#09090b', bgGrad:'linear-gradient(160deg,#000000 0%,#18181b 100%)', surface:'#18181b', surface2:'#27272a', border:'#3f3f46', accent:'#a78bfa', ...DEFAULT_TEXT},
-  {id:'abyss',    name:'Abyss',    bg:'#020817', bgGrad:'linear-gradient(160deg,#000000 0%,#030e28 100%)', surface:'#0f172a', surface2:'#1e293b', border:'#334155', accent:'#38bdf8', ...DEFAULT_TEXT},
-  {id:'dusk',     name:'Dusk',     bg:'#0d0a14', bgGrad:'linear-gradient(160deg,#000000 0%,#1c0a30 100%)', surface:'#1a1428', surface2:'#261e3c', border:'#3d3060', accent:'#e879f9', ...DEFAULT_TEXT},
-  {id:'ember',    name:'Ember',    bg:'#0c0800', bgGrad:'linear-gradient(160deg,#040100 0%,#221200 100%)', surface:'#1c1408', surface2:'#2c2010', border:'#4a3418', accent:'#fbbf24', ...DEFAULT_TEXT},
+  // ── New ──
+  // Deep forest-black, emerald accent
+  {id:'forest',   name:'Forest',   bg:'#001e0e', bgGrad:'linear-gradient(160deg,#000c06 0%,#003018 100%)', surface:'#0c2018', surface2:'#14301e', border:'#1e4428', accent:'#34d399', ...DEFAULT_TEXT},
+  // Warm cognac-black, amber accent
+  {id:'cognac',   name:'Cognac',   bg:'#1a0e00', bgGrad:'linear-gradient(160deg,#0e0600 0%,#301a00 100%)', surface:'#2c1a08', surface2:'#3e2810', border:'#543c18', accent:'#fb923c', ...DEFAULT_TEXT},
+  // Deep indigo-black, sky accent
+  {id:'indigo',   name:'Indigo',   bg:'#10042a', bgGrad:'linear-gradient(160deg,#080018 0%,#1e0840 100%)', surface:'#1c1040', surface2:'#281858', border:'#3c2870', accent:'#818cf8', ...DEFAULT_TEXT},
+  // Dark teal, mint accent
+  {id:'tidal',    name:'Tidal',    bg:'#001c1c', bgGrad:'linear-gradient(160deg,#000c0c 0%,#002e2e 100%)', surface:'#0a2828', surface2:'#123434', border:'#1e4444', accent:'#2dd4bf', ...DEFAULT_TEXT},
+  // ── Keep ──
   {id:'chalk',    name:'Chalk',    bg:'#f5f5f7', bgGrad:'linear-gradient(160deg,#dde4f0 0%,#f5f5f7 100%)', surface:'#ffffff',  surface2:'#f2f2f7', border:'#d1d1d6', accent:'#007aff', text:'#1d1d1f', textDim:'#515154', textDimmer:'#a1a1a6'},
 ];
 
@@ -4248,30 +4255,30 @@ const FONT_OPTIONS=[
 
 const ACCENT_SWATCHES=['#0a84ff','#30d158','#ffd60a','#ff375f','#a78bfa','#38bdf8','#e879f9','#fbbf24','#34d399','#f472b6'];
 const SURFACE_OPTIONS=[
-  // ── Darks ──
-  {surface:'#1c1c1e',surface2:'#2c2c2e',label:'Carbon'},   // Apple system dark
-  {surface:'#18181b',surface2:'#27272a',label:'Zinc'},      // Neutral zinc
-  {surface:'#1a1428',surface2:'#28204a',label:'Violet'},    // Deep purple
-  {surface:'#1c1408',surface2:'#2e1e08',label:'Amber'},     // Warm amber
-  {surface:'#0c1a14',surface2:'#142a1e',label:'Sage'},      // Forest green
-  {surface:'#1e0c14',surface2:'#2e1424',label:'Rose'},      // Deep rose
-  // ── Mids ──
-  {surface:'#2e2e32',surface2:'#3e3e44',label:'Pewter'},    // Mid charcoal
-  // ── Light ──
-  {surface:'#ffffff', surface2:'#f2f2f7',label:'White'},    // Pure white (pairs with Chalk/Cream bg)
+  // ── Keep ──
+  {surface:'#1c1c1e',surface2:'#2c2c2e',label:'Carbon'},   // near-black neutral
+  // ── Distinct mid-darks ──
+  {surface:'#162036',surface2:'#1e2c48',label:'Slate'},     // clearly blue-steel
+  {surface:'#221630',surface2:'#322248',label:'Grape'},     // clearly purple
+  {surface:'#2c1a08',surface2:'#3e2810',label:'Cognac'},    // clearly warm amber-brown
+  {surface:'#0e2016',surface2:'#162c1e',label:'Moss'},      // clearly forest green
+  {surface:'#2a1a28',surface2:'#3a2438',label:'Mauve'},     // muted rose-purple
+  // ── Keep ──
+  {surface:'#2e2e32',surface2:'#3e3e44',label:'Pewter'},    // mid charcoal
+  {surface:'#ffffff', surface2:'#f2f2f7',label:'White'},    // light (Chalk/Cream bg)
 ];
 const BG_OPTIONS=[
-  // ── Pure black → colored darks ──
-  {bg:'#000000',bgGrad:'linear-gradient(160deg,#000000 0%,#0a0a0f 100%)',label:'Void'},
-  {bg:'#020817',bgGrad:'linear-gradient(160deg,#000000 0%,#030e28 100%)',label:'Abyss'},
-  {bg:'#080012',bgGrad:'linear-gradient(160deg,#000000 0%,#150030 100%)',label:'Nebula'},
-  {bg:'#0c0800',bgGrad:'linear-gradient(160deg,#040100 0%,#221200 100%)',label:'Ember'},
-  {bg:'#00100a',bgGrad:'linear-gradient(160deg,#000000 0%,#001c10 100%)',label:'Forest'},
-  {bg:'#0d0a14',bgGrad:'linear-gradient(160deg,#000000 0%,#1c0a30 100%)',label:'Dusk'},
-  // ── Neutral grays ──
-  {bg:'#141414',bgGrad:'linear-gradient(160deg,#080808 0%,#242424 100%)',label:'Graphite'},
+  // ── Visible colorful darks ──
+  {bg:'#06061a',bgGrad:'linear-gradient(160deg,#000010 0%,#0e0e3a 100%)',label:'Midnight'},
+  {bg:'#14042e',bgGrad:'linear-gradient(160deg,#080018 0%,#200840 100%)',label:'Indigo'},
+  {bg:'#1a0e00',bgGrad:'linear-gradient(160deg,#0e0600 0%,#301a00 100%)',label:'Walnut'},
+  {bg:'#001e0e',bgGrad:'linear-gradient(160deg,#000c06 0%,#003018 100%)',label:'Spruce'},
+  {bg:'#14101c',bgGrad:'linear-gradient(160deg,#0c0810 0%,#241830 100%)',label:'Mauve'},
+  // ── Neutral mid-darks ──
+  {bg:'#1a1a1a',bgGrad:'linear-gradient(160deg,#0e0e0e 0%,#2e2e2e 100%)',label:'Graphite'},
+  {bg:'#161a26',bgGrad:'linear-gradient(160deg,#0e1018 0%,#24293c 100%)',label:'Steel'},
+  // ── Keep ──
   {bg:'#3a3a3c',bgGrad:'linear-gradient(160deg,#1c1c1e 0%,#3e3e42 100%)',label:'Pewter'},
-  // ── Lights ──
   {bg:'#f5f5f7',bgGrad:'linear-gradient(160deg,#dde4f0 0%,#f5f5f7 100%)',label:'Chalk'},
   {bg:'#fafaf9',bgGrad:'linear-gradient(160deg,#e8e0d4 0%,#fafaf9 100%)',label:'Cream'},
 ];
