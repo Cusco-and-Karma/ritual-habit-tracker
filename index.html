@@ -121,6 +121,21 @@
   .progress-text h3{font-family:'DM Serif Display',serif;font-size:20px;color:var(--text);margin-bottom:4px}
   .progress-text p{font-size:12px;color:var(--text-dim);line-height:1.5}
   .swipe-hint{font-size:10px;color:var(--text-dimmer);text-align:center;padding:8px 0 0;letter-spacing:.04em}
+  /* ── Export Report ── */
+  .export-rpt-btn{width:100%;padding:14px 16px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);display:flex;align-items:center;justify-content:space-between;cursor:pointer;transition:border-color .2s,background .2s;margin-bottom:10px}
+  .export-rpt-btn:hover{border-color:var(--accent);background:var(--surface2)}
+  .export-rpt-icon{width:36px;height:36px;border-radius:var(--r-sm);background:var(--accent-glow);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+  /* ── Digital Wellness card & modal ── */
+  .dw-settings-card{width:100%;padding:14px 16px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);display:flex;align-items:center;justify-content:space-between;cursor:pointer;transition:border-color .2s,background .2s;margin-bottom:10px;text-align:left}
+  .dw-settings-card:hover{border-color:var(--accent)}
+  .dw-settings-icon{width:36px;height:36px;border-radius:var(--r-sm);background:rgba(48,209,88,.12);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+  .dw-entry-row{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+  .dw-entry-label{font-size:11px;color:var(--text-dim);width:110px;flex-shrink:0;letter-spacing:.03em}
+  .dw-num-input{background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-sm);padding:8px 10px;font-family:'DM Mono',monospace;font-size:13px;color:var(--text);width:58px;text-align:center;-webkit-appearance:none;appearance:none}
+  .dw-unit{font-size:11px;color:var(--text-dimmer)}
+  .dw-save-btn{background:var(--accent);color:var(--bg);border:none;border-radius:var(--r-sm);padding:11px 18px;font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;transition:opacity .15s;width:100%;margin-top:6px}
+  .dw-save-btn:hover{opacity:.85}
+  .dw-saved-tag{font-size:11px;color:var(--accent3);text-align:center;margin-top:8px;min-height:16px;transition:opacity .3s}
   /* Duration vs Wellness dual chart */
   .dur-well-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px;margin-bottom:10px}
   .dur-well-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;gap:8px}
@@ -880,6 +895,33 @@
         <svg id="wellChart2Svg" width="100%" height="90" style="display:block;overflow:visible"></svg>
       </div>
     </div>
+    <div id="screenTimeSection" style="display:none">
+      <div class="section-label">screen time vs wellness</div>
+      <div class="dur-well-wrap">
+        <div class="dur-well-header">
+          <div class="dur-well-title">Screen Time</div>
+          <div class="dur-well-range-btns">
+            <button class="dur-well-range-btn active" data-st-range="14">14D</button>
+            <button class="dur-well-range-btn" data-st-range="30">30D</button>
+            <button class="dur-well-range-btn" data-st-range="90">90D</button>
+          </div>
+        </div>
+        <div class="dur-chart-row-label">
+          <div class="dur-chart-dot" style="background:#30d158"></div>
+          <div class="dur-chart-lbl">Screen Time (hrs)</div>
+          <div class="dur-chart-avg" id="stChartAvg"></div>
+        </div>
+        <svg id="stChartSvg" width="100%" height="90" style="display:block;overflow:visible"></svg>
+        <div class="dur-chart-divider"></div>
+        <div class="dur-chart-row-label">
+          <div class="dur-chart-dot" style="background:var(--accent2)"></div>
+          <div class="dur-chart-lbl">Wellness (1–10)</div>
+          <div class="dur-chart-avg" id="stWellAvg"></div>
+        </div>
+        <svg id="stWellSvg" width="100%" height="90" style="display:block;overflow:visible"></svg>
+        <div style="font-size:10px;color:var(--text-dimmer);font-family:'DM Mono',monospace;margin-top:10px;letter-spacing:.04em;text-align:center">Log screen time via Settings → Data Sources</div>
+      </div>
+    </div>
     <div class="section-label">rolling completion rate</div>
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:4px" id="trendsRollingGrid"></div>
     <div class="section-label">habit quality <span style="font-style:italic;text-transform:none;letter-spacing:0;color:var(--text-dimmer);font-size:9px">- selected range</span></div>
@@ -1242,6 +1284,30 @@
       <!-- rendered by renderSettings -->
     </div>
 
+    <div class="section-label">export</div>
+    <button class="export-rpt-btn" id="exportReportBtn">
+      <div style="display:flex;align-items:center;gap:12px">
+        <div class="export-rpt-icon">📊</div>
+        <div>
+          <div style="font-family:'DM Serif Display',serif;font-size:14px;color:var(--text)">Progress Report</div>
+          <div style="font-size:11px;color:var(--text-dimmer);margin-top:1px">Stats, trends &amp; tips — save as PDF</div>
+        </div>
+      </div>
+      <svg viewBox="0 0 24 24" width="16" height="16" stroke="var(--text-dimmer)" fill="none" stroke-width="2"><polyline points="9 6 15 12 9 18"/></svg>
+    </button>
+
+    <div class="section-label">data sources</div>
+    <button class="dw-settings-card" id="dwSettingsBtn">
+      <div style="display:flex;align-items:center;gap:12px">
+        <div class="dw-settings-icon">📱</div>
+        <div>
+          <div style="font-family:'DM Serif Display',serif;font-size:14px;color:var(--text)">Digital Wellness</div>
+          <div style="font-size:11px;color:var(--text-dimmer);margin-top:1px">Log screen time &amp; pickups</div>
+        </div>
+      </div>
+      <svg viewBox="0 0 24 24" width="16" height="16" stroke="var(--text-dimmer)" fill="none" stroke-width="2"><polyline points="9 6 15 12 9 18"/></svg>
+    </button>
+
     <div class="section-label">account</div>
     <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px;margin-bottom:10px">
       <div style="font-size:12px;color:var(--text-dim);margin-bottom:12px" id="settingsEmail"></div>
@@ -1337,6 +1403,57 @@
 </div>
 
 <!-- GARMIN CONNECT DETAIL PAGE -->
+<div class="modal-overlay" id="dwModal" role="dialog" aria-modal="true">
+  <div class="modal-sheet" style="padding-bottom:48px">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <button class="back-btn" id="dwBackBtn" aria-label="Close"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></button>
+      <div class="sheet-title">Digital Wellness</div>
+    </div>
+    <!-- Hero -->
+    <div style="display:flex;flex-direction:column;align-items:center;padding:16px 0 20px;border-bottom:1px solid var(--border);margin-bottom:20px">
+      <div style="font-size:48px;margin-bottom:10px">📱</div>
+      <div style="font-family:'DM Serif Display',serif;font-size:20px;color:var(--text);margin-bottom:6px">Screen Time Tracking</div>
+      <div style="font-size:12px;color:var(--text-dim);text-align:center;line-height:1.6;max-width:280px">Log your daily screen time and phone pickups to see how device usage affects your wellness.</div>
+    </div>
+    <!-- Manual entry -->
+    <div style="margin-bottom:20px">
+      <div class="field-label" style="margin-bottom:14px">Log Today's Usage</div>
+      <div class="dw-entry-row">
+        <div class="dw-entry-label">Screen time</div>
+        <input class="dw-num-input" id="dwHrInput" type="number" min="0" max="24" placeholder="0" aria-label="Hours"/>
+        <div class="dw-unit">hr</div>
+        <input class="dw-num-input" id="dwMinInput" type="number" min="0" max="59" placeholder="0" aria-label="Minutes"/>
+        <div class="dw-unit">min</div>
+      </div>
+      <div class="dw-entry-row">
+        <div class="dw-entry-label">Phone pickups</div>
+        <input class="dw-num-input" id="dwPickupInput" type="number" min="0" max="999" placeholder="0" aria-label="Pickups"/>
+        <div class="dw-unit">times</div>
+      </div>
+      <button class="dw-save-btn" id="dwSaveBtn">Save Today</button>
+      <div class="dw-saved-tag" id="dwSavedTag" style="opacity:0"> </div>
+    </div>
+    <!-- About auto-sync -->
+    <div style="border-top:1px solid var(--border);padding-top:20px">
+      <div class="field-label" style="margin-bottom:12px">About Auto-Sync</div>
+      <div style="background:var(--accent-glow);border:1px solid rgba(200,180,240,.2);border-radius:var(--r-sm);padding:12px 14px;font-size:11px;color:var(--text-dim);line-height:1.6;margin-bottom:14px">
+        <strong style="color:var(--accent)">Note:</strong> Android's Digital Wellness API is only accessible to native apps with system-level permissions — it cannot be read from a browser. The Ritual native app (coming soon) will auto-sync this data. Until then, log it manually here.
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="display:flex;gap:12px;align-items:flex-start">
+          <div style="font-size:16px;flex-shrink:0">📲</div>
+          <div style="font-size:11px;color:var(--text-dim);line-height:1.5">Open <strong style="color:var(--text)">Settings → Digital Wellbeing</strong> on your Android device to see your daily screen time.</div>
+        </div>
+        <div style="display:flex;gap:12px;align-items:flex-start">
+          <div style="font-size:16px;flex-shrink:0">📊</div>
+          <div style="font-size:11px;color:var(--text-dim);line-height:1.5">Log it here and it will appear as a chart in <strong style="color:var(--text)">Insights → Trends</strong> compared to your daily wellness.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="garminModal" role="dialog" aria-modal="true">
   <div class="modal-sheet" style="padding-bottom:48px">
     <div class="sheet-handle"></div>
@@ -3794,6 +3911,190 @@ function renderTrends(){
     }
   }
   renderDurationWellnessCharts();
+  renderScreenTimeInsights();
+}
+
+// ── Screen time state ──
+let stWellRange=14;
+
+function getScreenTimeData(day){
+  if(!completions._screenTime)completions._screenTime={};
+  return completions._screenTime[day]||{screenMins:0,pickups:0};
+}
+function saveScreenTimeData(day,data){
+  if(!completions._screenTime)completions._screenTime={};
+  completions._screenTime[day]=data;save();
+}
+
+function openDWModal(){
+  const m=document.getElementById('dwModal');if(!m)return;
+  m.classList.add('open');
+  const today=todayKey();const d=getScreenTimeData(today);
+  const hrs=Math.floor((d.screenMins||0)/60),mins=(d.screenMins||0)%60;
+  const hi=document.getElementById('dwHrInput');const mi=document.getElementById('dwMinInput');const pi=document.getElementById('dwPickupInput');
+  if(hi)hi.value=hrs||'';if(mi)mi.value=mins||'';if(pi)pi.value=d.pickups||'';
+  const tag=document.getElementById('dwSavedTag');if(tag){tag.style.opacity='0';tag.textContent=' ';}
+}
+function closeDWModal(){const m=document.getElementById('dwModal');if(m)m.classList.remove('open');}
+
+function renderScreenTimeInsights(){
+  const section=document.getElementById('screenTimeSection');if(!section)return;
+  // Check if any screen time data exists
+  const hasData=Object.values((completions._screenTime)||{}).some(d=>d.screenMins>0||d.pickups>0);
+  section.style.display=hasData?'':'none';
+  if(!hasData)return;
+  // Range buttons
+  document.querySelectorAll('[data-st-range]').forEach(btn=>{
+    btn.classList.toggle('active',Number(btn.dataset.stRange)===stWellRange);
+    btn.onclick=()=>{stWellRange=Number(btn.dataset.stRange);renderScreenTimeInsights();};
+  });
+  // Build points
+  const stPoints=[],swPoints=[];
+  for(let i=stWellRange-1;i>=0;i--){
+    const day=dateKey(-i);
+    const d=getScreenTimeData(day);
+    stPoints.push({day,val:(d.screenMins||0)/60});
+    swPoints.push({day,val:getDayData(day).wellness||0});
+  }
+  const maxST=Math.max(1,...stPoints.map(p=>p.val))*1.2;
+  renderDurSvgChart(document.getElementById('stChartSvg'),stPoints,'#30d158',maxST);
+  const nzST=stPoints.filter(p=>p.val>0);
+  const avgST=nzST.length?nzST.reduce((s,p)=>s+p.val,0)/nzST.length:0;
+  const stAvgEl=document.getElementById('stChartAvg');if(stAvgEl)stAvgEl.textContent=avgST>0?`avg ${avgST.toFixed(1)}h`:'';
+  const accent2=getComputedStyle(document.documentElement).getPropertyValue('--accent2').trim()||'#f0c4a0';
+  renderDurSvgChart(document.getElementById('stWellSvg'),swPoints,accent2,10);
+  const nzW=swPoints.filter(p=>p.val>0);
+  const avgW=nzW.length?nzW.reduce((s,p)=>s+p.val,0)/nzW.length:0;
+  const stWellAvgEl=document.getElementById('stWellAvg');if(stWellAvgEl)stWellAvgEl.textContent=avgW>0?`avg ${avgW.toFixed(1)}/10`:'';
+}
+
+function generateReport(){
+  const range=30;
+  const today=todayKey();
+  const[ty,tm,td]=today.split('-').map(Number);
+  const months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const todayFmt=`${months[tm-1]} ${td}, ${ty}`;
+  const startObj=new Date(ty,tm-1,td);startObj.setDate(startObj.getDate()-(range-1));
+  const startFmt=`${months[startObj.getMonth()]} ${startObj.getDate()}, ${startObj.getFullYear()}`;
+  // Stats
+  let totalComps=0,totalPossible=0,wellSum=0,wellCount=0,topStreak=0,topStreakName='';
+  const habitStats=habits.map(h=>{
+    let done=0,rSum=0,rCnt=0,dSum=0,dCnt=0;
+    for(let i=0;i<range;i++){
+      const day=dateKey(-i);
+      if(isCompleted(h.id,day))done++;
+      const r=getHabitDayRating(h.id,day);if(r>0){rSum+=r;rCnt++;}
+      if(h.durationEnabled){const m=getHabitDurationMins(h.id,day);if(m>0){dSum+=m;dCnt++;}}
+    }
+    const pct=Math.round((done/range)*100);
+    const streak=getStreak(h.id);
+    if(streak>topStreak){topStreak=streak;topStreakName=h.name;}
+    totalComps+=done;totalPossible+=range;
+    return{h,done,pct,streak,avgRating:rCnt?rSum/rCnt:null,avgDuration:dCnt?dSum/dCnt:null};
+  });
+  for(let i=0;i<range;i++){const dd=getDayData(dateKey(-i));if(dd.wellness>0){wellSum+=dd.wellness;wellCount++;}}
+  const avgComp=totalPossible?Math.round((totalComps/totalPossible)*100):0;
+  const avgWell=wellCount?wellSum/wellCount:0;
+  // Recent notes
+  const recentNotes=[];
+  for(let i=0;i<range;i++){
+    const day=dateKey(-i);const dd=getDayData(day);
+    if(dd.reflection&&dd.reflection.trim()&&recentNotes.length<7){
+      const[y,m,d]=day.split('-').map(Number);
+      recentNotes.push({text:dd.reflection.trim(),dateLabel:`${months[m-1]} ${d}`});
+    }
+  }
+  // Tips
+  const tips=[];
+  const sorted=[...habitStats].sort((a,b)=>a.pct-b.pct);
+  if(sorted.length&&sorted[0].pct<50)tips.push(`<strong>${escapeHtml(sorted[0].h.name)}</strong> has only ${sorted[0].pct}% completion over 30 days. Consider a reminder or a reduced frequency goal.`);
+  if(sorted.length&&sorted[sorted.length-1].pct>=80)tips.push(`<strong>${escapeHtml(sorted[sorted.length-1].h.name)}</strong> is your strongest habit at ${sorted[sorted.length-1].pct}% — stack other habits around it.`);
+  if(topStreak>7)tips.push(`You're on a <strong>${topStreak}-day streak</strong> with <strong>${escapeHtml(topStreakName)}</strong>. This consistency signals deep habit formation.`);
+  if(avgWell>0&&avgComp>0){if(avgWell>=7)tips.push(`Your average wellness of <strong>${avgWell.toFixed(1)}/10</strong> is strong. Your current routine is working.`);else if(avgWell<5)tips.push(`Your wellness average of <strong>${avgWell.toFixed(1)}/10</strong> is below midrange. Prioritize sleep and recovery habits.`);}
+  if(!tips.length)tips.push('Keep logging daily — 21+ days of data is where patterns become clear and actionable.');
+  // Wellness bar sparkline SVG
+  const wellPoints=[];for(let i=range-1;i>=0;i--)wellPoints.push(getDayData(dateKey(-i)).wellness||0);
+  const bW=6,gap=2,svgW=(bW+gap)*range,svgH=40;
+  const bars=wellPoints.map((v,i)=>{const h2=v?Math.max(2,Math.round((v/10)*svgH)):2;const col=v>=7?'#30d158':v>=4?'#ffd60a':'#ff375f';return `<rect x="${i*(bW+gap)}" y="${svgH-h2}" width="${bW}" height="${h2}" rx="2" fill="${v?col:'#3a3a3c'}"/>`;}).join('');
+  const sparkSvg=`<svg xmlns="http://www.w3.org/2000/svg" width="${svgW}" height="${svgH}" viewBox="0 0 ${svgW} ${svgH}">${bars}</svg>`;
+  const userLabel=currentUser?currentUser.email:'Guest';
+  const html=`<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ritual Report — ${todayFmt}</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#f5f5f7;font-family:'DM Mono',monospace;color:#1d1d1f;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.page{max-width:720px;margin:0 auto;padding:36px 24px 60px}
+.report-header{display:flex;justify-content:space-between;align-items:flex-end;padding-bottom:20px;border-bottom:2px solid #1d1d1f;margin-bottom:28px}
+.report-title{font-family:'DM Serif Display',serif;font-size:36px;color:#1d1d1f;line-height:1;letter-spacing:-.5px}
+.report-subtitle{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:#86868b;margin-top:5px}
+.report-meta{text-align:right;font-size:11px;color:#86868b;line-height:1.7}
+.sec{font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:#86868b;font-family:'DM Mono',monospace;margin:28px 0 14px;padding-bottom:6px;border-bottom:1px solid #d1d1d6}
+.sum-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.sum-card{background:#fff;border:1px solid #d1d1d6;border-radius:12px;padding:16px 12px;text-align:center}
+.sum-val{font-family:'DM Serif Display',serif;font-size:26px;color:#1d1d1f;line-height:1}
+.sum-lbl{font-size:9px;letter-spacing:.06em;text-transform:uppercase;color:#86868b;margin-top:4px}
+.h-row{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid #f0f0f0}
+.h-emoji{font-size:18px;width:26px;text-align:center;flex-shrink:0}
+.h-info{flex:1;min-width:0}
+.h-name{font-family:'DM Serif Display',serif;font-size:14px;color:#1d1d1f;margin-bottom:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar-wrap{height:4px;background:#e5e5ea;border-radius:2px}
+.bar-fill{height:4px;border-radius:2px}
+.h-meta{font-size:10px;color:#86868b;margin-top:3px}
+.h-right{text-align:right;flex-shrink:0}
+.h-pct{font-family:'DM Serif Display',serif;font-size:20px;color:#1d1d1f}
+.h-grade{font-size:9px;text-transform:uppercase;letter-spacing:.04em;color:#86868b}
+.tips{display:flex;flex-direction:column;gap:9px}
+.tip{background:#fff;border:1px solid #d1d1d6;border-radius:10px;padding:12px 14px;font-size:12px;color:#515154;line-height:1.55;display:flex;gap:10px}
+.tip-ico{font-size:15px;flex-shrink:0;margin-top:1px}
+.notes{display:flex;flex-direction:column;gap:8px}
+.note{background:#fff;border:1px solid #d1d1d6;border-radius:10px;padding:12px 14px}
+.note-dt{font-size:9px;letter-spacing:.06em;text-transform:uppercase;color:#86868b;margin-bottom:4px}
+.note-txt{font-size:12px;color:#515154;line-height:1.5}
+.well-card{background:#fff;border:1px solid #d1d1d6;border-radius:12px;padding:16px}
+.well-cap{font-size:10px;color:#86868b;margin-top:8px}
+.print-btn{display:block;margin:0 auto 32px;padding:12px 28px;background:#007aff;color:#fff;border:none;border-radius:10px;font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;transition:opacity .15s}
+.print-btn:hover{opacity:.85}
+@media print{.print-btn{display:none!important}.page{padding:16px 16px 40px}body{background:#fff}}
+</style></head>
+<body>
+<div class="page">
+<button class="print-btn" onclick="window.print()">🖨 Save as PDF</button>
+<div class="report-header">
+  <div>
+    <div class="report-title">Ritual</div>
+    <div class="report-subtitle">30-Day Progress Report</div>
+  </div>
+  <div class="report-meta">${userLabel}<br>${startFmt} — ${todayFmt}</div>
+</div>
+<div class="sec">Summary</div>
+<div class="sum-grid">
+  <div class="sum-card"><div class="sum-val">${habits.length}</div><div class="sum-lbl">Habits</div></div>
+  <div class="sum-card"><div class="sum-val">${avgComp}%</div><div class="sum-lbl">Avg Completion</div></div>
+  <div class="sum-card"><div class="sum-val">${topStreak>0?topStreak+'d':'—'}</div><div class="sum-lbl">Top Streak</div></div>
+  <div class="sum-card"><div class="sum-val">${avgWell>0?avgWell.toFixed(1):'—'}</div><div class="sum-lbl">Avg Wellness</div></div>
+</div>
+<div class="sec">Habit Breakdown — Last 30 Days</div>
+${habitStats.length?habitStats.map(s=>{
+  const bc=s.pct>=75?'#30d158':s.pct>=50?'#ffd60a':'#ff375f';
+  const extras=[];
+  if(s.streak>0)extras.push(s.streak+'-day streak');
+  if(s.avgRating)extras.push('effort '+s.avgRating.toFixed(1)+'/5');
+  if(s.avgDuration)extras.push('avg '+(s.avgDuration/60).toFixed(1)+'h/day');
+  return '<div class="h-row"><div class="h-emoji">'+(s.h.emoji||'•')+'</div><div class="h-info"><div class="h-name">'+escapeHtml(s.h.name)+'</div><div class="bar-wrap"><div class="bar-fill" style="width:'+s.pct+'%;background:'+bc+'"></div></div><div class="h-meta">'+s.done+'/'+range+' days'+(extras.length?' · '+extras.join(' · '):'')+' </div></div><div class="h-right"><div class="h-pct">'+s.pct+'%</div><div class="h-grade">'+(s.pct>=75?'Strong':s.pct>=50?'Steady':'Slipping')+'</div></div></div>';
+}).join(''):'<div style="color:#86868b;font-size:12px;padding:12px 0">No habits tracked yet.</div>'}
+<div class="sec">Wellness — 30-Day Trend</div>
+<div class="well-card">${sparkSvg}<div class="well-cap">Daily wellness · ${startFmt} → ${todayFmt} · avg ${avgWell>0?avgWell.toFixed(1)+'/10':'not tracked'}</div></div>
+<div class="sec">Insights &amp; Tips</div>
+<div class="tips">${tips.map((t,i)=>'<div class="tip"><div class="tip-ico">'+['🌿','⚡','🔥','💡','✨'][i%5]+'</div><div>'+t+'</div></div>').join('')}</div>
+${recentNotes.length?'<div class="sec">Recent Reflections</div><div class="notes">'+recentNotes.map(n=>'<div class="note"><div class="note-dt">'+n.dateLabel+'</div><div class="note-txt">'+escapeHtml(n.text).replace(/\n/g,'<br>')+'</div></div>').join('')+'</div>':''}
+<div style="margin-top:40px;text-align:center;font-size:10px;color:#86868b;letter-spacing:.04em">Generated by Ritual Habit Tracker · ${todayFmt}</div>
+</div>
+</body></html>`;
+  const blob=new Blob([html],{type:'text/html'});
+  window.open(URL.createObjectURL(blob),'_blank');
 }
 
 // ── Duration vs Wellness helpers & charts ──
@@ -4150,7 +4451,25 @@ function renderSettings(){
       fontEl.appendChild(btn);
     });
   }
+  // Export report button
+  const expBtn=document.getElementById('exportReportBtn');
+  if(expBtn&&!expBtn._bound){expBtn._bound=true;expBtn.addEventListener('click',generateReport);}
+  // Digital Wellness settings card
+  const dwBtn=document.getElementById('dwSettingsBtn');
+  if(dwBtn&&!dwBtn._bound){dwBtn._bound=true;dwBtn.addEventListener('click',openDWModal);}
 }
+
+// Digital Wellness modal wiring
+document.getElementById('dwBackBtn').addEventListener('click',closeDWModal);
+document.getElementById('dwModal').addEventListener('click',e=>{if(e.target===document.getElementById('dwModal'))closeDWModal();});
+document.getElementById('dwSaveBtn').addEventListener('click',()=>{
+  const hr=parseInt(document.getElementById('dwHrInput').value)||0;
+  const min=parseInt(document.getElementById('dwMinInput').value)||0;
+  const pickups=parseInt(document.getElementById('dwPickupInput').value)||0;
+  saveScreenTimeData(todayKey(),{screenMins:hr*60+min,pickups});
+  const tag=document.getElementById('dwSavedTag');
+  if(tag){tag.textContent='✓ Saved';tag.style.opacity='1';setTimeout(()=>{tag.style.opacity='0';},2000);}
+});
 
 document.getElementById('calPrev').addEventListener('click',()=>{calMonth--;if(calMonth<0){calMonth=11;calYear--;}selectedCalDay=null;renderCalendar();});
 document.getElementById('calNext').addEventListener('click',()=>{calMonth++;if(calMonth>11){calMonth=0;calYear++;}selectedCalDay=null;renderCalendar();});
