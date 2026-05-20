@@ -5421,7 +5421,7 @@ let trainSetup = {
     {train:true,  activity:'', time:''},
     {train:false, activity:'', time:''},
   ],
-  age:'', weight:'', heightFt:'', heightIn:'', heightCm:'',
+  age:'', weight:'', targetWeight:'', heightFt:'', heightIn:'', heightCm:'',
   notes:''
 };
 let expandedDay = null;        // which day card is open
@@ -5615,20 +5615,24 @@ function renderTrainSetupHTML(){
   // Body stats — imperial or metric
   let statsHTML;
   if(metric){
-    statsHTML=`<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px">
+    statsHTML=`<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;margin-bottom:12px">
       <div><div style="font-size:10px;color:var(--text-dimmer);margin-bottom:4px">Age</div>
         <input class="train-input" type="number" placeholder="30" min="10" max="100" value="${escapeHtml(trainSetup.age)}" oninput="trainSetup.age=this.value" style="padding:8px 10px"/></div>
       <div><div style="font-size:10px;color:var(--text-dimmer);margin-bottom:4px">Weight (kg)</div>
         <input class="train-input" type="number" placeholder="70" min="30" max="300" value="${escapeHtml(trainSetup.weight)}" oninput="trainSetup.weight=this.value" style="padding:8px 10px"/></div>
+      <div><div style="font-size:10px;color:var(--text-dimmer);margin-bottom:4px">Target (kg)</div>
+        <input class="train-input" type="number" placeholder="65" min="30" max="300" value="${escapeHtml(trainSetup.targetWeight)}" oninput="trainSetup.targetWeight=this.value" style="padding:8px 10px"/></div>
       <div><div style="font-size:10px;color:var(--text-dimmer);margin-bottom:4px">Height (cm)</div>
         <input class="train-input" type="number" placeholder="175" min="100" max="250" value="${escapeHtml(trainSetup.heightCm)}" oninput="trainSetup.heightCm=this.value" style="padding:8px 10px"/></div>
     </div>`;
   } else {
-    statsHTML=`<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;margin-bottom:12px">
+    statsHTML=`<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr;gap:8px;margin-bottom:12px">
       <div><div style="font-size:10px;color:var(--text-dimmer);margin-bottom:4px">Age</div>
         <input class="train-input" type="number" placeholder="30" min="10" max="100" value="${escapeHtml(trainSetup.age)}" oninput="trainSetup.age=this.value" style="padding:8px 10px"/></div>
       <div><div style="font-size:10px;color:var(--text-dimmer);margin-bottom:4px">Weight (lbs)</div>
         <input class="train-input" type="number" placeholder="155" min="60" max="700" value="${escapeHtml(trainSetup.weight)}" oninput="trainSetup.weight=this.value" style="padding:8px 10px"/></div>
+      <div><div style="font-size:10px;color:var(--text-dimmer);margin-bottom:4px">Target (lbs)</div>
+        <input class="train-input" type="number" placeholder="140" min="60" max="700" value="${escapeHtml(trainSetup.targetWeight)}" oninput="trainSetup.targetWeight=this.value" style="padding:8px 10px"/></div>
       <div><div style="font-size:10px;color:var(--text-dimmer);margin-bottom:4px">Height (ft)</div>
         <input class="train-input" type="number" placeholder="5" min="3" max="8" value="${escapeHtml(trainSetup.heightFt)}" oninput="trainSetup.heightFt=this.value" style="padding:8px 10px"/></div>
       <div><div style="font-size:10px;color:var(--text-dimmer);margin-bottom:4px">in</div>
@@ -5757,9 +5761,13 @@ async function doGeneratePlan(){
   // Build body stats
   const weightKg=getWeightKg(trainSetup);
   const heightCm=getHeightCm(trainSetup);
+  const targetWeightKg=trainSetup.targetWeight
+    ?(isMetric()?parseFloat(trainSetup.targetWeight):Math.round(parseFloat(trainSetup.targetWeight)*0.453592))
+    :null;
   const statsStr=[
     trainSetup.age?'Age: '+trainSetup.age:'',
-    weightKg?'Weight: '+weightKg+'kg':'',
+    weightKg?'Current weight: '+weightKg+'kg':'',
+    targetWeightKg?'Target weight: '+targetWeightKg+'kg':'',
     heightCm?'Height: '+heightCm+'cm':'',
   ].filter(Boolean).join('. ');
 
