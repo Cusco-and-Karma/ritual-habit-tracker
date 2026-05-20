@@ -795,7 +795,7 @@
   .train-day-circle{width:34px;height:34px;border-radius:50%;border:1.5px solid var(--border);background:none;color:var(--text-dim);font-family:var(--font-body);font-size:10px;cursor:pointer;transition:all .2s;flex-shrink:0;display:flex;align-items:center;justify-content:center;line-height:1;text-align:center}
   .train-day-circle.is-train{background:var(--accent);border-color:var(--accent);color:var(--bg)}
   .train-day-circle.is-activity{background:rgba(200,180,240,.12);border-color:var(--accent);color:var(--accent)}
-  .train-day-circle.ai-mode{cursor:default;opacity:.5}
+  .train-day-circle.ai-flagged{background:rgba(200,180,240,.15);border-color:var(--accent);color:var(--accent)}
   .train-day-slot-inputs{display:flex;gap:5px;flex:1;min-width:0}
   .train-day-act-input{flex:1;min-width:0;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-sm);color:var(--text);font-family:var(--font-body);font-size:11px;padding:6px 7px;outline:none}
   .train-day-act-input:focus{border-color:var(--accent)}
@@ -5582,19 +5582,22 @@ function renderTrainSetupHTML(){
   const daySlotRows=DAY_NAMES.map((d,i)=>{
     const slot=trainSetup.daySlots[i];
     const isTrain=!trainSetup.aiDecidesDays&&slot.train;
+    const isFlagged=trainSetup.aiDecidesDays&&slot.train;
     const hasActivity=slot.activity.trim().length>0;
     let circleClass='train-day-circle';
-    if(trainSetup.aiDecidesDays)circleClass+=' ai-mode';
-    else if(isTrain)circleClass+=' is-train';
-    else if(hasActivity)circleClass+=' is-activity';
+    if(isTrain)circleClass+=' is-train';
+    else if(isFlagged||hasActivity)circleClass+=trainSetup.aiDecidesDays?' ai-flagged':' is-activity';
     const t=slot.time||'';
     const timePicker=`<div class="train-time-picker">
       <button type="button" class="train-time-btn${t==='morning'?' active':''}" onclick="setTrainDayTime(${i},'morning')">Morn</button>
       <button type="button" class="train-time-btn${t==='afternoon'?' active':''}" onclick="setTrainDayTime(${i},'afternoon')">Aft</button>
       <button type="button" class="train-time-btn${t==='evening'?' active':''}" onclick="setTrainDayTime(${i},'evening')">Eve</button>
     </div>`;
+    const title=trainSetup.aiDecidesDays
+      ?(isFlagged?'Flagged as committed — tap to unflag':'Tap to flag as committed — AI will avoid scheduling here')
+      :(isTrain?'Training day — tap to unset':'Tap to set as training day');
     return `<div class="train-day-slot">
-      <button type="button" class="${circleClass}" onclick="toggleTrainDayTrain(${i})" title="${trainSetup.aiDecidesDays?'AI assigns training — tap circle has no effect':isTrain?'Training day — tap to unset':'Tap to set as training day'}">${d}</button>
+      <button type="button" class="${circleClass}" onclick="toggleTrainDayTrain(${i})" title="${title}">${d}</button>
       <div class="train-day-slot-inputs">
         <input class="train-day-act-input" type="text" placeholder="Fixed activity (Capoeira, Yoga…)" maxlength="30"
           value="${escapeHtml(slot.activity)}"
@@ -5711,21 +5714,31 @@ function toggleAIDecidesDays(){
   renderTrainingView();
 }
 function toggleTrainDayTrain(i){
-  if(trainSetup.aiDecidesDays)return; // circles disabled in AI mode
   trainSetup.daySlots[i].train=!trainSetup.daySlots[i].train;
+  // Re-render just the circle to avoid full redraw losing input focus
   const btn=document.querySelectorAll('.train-day-circle')[i];
   if(btn){
-    btn.classList.toggle('is-train',trainSetup.daySlots[i].train);
-    if(trainSetup.daySlots[i].train)btn.classList.remove('is-activity');
-    else btn.classList.toggle('is-activity',trainSetup.daySlots[i].activity.trim().length>0);
+    const slot=trainSetup.daySlots[i];
+    btn.classList.remove('is-train','is-activity','ai-flagged');
+    if(trainSetup.aiDecidesDays){
+      if(slot.train||slot.activity.trim())btn.classList.add('ai-flagged');
+    } else {
+      if(slot.train)btn.classList.add('is-train');
+      else if(slot.activity.trim())btn.classList.add('is-activity');
+    }
   }
 }
 function refreshDayCircle(i){
-  const circles=document.querySelectorAll('.train-day-circle');
-  const btn=circles[i];if(!btn||trainSetup.aiDecidesDays)return;
+  const btn=document.querySelectorAll('.train-day-circle')[i];
+  if(!btn)return;
   const slot=trainSetup.daySlots[i];
-  btn.classList.toggle('is-train',slot.train);
-  btn.classList.toggle('is-activity',!slot.train&&slot.activity.trim().length>0);
+  btn.classList.remove('is-train','is-activity','ai-flagged');
+  if(trainSetup.aiDecidesDays){
+    if(slot.train||slot.activity.trim())btn.classList.add('ai-flagged');
+  } else {
+    if(slot.train)btn.classList.add('is-train');
+    else if(slot.activity.trim())btn.classList.add('is-activity');
+  }
 }
 function adjustAISessions(delta){
   trainSetup.daysPerWeekAI=Math.max(2,Math.min(6,trainSetup.daysPerWeekAI+delta));
@@ -5757,9 +5770,12 @@ async function doGeneratePlan(){
   if(tc)tc.innerHTML=`<div class="train-loading"><div class="train-loading-spinner"></div><div class="train-loading-text">Building your personalised plan…<br><span style="font-size:11px;color:var(--text-dimmer)">This takes about 20–30 seconds</span></div></div>`;
 
   // Build day context string
-  const fixedActivities=trainSetup.daySlots.map((s,i)=>
-    s.activity.trim()?`${DAY_FULL[i]}${s.time?' '+s.time:''}: ${s.activity}`:null
-  ).filter(Boolean);
+  const fixedActivities=trainSetup.daySlots.map((s,i)=>{
+    const timeStr=s.time?' '+s.time:'';
+    if(s.activity.trim())return `${DAY_FULL[i]}${timeStr}: ${s.activity}`;
+    if(trainSetup.aiDecidesDays&&s.train)return `${DAY_FULL[i]}${timeStr}: committed (do not schedule training)`;
+    return null;
+  }).filter(Boolean);
   let daysContext;
   if(trainSetup.aiDecidesDays){
     daysContext=`Choose ${trainSetup.daysPerWeekAI} training sessions per week, distributing them optimally across the week.`;
