@@ -5804,11 +5804,13 @@ async function doGeneratePlan(){
   const dur=trainSetup.durationWeeks===0?'an appropriate number of':''+trainSetup.durationWeeks;
   const numDays=trainSetup.aiDecidesDays?trainSetup.daysPerWeekAI:trainDays.length;
 
+  const unitSystem=isMetric()?'metric (kg, cm)':'imperial (lbs, feet/inches)';
   const prompt=`Create a detailed ${dur}-week training plan focused on ${goals} for a ${trainSetup.experience} with access to ${trainSetup.equipment.replace(/_/g,' ')} equipment.
 ${daysContext}
 ${fixedCtx}
 ${statsStr?statsStr+'.':''}
 ${trainSetup.notes?'Additional context: '+trainSetup.notes:''}
+Use ${unitSystem} throughout — all body weight references, exercise loads, and food portion weights must be in ${unitSystem}.
 
 Return ONLY valid JSON in this exact structure (no markdown fences, no explanation outside the JSON):
 {
