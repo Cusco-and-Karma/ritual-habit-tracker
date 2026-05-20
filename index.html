@@ -789,6 +789,27 @@
   .diet-no-plan{text-align:center;padding:48px 24px;color:var(--text-dimmer);font-size:13px;line-height:1.7}
   .train-plan-name{font-family:'DM Serif Display',serif;font-size:20px;color:var(--text);margin-bottom:2px}
   .train-plan-goal{font-size:12px;color:var(--text-dim);margin-bottom:16px;line-height:1.5}
+  /* day slot rows */
+  .train-day-slot{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border)}
+  .train-day-slot:last-child{border-bottom:none}
+  .train-day-circle{width:34px;height:34px;border-radius:50%;border:1.5px solid var(--border);background:none;color:var(--text-dim);font-family:var(--font-body);font-size:10px;cursor:pointer;transition:all .2s;flex-shrink:0;display:flex;align-items:center;justify-content:center;line-height:1;text-align:center}
+  .train-day-circle.is-train{background:var(--accent);border-color:var(--accent);color:var(--bg)}
+  .train-day-circle.is-activity{background:rgba(200,180,240,.12);border-color:var(--accent);color:var(--accent)}
+  .train-day-circle.ai-mode{cursor:default;opacity:.5}
+  .train-day-slot-inputs{display:flex;gap:5px;flex:1;min-width:0}
+  .train-day-act-input{flex:1;min-width:0;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-sm);color:var(--text);font-family:var(--font-body);font-size:11px;padding:6px 7px;outline:none}
+  .train-day-act-input:focus{border-color:var(--accent)}
+  .train-day-time-input{width:72px;flex-shrink:0;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-sm);color:var(--text);font-family:var(--font-body);font-size:11px;padding:6px 7px;outline:none}
+  .train-day-time-input:focus{border-color:var(--accent)}
+  .train-ai-toggle-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+  .train-ai-toggle-label{font-size:12px;color:var(--text-dim)}
+  .train-ai-toggle-sub{font-size:10px;color:var(--text-dimmer);margin-top:2px}
+  .train-ai-sessions-row{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  .train-ai-sessions-label{font-size:12px;color:var(--text-dim);flex:1}
+  .train-sessions-stepper{display:flex;align-items:center;gap:8px}
+  .train-sessions-btn{width:28px;height:28px;border-radius:50%;border:1px solid var(--border);background:none;color:var(--text-dim);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s}
+  .train-sessions-btn:hover{border-color:var(--accent);color:var(--accent)}
+  .train-sessions-num{font-family:'DM Serif Display',serif;font-size:18px;color:var(--text);min-width:24px;text-align:center}
 </style>
 <!-- Firebase compat SDKs -->
 <script src="https://www.gstatic.com/firebasejs/10.12.1/firebase-app-compat.js"></script>
@@ -1381,6 +1402,15 @@
         <div style="font-size:11px;color:var(--text-dimmer);margin-top:2px">Show horoscope &amp; cosmic readings</div>
       </div>
       <div class="rating-enable-pill" id="cosmosTabPill"></div>
+    </div>
+
+    <div class="section-label">training</div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;cursor:pointer" id="metricUnitsToggle">
+      <div>
+        <div style="font-size:13px;color:var(--text);font-family:'DM Serif Display',serif">Metric Units</div>
+        <div style="font-size:11px;color:var(--text-dimmer);margin-top:2px">Use kg and cm instead of lbs and ft/in</div>
+      </div>
+      <div class="rating-enable-pill" id="metricUnitsPill"></div>
     </div>
 
     <div class="section-label">theme</div>
@@ -4590,6 +4620,18 @@ function renderSettings(){
       fontEl.appendChild(btn);
     });
   }
+  // Metric units toggle
+  const metricToggle=document.getElementById('metricUnitsToggle');
+  const metricPill=document.getElementById('metricUnitsPill');
+  if(metricToggle&&metricPill){
+    const metric=isMetric();
+    metricPill.classList.toggle('active-pill',metric);
+    metricPill.style.background=metric?'var(--accent)':'var(--border)';
+    metricToggle.onclick=()=>{
+      localStorage.setItem('ritualMetric',isMetric()?'0':'1');
+      renderSettings();
+    };
+  }
   // Export report button
   const expBtn=document.getElementById('exportReportBtn');
   if(expBtn&&!expBtn._bound){expBtn._bound=true;expBtn.addEventListener('click',generateReport);}
@@ -5363,19 +5405,44 @@ let trainingPlan = null;       // parsed plan JSON
 let trainingWeek = 1;          // current displayed week
 let trainingTab = 'plan';      // 'plan' | 'diet'
 let trainPhaseIdx = 0;         // active phase index in stepper
-let trainSetup = {             // setup form state
-  goal: 'general',
+let trainSetup = {
+  goals: ['general'],          // multi-select array
   experience: 'beginner',
   equipment: 'gym',
-  durationWeeks: 12,
-  daysPerWeek: [1,3,5],        // 0=Sun…6=Sat
-  commitments: {},             // {dayIdx: 'time string'}
-  age: '', weight: '', height: '', notes: ''
+  durationWeeks: 12,           // 0 = AI decides
+  aiDecidesDays: false,        // true = let AI pick training days
+  daysPerWeekAI: 3,            // sessions/week when AI decides
+  daySlots: [                  // index 0=Sun … 6=Sat
+    {train:false, activity:'', time:''},
+    {train:true,  activity:'', time:''},
+    {train:false, activity:'', time:''},
+    {train:true,  activity:'', time:''},
+    {train:false, activity:'', time:''},
+    {train:true,  activity:'', time:''},
+    {train:false, activity:'', time:''},
+  ],
+  age:'', weight:'', heightFt:'', heightIn:'', heightCm:'',
+  notes:''
 };
 let expandedDay = null;        // which day card is open
 let currentMealSlot = null;    // name of open meal slot
 let pendingFood = null;        // food awaiting qty confirm
 let foodSearchTimer = null;    // debounce handle
+
+// ── unit helpers ──
+function isMetric(){return localStorage.getItem('ritualMetric')==='1';}
+function getWeightKg(setup){
+  const v=parseFloat(setup.weight);
+  if(!v)return null;
+  return isMetric()?v:Math.round(v*0.453592);
+}
+function getHeightCm(setup){
+  if(isMetric()){const v=parseFloat(setup.heightCm);return v||null;}
+  const ft=parseFloat(setup.heightFt)||0;
+  const inches=parseFloat(setup.heightIn)||0;
+  if(!ft&&!inches)return null;
+  return Math.round((ft*12+inches)*2.54);
+}
 
 // ── localStorage helpers ──
 function loadTrainingData(){
@@ -5501,106 +5568,216 @@ function renderTrainSetupHTML(){
   const goalOpts=[{v:'fat_loss',l:'Fat Loss'},{v:'muscle_gain',l:'Muscle Gain'},{v:'endurance',l:'Endurance'},{v:'general',l:'General Fitness'}];
   const expOpts=[{v:'beginner',l:'Beginner'},{v:'intermediate',l:'Intermediate'},{v:'advanced',l:'Advanced'}];
   const eqOpts=[{v:'none',l:'No Equipment'},{v:'home',l:'Home Gym'},{v:'gym',l:'Full Gym'}];
-  const durOpts=[{v:8,l:'8 wks'},{v:12,l:'12 wks'},{v:16,l:'16 wks'},{v:20,l:'20 wks'}];
+  const durOpts=[{v:8,l:'8 wks'},{v:12,l:'12 wks'},{v:16,l:'16 wks'},{v:20,l:'20 wks'},{v:0,l:'You Decide'}];
+  const metric=isMetric();
 
-  const dayBtns=DAY_NAMES.map((d,i)=>`<button type="button" class="train-day-num${trainSetup.daysPerWeek.includes(i)?' active':''}" onclick="toggleTrainDay(${i})">${d}</button>`).join('');
+  // Goals — multi-select
+  const goalBtns=goalOpts.map(o=>`<button type="button" class="train-pill${trainSetup.goals.includes(o.v)?' active':''}" onclick="toggleTrainGoal('${o.v}')" data-tgoal="${o.v}">${o.l}</button>`).join('');
 
-  const commitRows=trainSetup.daysPerWeek.map(i=>`
-    <div class="commitment-row">
-      <span class="commitment-row-label">${DAY_FULL[i]}</span>
-      <input class="commitment-input" type="text" placeholder="e.g. 7am" maxlength="20"
-        value="${escapeHtml(trainSetup.commitments[i]||'')}"
-        oninput="trainSetup.commitments[${i}]=this.value"
-        aria-label="Time for ${DAY_FULL[i]}"/>
-    </div>`).join('');
+  // Duration pills
+  const durBtns=durOpts.map(o=>`<button type="button" class="train-pill${trainSetup.durationWeeks===o.v?' active':''}" onclick="setTrainDuration(${o.v})" data-tdur="${o.v}">${o.l}</button>`).join('');
+
+  // Day slots
+  const daySlotRows=DAY_NAMES.map((d,i)=>{
+    const slot=trainSetup.daySlots[i];
+    const isTrain=!trainSetup.aiDecidesDays&&slot.train;
+    const hasActivity=slot.activity.trim().length>0;
+    let circleClass='train-day-circle';
+    if(trainSetup.aiDecidesDays)circleClass+=' ai-mode';
+    else if(isTrain)circleClass+=' is-train';
+    else if(hasActivity)circleClass+=' is-activity';
+    return `<div class="train-day-slot">
+      <button type="button" class="${circleClass}" onclick="toggleTrainDayTrain(${i})" title="${trainSetup.aiDecidesDays?'AI picks training days':isTrain?'Training day — tap to remove':'Tap to set as training day'}">${d}</button>
+      <div class="train-day-slot-inputs">
+        <input class="train-day-act-input" type="text" placeholder="Activity (Capoeira, Yoga…)" maxlength="30"
+          value="${escapeHtml(slot.activity)}"
+          oninput="trainSetup.daySlots[${i}].activity=this.value;refreshDayCircle(${i})"
+          aria-label="Activity for ${DAY_FULL[i]}"/>
+        <input class="train-day-time-input" type="text" placeholder="Time" maxlength="12"
+          value="${escapeHtml(slot.time)}"
+          oninput="trainSetup.daySlots[${i}].time=this.value"
+          aria-label="Time for ${DAY_FULL[i]}"/>
+      </div>
+    </div>`;
+  }).join('');
+
+  // "AI decides sessions" count stepper (only when aiDecidesDays)
+  const aiSessionsRow=trainSetup.aiDecidesDays?`
+    <div class="train-ai-sessions-row">
+      <span class="train-ai-sessions-label">Sessions per week</span>
+      <div class="train-sessions-stepper">
+        <button type="button" class="train-sessions-btn" onclick="adjustAISessions(-1)">−</button>
+        <span class="train-sessions-num">${trainSetup.daysPerWeekAI}</span>
+        <button type="button" class="train-sessions-btn" onclick="adjustAISessions(1)">+</button>
+      </div>
+    </div>`:'';
+
+  // Body stats — imperial or metric
+  let statsHTML;
+  if(metric){
+    statsHTML=`<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px">
+      <div><div style="font-size:10px;color:var(--text-dimmer);margin-bottom:4px">Age</div>
+        <input class="train-input" type="number" placeholder="30" min="10" max="100" value="${escapeHtml(trainSetup.age)}" oninput="trainSetup.age=this.value" style="padding:8px 10px"/></div>
+      <div><div style="font-size:10px;color:var(--text-dimmer);margin-bottom:4px">Weight (kg)</div>
+        <input class="train-input" type="number" placeholder="70" min="30" max="300" value="${escapeHtml(trainSetup.weight)}" oninput="trainSetup.weight=this.value" style="padding:8px 10px"/></div>
+      <div><div style="font-size:10px;color:var(--text-dimmer);margin-bottom:4px">Height (cm)</div>
+        <input class="train-input" type="number" placeholder="175" min="100" max="250" value="${escapeHtml(trainSetup.heightCm)}" oninput="trainSetup.heightCm=this.value" style="padding:8px 10px"/></div>
+    </div>`;
+  } else {
+    statsHTML=`<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;margin-bottom:12px">
+      <div><div style="font-size:10px;color:var(--text-dimmer);margin-bottom:4px">Age</div>
+        <input class="train-input" type="number" placeholder="30" min="10" max="100" value="${escapeHtml(trainSetup.age)}" oninput="trainSetup.age=this.value" style="padding:8px 10px"/></div>
+      <div><div style="font-size:10px;color:var(--text-dimmer);margin-bottom:4px">Weight (lbs)</div>
+        <input class="train-input" type="number" placeholder="155" min="60" max="700" value="${escapeHtml(trainSetup.weight)}" oninput="trainSetup.weight=this.value" style="padding:8px 10px"/></div>
+      <div><div style="font-size:10px;color:var(--text-dimmer);margin-bottom:4px">Height (ft)</div>
+        <input class="train-input" type="number" placeholder="5" min="3" max="8" value="${escapeHtml(trainSetup.heightFt)}" oninput="trainSetup.heightFt=this.value" style="padding:8px 10px"/></div>
+      <div><div style="font-size:10px;color:var(--text-dimmer);margin-bottom:4px">in</div>
+        <input class="train-input" type="number" placeholder="9" min="0" max="11" value="${escapeHtml(trainSetup.heightIn)}" oninput="trainSetup.heightIn=this.value" style="padding:8px 10px"/></div>
+    </div>`;
+  }
 
   return `
     <div class="train-setup-card">
       <div style="font-family:'DM Serif Display',serif;font-size:18px;color:var(--text);margin-bottom:4px">Build Your Plan</div>
-      <div style="font-size:12px;color:var(--text-dim);line-height:1.5">Claude will generate a personalised training schedule and nutrition guide.</div>
+      <div style="font-size:12px;color:var(--text-dim);line-height:1.5">Claude will create a personalised schedule and nutrition guide tailored to your goals.</div>
     </div>
     <div id="trainError" class="train-error" style="display:none"></div>
 
     <div class="train-setup-card">
-      <div class="train-field-label" style="margin-top:0">Goal</div>
-      <div class="train-pill-group">${goalOpts.map(o=>`<button type="button" class="train-pill${trainSetup.goal===o.v?' active':''}" onclick="trainSetup.goal='${o.v}';document.querySelectorAll('[data-train-goal]').forEach(b=>b.classList.toggle('active',b.dataset.trainGoal==='${o.v}'))" data-train-goal="${o.v}">${o.l}</button>`).join('')}</div>
+      <div class="train-field-label" style="margin-top:0">Goals <span style="color:var(--text-dimmer);font-size:9px">select all that apply</span></div>
+      <div class="train-pill-group">${goalBtns}</div>
 
       <div class="train-field-label">Experience Level</div>
-      <div class="train-pill-group">${expOpts.map(o=>`<button type="button" class="train-pill${trainSetup.experience===o.v?' active':''}" onclick="trainSetup.experience='${o.v}';document.querySelectorAll('[data-train-exp]').forEach(b=>b.classList.toggle('active',b.dataset.trainExp==='${o.v}'))" data-train-exp="${o.v}">${o.l}</button>`).join('')}</div>
+      <div class="train-pill-group">${expOpts.map(o=>`<button type="button" class="train-pill${trainSetup.experience===o.v?' active':''}" onclick="trainSetup.experience='${o.v}';document.querySelectorAll('[data-texp]').forEach(b=>b.classList.toggle('active',b.dataset.texp==='${o.v}'))" data-texp="${o.v}">${o.l}</button>`).join('')}</div>
 
       <div class="train-field-label">Equipment Available</div>
-      <div class="train-pill-group">${eqOpts.map(o=>`<button type="button" class="train-pill${trainSetup.equipment===o.v?' active':''}" onclick="trainSetup.equipment='${o.v}';document.querySelectorAll('[data-train-eq]').forEach(b=>b.classList.toggle('active',b.dataset.trainEq==='${o.v}'))" data-train-eq="${o.v}">${o.l}</button>`).join('')}</div>
+      <div class="train-pill-group">${eqOpts.map(o=>`<button type="button" class="train-pill${trainSetup.equipment===o.v?' active':''}" onclick="trainSetup.equipment='${o.v}';document.querySelectorAll('[data-teq]').forEach(b=>b.classList.toggle('active',b.dataset.teq==='${o.v}'))" data-teq="${o.v}">${o.l}</button>`).join('')}</div>
 
       <div class="train-field-label">Plan Duration</div>
-      <div class="train-pill-group">${durOpts.map(o=>`<button type="button" class="train-pill${trainSetup.durationWeeks===o.v?' active':''}" onclick="trainSetup.durationWeeks=${o.v};document.querySelectorAll('[data-train-dur]').forEach(b=>b.classList.toggle('active',b.dataset.trainDur==='${o.v}'))" data-train-dur="${o.v}">${o.l}</button>`).join('')}</div>
+      <div class="train-pill-group">${durBtns}</div>
     </div>
 
     <div class="train-setup-card">
-      <div class="train-field-label" style="margin-top:0">Training Days</div>
-      <div class="train-days-row">${dayBtns}</div>
-      ${trainSetup.daysPerWeek.length?`
-      <div class="train-field-label" style="margin-top:12px">Preferred Times <span style="color:var(--text-dimmer);font-size:9px">(optional)</span></div>
-      <div id="commitmentRows">${commitRows}</div>`:''}
-    </div>
-
-    <div class="train-setup-card">
-      <div class="train-field-label" style="margin-top:0">About You <span style="color:var(--text-dimmer);font-size:9px">(optional — helps personalise the plan)</span></div>
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px">
+      <div class="train-ai-toggle-row">
         <div>
-          <div style="font-size:10px;color:var(--text-dimmer);margin-bottom:4px">Age</div>
-          <input class="train-input" type="number" placeholder="30" min="10" max="100" value="${escapeHtml(trainSetup.age)}" oninput="trainSetup.age=this.value" style="padding:8px 10px"/>
+          <div class="train-ai-toggle-label">AI picks training days</div>
+          <div class="train-ai-toggle-sub">Claude will schedule sessions based on your commitments</div>
         </div>
-        <div>
-          <div style="font-size:10px;color:var(--text-dimmer);margin-bottom:4px">Weight (kg)</div>
-          <input class="train-input" type="number" placeholder="70" min="30" max="300" value="${escapeHtml(trainSetup.weight)}" oninput="trainSetup.weight=this.value" style="padding:8px 10px"/>
-        </div>
-        <div>
-          <div style="font-size:10px;color:var(--text-dimmer);margin-bottom:4px">Height (cm)</div>
-          <input class="train-input" type="number" placeholder="175" min="100" max="250" value="${escapeHtml(trainSetup.height)}" oninput="trainSetup.height=this.value" style="padding:8px 10px"/>
-        </div>
+        <div class="rating-enable-pill${trainSetup.aiDecidesDays?' active-pill':''}" id="aiDaysTogglePill"
+          style="background:${trainSetup.aiDecidesDays?'var(--accent)':'var(--border)'};cursor:pointer;flex-shrink:0"
+          onclick="toggleAIDecidesDays()"></div>
       </div>
-      <div style="font-size:10px;color:var(--text-dimmer);margin-bottom:4px">Additional notes, injuries, preferences</div>
+      ${aiSessionsRow}
+      <div style="font-size:10px;color:var(--text-dimmer);margin-bottom:8px;line-height:1.5">
+        ${trainSetup.aiDecidesDays
+          ? 'Tap a day to mark a fixed activity — Claude will work around it.'
+          : 'Tap a day circle to set it as a training day. Add activities Claude should work around.'}
+      </div>
+      <div>${daySlotRows}</div>
+    </div>
+
+    <div class="train-setup-card">
+      <div class="train-field-label" style="margin-top:0">About You <span style="color:var(--text-dimmer);font-size:9px">optional — helps personalise</span></div>
+      ${statsHTML}
+      <div style="font-size:10px;color:var(--text-dimmer);margin-bottom:4px">Injuries, preferences, or anything else</div>
       <textarea class="train-input" rows="3" placeholder="e.g. bad left knee, prefer mornings, vegetarian..." oninput="trainSetup.notes=this.value" style="resize:none;line-height:1.5">${escapeHtml(trainSetup.notes)}</textarea>
+      <div style="font-size:10px;color:var(--text-dimmer);margin-top:6px">Units: ${metric?'metric (kg, cm)':'imperial (lbs, ft/in)'} · change in <span style="color:var(--accent);cursor:pointer" onclick="switchView('settings')">Settings → Training</span></div>
     </div>
 
     <button class="train-generate-btn" id="trainGenBtn" onclick="doGeneratePlan()">Generate My Plan</button>
     <div style="height:16px"></div>`;
 }
 
-function toggleTrainDay(i){
-  const idx=trainSetup.daysPerWeek.indexOf(i);
-  if(idx>=0)trainSetup.daysPerWeek.splice(idx,1);
-  else trainSetup.daysPerWeek.push(i);
-  trainSetup.daysPerWeek.sort((a,b)=>a-b);
+function toggleTrainGoal(v){
+  const idx=trainSetup.goals.indexOf(v);
+  if(idx>=0){if(trainSetup.goals.length>1)trainSetup.goals.splice(idx,1);}
+  else trainSetup.goals.push(v);
+  document.querySelectorAll('[data-tgoal]').forEach(b=>b.classList.toggle('active',trainSetup.goals.includes(b.dataset.tgoal)));
+}
+function setTrainDuration(v){
+  trainSetup.durationWeeks=v;
+  document.querySelectorAll('[data-tdur]').forEach(b=>b.classList.toggle('active',trainSetup.durationWeeks===Number(b.dataset.tdur)));
+}
+function toggleAIDecidesDays(){
+  trainSetup.aiDecidesDays=!trainSetup.aiDecidesDays;
   renderTrainingView();
 }
+function toggleTrainDayTrain(i){
+  if(trainSetup.aiDecidesDays)return; // circles disabled in AI mode
+  trainSetup.daySlots[i].train=!trainSetup.daySlots[i].train;
+  const btn=document.querySelectorAll('.train-day-circle')[i];
+  if(btn){
+    btn.classList.toggle('is-train',trainSetup.daySlots[i].train);
+    if(trainSetup.daySlots[i].train)btn.classList.remove('is-activity');
+    else btn.classList.toggle('is-activity',trainSetup.daySlots[i].activity.trim().length>0);
+  }
+}
+function refreshDayCircle(i){
+  const circles=document.querySelectorAll('.train-day-circle');
+  const btn=circles[i];if(!btn||trainSetup.aiDecidesDays)return;
+  const slot=trainSetup.daySlots[i];
+  btn.classList.toggle('is-train',slot.train);
+  btn.classList.toggle('is-activity',!slot.train&&slot.activity.trim().length>0);
+}
+function adjustAISessions(delta){
+  trainSetup.daysPerWeekAI=Math.max(2,Math.min(6,trainSetup.daysPerWeekAI+delta));
+  const el=document.querySelector('.train-sessions-num');
+  if(el)el.textContent=trainSetup.daysPerWeekAI;
+}
+// legacy alias kept for safety
+function toggleTrainDay(i){toggleTrainDayTrain(i);}
 
 // ─────────────────────────────────────────────────────────
 // AI PLAN GENERATION
 async function doGeneratePlan(){
   const apiKey=getApiKey();
   if(!apiKey){showTrainError('Add your Anthropic API key in Settings → AI Settings first.');return;}
-  if(!trainSetup.daysPerWeek.length){showTrainError('Select at least one training day.');return;}
+
+  // Validate: need at least 1 training day OR AI decides
+  const trainDays=trainSetup.daySlots.filter(s=>s.train);
+  if(!trainSetup.aiDecidesDays&&!trainDays.length){showTrainError('Select at least one training day, or enable "AI picks training days".');return;}
+  if(!trainSetup.goals.length){showTrainError('Select at least one goal.');return;}
+
   const btn=document.getElementById('trainGenBtn');
   if(btn)btn.disabled=true;
   const tc=document.getElementById('trainTabContent');
-  if(tc)tc.innerHTML=`<div class="train-loading"><div class="train-loading-spinner"></div><div class="train-loading-text">Building your personalised plan...<br><span style="font-size:11px;color:var(--text-dimmer)">This takes about 15-30 seconds</span></div></div>`;
+  if(tc)tc.innerHTML=`<div class="train-loading"><div class="train-loading-spinner"></div><div class="train-loading-text">Building your personalised plan…<br><span style="font-size:11px;color:var(--text-dimmer)">This takes about 20–30 seconds</span></div></div>`;
 
-  const dayList=trainSetup.daysPerWeek.map(i=>{
-    const t=trainSetup.commitments[i]?` at ${trainSetup.commitments[i]}`:'';
-    return DAY_FULL[i]+t;
-  }).join(', ');
+  // Build day context string
+  const fixedActivities=trainSetup.daySlots.map((s,i)=>s.activity.trim()?`${DAY_FULL[i]}${s.time?' '+s.time:''}: ${s.activity}`:null).filter(Boolean);
+  let daysContext;
+  if(trainSetup.aiDecidesDays){
+    daysContext=`You choose ${trainSetup.daysPerWeekAI} training sessions per week, distributing them optimally.`;
+  } else {
+    const dList=trainSetup.daySlots.map((s,i)=>s.train?`${DAY_FULL[i]}${s.time?' at '+s.time:''}${s.activity?' ('+s.activity+')':''}`:null).filter(Boolean);
+    daysContext=`Training days: ${dList.join(', ')}.`;
+  }
+  const fixedCtx=fixedActivities.length?`Fixed commitments to schedule around: ${fixedActivities.join('; ')}.`:'';
 
-  const prompt=`Create a detailed ${trainSetup.durationWeeks}-week ${trainSetup.goal.replace('_',' ')} training plan for a ${trainSetup.experience} with ${trainSetup.equipment.replace('_',' ')} equipment.
-Training days: ${dayList}.
-${trainSetup.age?'Age: '+trainSetup.age+'.':''}${trainSetup.weight?' Weight: '+trainSetup.weight+'kg.':''}${trainSetup.height?' Height: '+trainSetup.height+'cm.':''}
-${trainSetup.notes?'Notes: '+trainSetup.notes:''}
+  // Build body stats
+  const weightKg=getWeightKg(trainSetup);
+  const heightCm=getHeightCm(trainSetup);
+  const statsStr=[
+    trainSetup.age?'Age: '+trainSetup.age:'',
+    weightKg?'Weight: '+weightKg+'kg':'',
+    heightCm?'Height: '+heightCm+'cm':'',
+  ].filter(Boolean).join('. ');
 
-Return ONLY valid JSON in this exact structure (no markdown, no explanation):
+  const goals=trainSetup.goals.map(g=>g.replace(/_/g,' ')).join(' and ');
+  const dur=trainSetup.durationWeeks===0?'an appropriate number of':''+trainSetup.durationWeeks;
+  const numDays=trainSetup.aiDecidesDays?trainSetup.daysPerWeekAI:trainDays.length;
+
+  const prompt=`Create a detailed ${dur}-week training plan focused on ${goals} for a ${trainSetup.experience} with access to ${trainSetup.equipment.replace(/_/g,' ')} equipment.
+${daysContext}
+${fixedCtx}
+${statsStr?statsStr+'.':''}
+${trainSetup.notes?'Additional context: '+trainSetup.notes:''}
+
+Return ONLY valid JSON in this exact structure (no markdown fences, no explanation outside the JSON):
 {
   "plan_name": "string",
-  "duration_weeks": ${trainSetup.durationWeeks},
-  "goal_summary": "2-sentence overview",
+  "duration_weeks": ${trainSetup.durationWeeks>0?trainSetup.durationWeeks:12},
+  "goal_summary": "2-sentence overview of the plan and expected outcomes",
   "weekly_schedule": [
     {
       "day": "Monday",
@@ -5608,7 +5785,7 @@ Return ONLY valid JSON in this exact structure (no markdown, no explanation):
       "title": "string",
       "fixed_commitment": false,
       "sessions": [
-        {"name":"Exercise Name","sets":3,"reps":"10-12","note":"form tip"}
+        {"name":"Exercise Name","sets":3,"reps":"10-12","note":"brief form tip or purpose"}
       ]
     }
   ],
@@ -5621,13 +5798,13 @@ Return ONLY valid JSON in this exact structure (no markdown, no explanation):
     "carbs_g": 200,
     "fat_g": 65,
     "meals": [
-      {"name":"Breakfast","description":"string","protein_g":40,"carbs_g":60,"fat_g":15}
+      {"name":"Breakfast","description":"specific meal suggestion","protein_g":40,"carbs_g":60,"fat_g":15}
     ],
     "key_principles": ["string","string","string"]
   }
 }
 
-weekly_schedule must only include the ${trainSetup.daysPerWeek.length} training day(s) per week pattern — not all 7 days. Use type values: strength, cardio, hiit, flexibility, rest. Include 4-6 exercises per session.`;
+weekly_schedule should include ${numDays} training session(s) per week. Include 4-6 exercises per session. Fixed commitments marked fixed_commitment: true count as sessions if they are physically demanding (martial arts, yoga, etc). Use type values: strength, cardio, hiit, flexibility, rest.`;
 
   try{
     const res=await fetch('https://api.anthropic.com/v1/messages',{
