@@ -799,8 +799,9 @@
   .train-day-slot-inputs{display:flex;gap:5px;flex:1;min-width:0}
   .train-day-act-input{flex:1;min-width:0;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-sm);color:var(--text);font-family:var(--font-body);font-size:11px;padding:6px 7px;outline:none}
   .train-day-act-input:focus{border-color:var(--accent)}
-  .train-day-time-input{width:72px;flex-shrink:0;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-sm);color:var(--text);font-family:var(--font-body);font-size:11px;padding:6px 7px;outline:none}
-  .train-day-time-input:focus{border-color:var(--accent)}
+  .train-time-picker{display:flex;gap:3px;flex-shrink:0}
+  .train-time-btn{padding:5px 7px;border-radius:10px;border:1px solid var(--border);background:none;color:var(--text-dimmer);font-family:var(--font-body);font-size:9px;cursor:pointer;transition:all .15s;white-space:nowrap;letter-spacing:.03em;line-height:1}
+  .train-time-btn.active{background:var(--accent);border-color:var(--accent);color:var(--bg)}
   .train-ai-toggle-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
   .train-ai-toggle-label{font-size:12px;color:var(--text-dim)}
   .train-ai-toggle-sub{font-size:10px;color:var(--text-dimmer);margin-top:2px}
@@ -5577,7 +5578,7 @@ function renderTrainSetupHTML(){
   // Duration pills
   const durBtns=durOpts.map(o=>`<button type="button" class="train-pill${trainSetup.durationWeeks===o.v?' active':''}" onclick="setTrainDuration(${o.v})" data-tdur="${o.v}">${o.l}</button>`).join('');
 
-  // Day slots
+  // Day slots — always shown regardless of aiDecidesDays
   const daySlotRows=DAY_NAMES.map((d,i)=>{
     const slot=trainSetup.daySlots[i];
     const isTrain=!trainSetup.aiDecidesDays&&slot.train;
@@ -5586,17 +5587,20 @@ function renderTrainSetupHTML(){
     if(trainSetup.aiDecidesDays)circleClass+=' ai-mode';
     else if(isTrain)circleClass+=' is-train';
     else if(hasActivity)circleClass+=' is-activity';
+    const t=slot.time||'';
+    const timePicker=`<div class="train-time-picker">
+      <button type="button" class="train-time-btn${t==='morning'?' active':''}" onclick="setTrainDayTime(${i},'morning')">Morn</button>
+      <button type="button" class="train-time-btn${t==='afternoon'?' active':''}" onclick="setTrainDayTime(${i},'afternoon')">Aft</button>
+      <button type="button" class="train-time-btn${t==='evening'?' active':''}" onclick="setTrainDayTime(${i},'evening')">Eve</button>
+    </div>`;
     return `<div class="train-day-slot">
-      <button type="button" class="${circleClass}" onclick="toggleTrainDayTrain(${i})" title="${trainSetup.aiDecidesDays?'AI picks training days':isTrain?'Training day — tap to remove':'Tap to set as training day'}">${d}</button>
+      <button type="button" class="${circleClass}" onclick="toggleTrainDayTrain(${i})" title="${trainSetup.aiDecidesDays?'AI assigns training — tap circle has no effect':isTrain?'Training day — tap to unset':'Tap to set as training day'}">${d}</button>
       <div class="train-day-slot-inputs">
-        <input class="train-day-act-input" type="text" placeholder="Activity (Capoeira, Yoga…)" maxlength="30"
+        <input class="train-day-act-input" type="text" placeholder="Fixed activity (Capoeira, Yoga…)" maxlength="30"
           value="${escapeHtml(slot.activity)}"
           oninput="trainSetup.daySlots[${i}].activity=this.value;refreshDayCircle(${i})"
           aria-label="Activity for ${DAY_FULL[i]}"/>
-        <input class="train-day-time-input" type="text" placeholder="Time" maxlength="12"
-          value="${escapeHtml(slot.time)}"
-          oninput="trainSetup.daySlots[${i}].time=this.value"
-          aria-label="Time for ${DAY_FULL[i]}"/>
+        ${timePicker}
       </div>
     </div>`;
   }).join('');
@@ -5674,8 +5678,8 @@ function renderTrainSetupHTML(){
       ${aiSessionsRow}
       <div style="font-size:10px;color:var(--text-dimmer);margin-bottom:8px;line-height:1.5">
         ${trainSetup.aiDecidesDays
-          ? 'Tap a day to mark a fixed activity — Claude will work around it.'
-          : 'Tap a day circle to set it as a training day. Add activities Claude should work around.'}
+          ? 'Add fixed activities below — Claude will schedule sessions around them.'
+          : 'Tap a day circle to mark it as a training day. Add any fixed activities Claude should work around.'}
       </div>
       <div>${daySlotRows}</div>
     </div>
@@ -5728,6 +5732,11 @@ function adjustAISessions(delta){
   const el=document.querySelector('.train-sessions-num');
   if(el)el.textContent=trainSetup.daysPerWeekAI;
 }
+function setTrainDayTime(i,val){
+  // tap active pill to clear, otherwise set
+  trainSetup.daySlots[i].time=(trainSetup.daySlots[i].time===val?'':val);
+  renderTrainingView();
+}
 // legacy alias kept for safety
 function toggleTrainDay(i){toggleTrainDayTrain(i);}
 
@@ -5748,12 +5757,16 @@ async function doGeneratePlan(){
   if(tc)tc.innerHTML=`<div class="train-loading"><div class="train-loading-spinner"></div><div class="train-loading-text">Building your personalised plan…<br><span style="font-size:11px;color:var(--text-dimmer)">This takes about 20–30 seconds</span></div></div>`;
 
   // Build day context string
-  const fixedActivities=trainSetup.daySlots.map((s,i)=>s.activity.trim()?`${DAY_FULL[i]}${s.time?' '+s.time:''}: ${s.activity}`:null).filter(Boolean);
+  const fixedActivities=trainSetup.daySlots.map((s,i)=>
+    s.activity.trim()?`${DAY_FULL[i]}${s.time?' '+s.time:''}: ${s.activity}`:null
+  ).filter(Boolean);
   let daysContext;
   if(trainSetup.aiDecidesDays){
-    daysContext=`You choose ${trainSetup.daysPerWeekAI} training sessions per week, distributing them optimally.`;
+    daysContext=`Choose ${trainSetup.daysPerWeekAI} training sessions per week, distributing them optimally across the week.`;
   } else {
-    const dList=trainSetup.daySlots.map((s,i)=>s.train?`${DAY_FULL[i]}${s.time?' at '+s.time:''}${s.activity?' ('+s.activity+')':''}`:null).filter(Boolean);
+    const dList=trainSetup.daySlots.map((s,i)=>
+      s.train?`${DAY_FULL[i]}${s.time?' '+s.time:''}${s.activity?' ('+s.activity+')':''}`:null
+    ).filter(Boolean);
     daysContext=`Training days: ${dList.join(', ')}.`;
   }
   const fixedCtx=fixedActivities.length?`Fixed commitments to schedule around: ${fixedActivities.join('; ')}.`:'';
