@@ -5920,12 +5920,12 @@ async function doGeneratePlan(){
   if(age>=10&&age<=100){
     const maxHR=220-age;
     const z=(lo,hi)=>`${Math.round(maxHR*lo)}–${Math.round(maxHR*hi)} bpm`;
-    hrZoneStr=`\nHeart rate zones for age ${age} (max HR: ${maxHR} bpm — use these exact numbers whenever referencing heart rate targets):
-- Zone 1 Recovery:       ${z(.50,.60)} (50–60% max HR)
-- Zone 2 Aerobic/fat:    ${z(.60,.70)} (60–70% max HR)
-- Zone 3 Cardio:         ${z(.70,.80)} (70–80% max HR)
-- Zone 4 Threshold:      ${z(.80,.90)} (80–90% max HR)
-- Zone 5 Max effort:     ${z(.90,1.00)} (90–100% max HR)`;
+    hrZoneStr=`\nHeart rate zones for age ${age} (max HR: ${maxHR} bpm). Always state both the percentage and the BPM range together, e.g. "60–70% of max HR (${z(.60,.70)})":
+- Zone 1 Recovery:    50–60% of max HR (${z(.50,.60)})
+- Zone 2 Aerobic/fat: 60–70% of max HR (${z(.60,.70)})
+- Zone 3 Cardio:      70–80% of max HR (${z(.70,.80)})
+- Zone 4 Threshold:   80–90% of max HR (${z(.80,.90)})
+- Zone 5 Max effort:  90–100% of max HR (${z(.90,1.00)})`;
   }
 
   const unitSystem=isMetric()?'metric (kg, cm)':'imperial (lbs, feet/inches)';
