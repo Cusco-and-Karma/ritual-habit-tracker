@@ -5914,11 +5914,26 @@ async function doGeneratePlan(){
   const dur=trainSetup.durationWeeks===0?'an appropriate number of':''+trainSetup.durationWeeks;
   const numDays=trainSetup.aiDecidesDays?trainSetup.daysPerWeekAI:trainDays.length;
 
+  // Heart rate zones (Haskell & Fox formula: 220 - age)
+  let hrZoneStr='';
+  const age=parseInt(trainSetup.age)||0;
+  if(age>=10&&age<=100){
+    const maxHR=220-age;
+    const z=(lo,hi)=>`${Math.round(maxHR*lo)}–${Math.round(maxHR*hi)} bpm`;
+    hrZoneStr=`\nHeart rate zones for age ${age} (max HR: ${maxHR} bpm — use these exact numbers whenever referencing heart rate targets):
+- Zone 1 Recovery:       ${z(.50,.60)} (50–60% max HR)
+- Zone 2 Aerobic/fat:    ${z(.60,.70)} (60–70% max HR)
+- Zone 3 Cardio:         ${z(.70,.80)} (70–80% max HR)
+- Zone 4 Threshold:      ${z(.80,.90)} (80–90% max HR)
+- Zone 5 Max effort:     ${z(.90,1.00)} (90–100% max HR)`;
+  }
+
   const unitSystem=isMetric()?'metric (kg, cm)':'imperial (lbs, feet/inches)';
   const prompt=`Create a detailed ${dur}-week training plan focused on ${goals} for a ${trainSetup.experience} with access to ${trainSetup.equipment.replace(/_/g,' ')} equipment.
 ${daysContext}
 ${fixedCtx}
 ${statsStr?statsStr+'.':''}
+${hrZoneStr}
 ${trainSetup.notes?'Additional context: '+trainSetup.notes:''}
 Use ${unitSystem} throughout — all body weight references, exercise loads, and food portion weights must be in ${unitSystem}.
 
@@ -5932,6 +5947,7 @@ Return ONLY valid JSON in this exact structure (no markdown fences, no explanati
       "day": "Monday",
       "type": "strength",
       "title": "string",
+      "duration_minutes": 55,
       "fixed_commitment": false,
       "sessions": [
         {"name":"Exercise Name","sets":3,"reps":"10-12","note":"brief form tip or purpose"}
@@ -5953,7 +5969,7 @@ Return ONLY valid JSON in this exact structure (no markdown fences, no explanati
   }
 }
 
-weekly_schedule should include ${numDays} training session(s) per week. Include 4-6 exercises per session. Fixed commitments marked fixed_commitment: true count as sessions if they are physically demanding (martial arts, yoga, etc). Use type values: strength, cardio, hiit, flexibility, rest.`;
+weekly_schedule should include ${numDays} training session(s) per week. Include 4-6 exercises per session. Set duration_minutes to a realistic estimate of how long the full session will take (warm-up + exercises + cool-down). Fixed commitments marked fixed_commitment: true count as sessions if they are physically demanding (martial arts, yoga, etc). Use type values: strength, cardio, hiit, flexibility, rest.`;
 
   try{
     const res=await fetch('https://api.anthropic.com/v1/messages',{
@@ -6067,7 +6083,10 @@ function renderTrainPlanHTML(){
         <div class="train-day-name">${escapeHtml(day.day||'')}</div>
         <div>
           <div class="train-day-title">${escapeHtml(day.title||type)}</div>
-          <div style="font-size:10px;color:var(--text-dimmer);margin-top:1px">${total>0?done+'/'+total+' done':type==='rest'?'rest day':'no exercises'}</div>
+          <div style="font-size:10px;color:var(--text-dimmer);margin-top:1px;display:flex;gap:8px;flex-wrap:wrap">
+            <span>${total>0?done+'/'+total+' done':type==='rest'?'rest day':'no exercises'}</span>
+            ${day.duration_minutes?`<span style="color:var(--accent);opacity:.75">⏱ ${day.duration_minutes} min</span>`:''}
+          </div>
         </div>
         <div class="train-type-pill train-type-${type}">${type}</div>
         ${total>0?`<div class="train-day-check${allDone?' done':''}">✓</div>`:''}
