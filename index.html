@@ -5482,7 +5482,13 @@ function loadTrainingData(){
     if(p)trainingPlan=JSON.parse(p);
     const w=localStorage.getItem('ritual_training_week');
     if(w)trainingWeek=parseInt(w)||1;
+    // Restore setup form values so "Regenerate" pre-fills the last used settings
+    const s=localStorage.getItem('ritual_train_setup');
+    if(s){const saved=JSON.parse(s);Object.assign(trainSetup,saved);}
   }catch(e){trainingPlan=null;trainingWeek=1;}
+}
+function saveTrainSetup(){
+  try{localStorage.setItem('ritual_train_setup',JSON.stringify(trainSetup));}catch(e){}
 }
 function saveTrainingPlan(){
   if(trainingPlan)localStorage.setItem('ritual_training_plan',JSON.stringify(trainingPlan));
@@ -5676,7 +5682,7 @@ The updated_weekly_schedule must be the FULL array. Keep each day object: {day, 
     const res=await fetch('https://api.anthropic.com/v1/messages',{
       method:'POST',
       headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-      body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:2000,system:systemPrompt,messages:history})
+      body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:4096,system:systemPrompt,messages:history})
     });
     if(!res.ok){const e=await res.json().catch(()=>({}));throw new Error(e.error?.message||`API error ${res.status}`);}
     const data=await res.json();
@@ -5691,16 +5697,21 @@ The updated_weekly_schedule must be the FULL array. Keep each day object: {day, 
       saveTrainingPlan();
       scheduleUpdated=true;
       messageText=parsed.message||'Schedule updated!';
-      // Refresh plan tab if visible
-      if(trainingTab==='plan'){
-        const tc=document.getElementById('trainTabContent');
-        if(tc)tc.innerHTML=renderTrainPlanHTML();
-      }
     }
 
     const html=messageText.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\n\n/g,'<br><br>').replace(/\n/g,'<br>');
     const badge=scheduleUpdated?`<div style="margin-top:8px;font-size:10px;color:#4ade80;letter-spacing:.04em">✓ Plan updated &amp; saved</div>`:'';
     trainCoachMessages.push({role:'ai',text:html+badge});
+
+    if(scheduleUpdated){
+      // Full re-render so day cards update — but preserve coach messages by injecting directly
+      // Re-render the tab content, then re-inject coach messages to avoid scroll-to-top flash
+      if(trainingTab==='plan'){
+        const tc=document.getElementById('trainTabContent');
+        if(tc)tc.innerHTML=renderTrainPlanHTML();
+      }
+      // Re-render coach messages (was queued above, do it now before the final reRenderCoachMessages)
+    }
   }catch(err){
     trainCoachMessages.push({role:'ai',text:`<span style="color:#ef4444">Error: ${escapeHtml(err.message)}</span>`});
   }
@@ -6069,6 +6080,9 @@ async function doGeneratePlan(){
   if(!trainSetup.aiDecidesDays&&!trainDays.length){showTrainError('Select at least one training day, or enable "AI picks training days".');return;}
   if(!trainSetup.goals.length){showTrainError('Select at least one goal.');return;}
 
+  // Persist setup before we start — so "Regenerate" pre-fills the form if anything goes wrong
+  saveTrainSetup();
+
   const btn=document.getElementById('trainGenBtn');
   if(btn)btn.disabled=true;
   const tc=document.getElementById('trainTabContent');
@@ -6191,8 +6205,15 @@ weekly_schedule should include ${numDays} training session(s) per week. Include 
     saveTrainingPlan();
     renderTrainingView();
   }catch(err){
+    const isNetwork=err instanceof TypeError&&err.message.toLowerCase().includes('fetch');
+    const msg=isNetwork
+      ?'Network error — could not reach the AI. Check your internet connection, ensure your API key is valid, and try again.'
+      :'Generation failed: '+err.message;
     renderTrainingView();
-    showTrainError('Generation failed: '+err.message);
+    showTrainError(msg);
+    // Re-enable generate button so they can retry without refreshing
+    const b=document.getElementById('trainGenBtn');
+    if(b)b.disabled=false;
   }
 }
 
