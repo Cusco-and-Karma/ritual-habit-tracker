@@ -734,7 +734,7 @@
   .train-ex-check.done~.train-ex-info .train-ex-name{text-decoration:line-through;color:var(--text-dimmer)}
   .train-ex-meta{font-size:11px;color:var(--text-dimmer)}
   .train-ex-note{font-size:10px;color:var(--text-dimmer);margin-top:2px;line-height:1.5;font-style:italic}
-  .train-regen-btn{display:flex;align-items:center;gap:8px;background:none;border:1px solid var(--border);border-radius:var(--r-sm);padding:8px 14px;color:var(--text-dim);font-family:var(--font-body);font-size:12px;cursor:pointer;margin-top:8px;transition:all .2s}
+  .train-regen-btn{display:flex;align-items:center;gap:8px;background:none;border:1px solid var(--border);border-radius:var(--r-sm);padding:10px 14px;color:var(--text-dim);font-family:var(--font-body);font-size:12px;cursor:pointer;margin-top:8px;transition:all .2s;width:100%}
   .train-regen-btn:hover{border-color:var(--accent);color:var(--accent)}
   .train-error{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:var(--r-sm);padding:10px 14px;font-size:12px;color:#ef4444;margin-bottom:12px}
   .train-setup-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;margin-bottom:12px}
@@ -861,7 +861,7 @@
   .draft-empty{text-align:center;padding:32px 16px;color:var(--text-dimmer);font-size:13px;line-height:1.7}
   .draft-close-btn{width:100%;margin-top:12px;padding:12px;border-radius:var(--r-sm);border:1px solid var(--border);background:none;color:var(--text-dim);font-family:var(--font-body);font-size:12px;cursor:pointer;letter-spacing:.05em;text-transform:uppercase;transition:all .15s}
   .draft-close-btn:hover{border-color:var(--text-dim)}
-  .train-draft-actions{display:flex;gap:8px;margin-top:8px}
+  .train-draft-actions{display:flex;gap:8px;margin-top:6px}
   .train-save-draft-btn{padding:11px 14px;border-radius:var(--r-sm);border:1px solid var(--border);background:none;color:var(--text-dim);font-family:var(--font-body);font-size:11px;cursor:pointer;letter-spacing:.04em;text-transform:uppercase;display:flex;align-items:center;gap:5px;transition:all .2s;white-space:nowrap;flex-shrink:0}
   .train-save-draft-btn:hover{border-color:var(--accent);color:var(--accent)}
   .train-load-draft-link{text-align:center;padding:10px 0 2px;font-size:12px;color:var(--text-dimmer);cursor:pointer;transition:color .2s}
@@ -5837,6 +5837,7 @@ function getDrafts(){
 function _saveDrafts(d){localStorage.setItem('ritual_training_drafts',JSON.stringify(d));}
 
 function showSaveDraftModal(){
+  if(!trainingPlan){alert('Generate or load a plan first — there\'s nothing to save yet.');return;}
   const defaultName=trainingPlan?.plan_name||'My Training Plan';
   const name=prompt('Save plan as:',defaultName);
   if(!name||!name.trim())return;
@@ -6193,7 +6194,16 @@ function renderTrainSetupHTML(){
     </div>
 
     <button class="train-generate-btn" id="trainGenBtn" onclick="doGeneratePlan()">Generate My Plan</button>
-    <div class="train-load-draft-link" onclick="showLoadDraftModal()">📂 Load a saved plan</div>
+    <div class="train-draft-actions" style="margin-top:10px">
+      <button class="train-save-draft-btn" style="flex:1;justify-content:center" onclick="showSaveDraftModal()">
+        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+        Save Draft
+      </button>
+      <button class="train-save-draft-btn" style="flex:1;justify-content:center" onclick="showLoadDraftModal()">
+        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>
+        Load Plan
+      </button>
+    </div>
     <div style="height:16px"></div>`;
 }
 
@@ -6502,16 +6512,21 @@ function renderTrainPlanHTML(){
     </div>`;
   }).join('');
 
-  const actionRow=`<div class="train-draft-actions">
-    <button class="train-save-draft-btn" onclick="showSaveDraftModal()">
-      <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-      Save Draft
-    </button>
-    <button class="train-regen-btn" style="flex:1" onclick="confirmRegenPlan()">
+  const actionRow=`
+    <button class="train-regen-btn" style="width:100%;justify-content:center" onclick="confirmRegenPlan()">
       <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
-      Regenerate
+      Regenerate Plan
     </button>
-  </div>`;
+    <div class="train-draft-actions">
+      <button class="train-save-draft-btn" style="flex:1;justify-content:center" onclick="showSaveDraftModal()">
+        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+        Save Draft
+      </button>
+      <button class="train-save-draft-btn" style="flex:1;justify-content:center" onclick="showLoadDraftModal()">
+        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>
+        Load Plan
+      </button>
+    </div>`;
 
   return `
     <div class="train-plan-name">${escapeHtml(p.plan_name||'My Training Plan')}</div>
