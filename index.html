@@ -5788,9 +5788,10 @@ function _planGenSetUI(pct,caption){
 function startPlanGenProgress(){
   planGenCurrentPct=0;
   clearInterval(planGenInterval);
+  // Replace only the tab content — keep the coach section intact
   const tc=document.getElementById('trainTabContent');
   if(tc)tc.innerHTML=`
-    <div class="plan-gen-wrap">
+    <div class="plan-gen-wrap" id="planGenWrap">
       <div class="plan-gen-svg-wrap">
         <svg class="plan-gen-svg" viewBox="0 0 120 120">
           <circle class="plan-gen-track" cx="60" cy="60" r="50"/>
@@ -5802,6 +5803,10 @@ function startPlanGenProgress(){
       </div>
       <div class="plan-gen-caption" id="planGenCap">${PLAN_GEN_CAPTIONS[0]}</div>
     </div>`;
+  // Scroll train view to top so circle is immediately visible
+  // (user may have scrolled down to click Generate My Plan)
+  const sv=document.getElementById('trainView');
+  if(sv)sv.scrollTop=0;
   let targetPct=0,elapsed=0;
   const totalMs=26000,maxPct=88;
   planGenInterval=setInterval(()=>{
