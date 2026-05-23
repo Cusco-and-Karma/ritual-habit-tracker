@@ -837,6 +837,35 @@
   .train-coach-thinking span:nth-child(2){animation-delay:.2s}
   .train-coach-thinking span:nth-child(3){animation-delay:.4s}
   @keyframes coachPulse{0%,80%,100%{opacity:.3;transform:scale(.8)}40%{opacity:1;transform:scale(1)}}
+  /* ── Plan generation progress circle ── */
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  .plan-gen-wrap{display:flex;flex-direction:column;align-items:center;padding:52px 24px 24px;gap:22px;animation:fadeIn .3s ease}
+  .plan-gen-svg-wrap{position:relative;width:150px;height:150px;flex-shrink:0}
+  .plan-gen-svg{width:150px;height:150px;transform:rotate(-90deg)}
+  .plan-gen-track{fill:none;stroke:var(--surface2);stroke-width:10}
+  .plan-gen-fill{fill:none;stroke:var(--accent);stroke-width:10;stroke-linecap:round;stroke-dasharray:314.16;stroke-dashoffset:314.16;transition:stroke-dashoffset .15s linear;filter:drop-shadow(0 0 6px rgba(200,180,240,.5))}
+  .plan-gen-overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px}
+  .plan-gen-pct{font-family:'DM Serif Display',serif;font-size:32px;color:var(--text);line-height:1}
+  .plan-gen-caption{font-size:12px;color:var(--text-dim);text-align:center;max-width:240px;line-height:1.65;min-height:40px;transition:opacity .25s}
+  /* ── Draft sheet ── */
+  .draft-overlay{position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:200;display:flex;align-items:flex-end;justify-content:center;animation:fadeIn .18s ease}
+  .draft-sheet{background:var(--bg);border:1px solid var(--border);border-top:1px solid var(--accent);border-radius:var(--r) var(--r) 0 0;width:100%;max-width:420px;padding:20px 20px 40px;max-height:78vh;overflow-y:auto}
+  .draft-sheet-title{font-family:'DM Serif Display',serif;font-size:18px;color:var(--text);margin-bottom:16px}
+  .draft-item{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-sm);padding:12px 14px;margin-bottom:8px}
+  .draft-item-name{font-size:13px;color:var(--text);margin-bottom:3px;font-family:'DM Serif Display',serif}
+  .draft-item-meta{font-size:10px;color:var(--text-dimmer);margin-bottom:10px;letter-spacing:.02em}
+  .draft-item-actions{display:flex;gap:6px;flex-wrap:wrap}
+  .draft-act-btn{padding:5px 12px;border-radius:12px;border:1px solid var(--border);background:none;color:var(--text-dim);font-family:var(--font-body);font-size:11px;cursor:pointer;transition:all .15s}
+  .draft-act-btn.primary{border-color:var(--accent);color:var(--accent)}
+  .draft-act-btn.danger{border-color:#ef4444;color:#ef4444}
+  .draft-empty{text-align:center;padding:32px 16px;color:var(--text-dimmer);font-size:13px;line-height:1.7}
+  .draft-close-btn{width:100%;margin-top:12px;padding:12px;border-radius:var(--r-sm);border:1px solid var(--border);background:none;color:var(--text-dim);font-family:var(--font-body);font-size:12px;cursor:pointer;letter-spacing:.05em;text-transform:uppercase;transition:all .15s}
+  .draft-close-btn:hover{border-color:var(--text-dim)}
+  .train-draft-actions{display:flex;gap:8px;margin-top:8px}
+  .train-save-draft-btn{padding:11px 14px;border-radius:var(--r-sm);border:1px solid var(--border);background:none;color:var(--text-dim);font-family:var(--font-body);font-size:11px;cursor:pointer;letter-spacing:.04em;text-transform:uppercase;display:flex;align-items:center;gap:5px;transition:all .2s;white-space:nowrap;flex-shrink:0}
+  .train-save-draft-btn:hover{border-color:var(--accent);color:var(--accent)}
+  .train-load-draft-link{text-align:center;padding:10px 0 2px;font-size:12px;color:var(--text-dimmer);cursor:pointer;transition:color .2s}
+  .train-load-draft-link:hover{color:var(--accent)}
   /* ── Shopping list ── */
   .shop-list-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px;margin-bottom:12px}
   .shop-list-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
@@ -5601,6 +5630,21 @@ function showTrainError(msg){
 let trainCoachMessages=[];  // [{role:'user'|'ai', text}]
 let shoppingList=null;      // {categories:[{name, items:[{name,qty,unit,notes}]}]}
 let shoppingChecked={};     // {key: true}  — key = "catIdx_itemIdx"
+// Plan generation progress
+let planGenInterval=null;
+let planGenCurrentPct=0;
+const PLAN_GEN_CAPTIONS=[
+  'Analyzing your goals & experience…',
+  'Designing your weekly training structure…',
+  'Building day-by-day exercises…',
+  'Calibrating heart rate zones…',
+  'Balancing muscle groups & recovery…',
+  'Setting nutrition targets…',
+  'Crafting your weekly meal plan…',
+  'Reviewing and refining…',
+];
+// Draft saving
+let _draftModalKeys=[];
 
 function renderTrainCoachHTML(){
   const chips=[
@@ -5727,6 +5771,143 @@ function reRenderCoachMessages(showThinking=false){
   const thinking=showThinking?`<div class="train-coach-thinking"><span></span><span></span><span></span></div>`:'';
   el.innerHTML=msgs+thinking;
   el.scrollTop=el.scrollHeight;
+}
+
+// ─────────────────────────────────────────────────────────
+// PLAN GENERATION PROGRESS CIRCLE
+function _planGenSetUI(pct,caption){
+  const CIRC=314.16;
+  const pEl=document.getElementById('planGenPct');
+  const cEl=document.getElementById('planGenCap');
+  const aEl=document.getElementById('planGenArc');
+  if(pEl)pEl.textContent=Math.round(pct)+'%';
+  if(cEl)cEl.textContent=caption;
+  if(aEl)aEl.style.strokeDashoffset=String(CIRC*(1-pct/100));
+}
+
+function startPlanGenProgress(){
+  planGenCurrentPct=0;
+  clearInterval(planGenInterval);
+  const tc=document.getElementById('trainTabContent');
+  if(tc)tc.innerHTML=`
+    <div class="plan-gen-wrap">
+      <div class="plan-gen-svg-wrap">
+        <svg class="plan-gen-svg" viewBox="0 0 120 120">
+          <circle class="plan-gen-track" cx="60" cy="60" r="50"/>
+          <circle class="plan-gen-fill" id="planGenArc" cx="60" cy="60" r="50"/>
+        </svg>
+        <div class="plan-gen-overlay">
+          <div class="plan-gen-pct" id="planGenPct">0%</div>
+        </div>
+      </div>
+      <div class="plan-gen-caption" id="planGenCap">${PLAN_GEN_CAPTIONS[0]}</div>
+    </div>`;
+  let targetPct=0,elapsed=0;
+  const totalMs=26000,maxPct=88;
+  planGenInterval=setInterval(()=>{
+    elapsed+=150;
+    targetPct=Math.min(maxPct,(elapsed/totalMs)*maxPct);
+    planGenCurrentPct+=(targetPct-planGenCurrentPct)*0.1;
+    const capIdx=Math.min(Math.floor(planGenCurrentPct/maxPct*PLAN_GEN_CAPTIONS.length),PLAN_GEN_CAPTIONS.length-1);
+    _planGenSetUI(planGenCurrentPct,PLAN_GEN_CAPTIONS[capIdx]);
+  },150);
+}
+
+function completePlanGenProgress(onDone){
+  clearInterval(planGenInterval);planGenInterval=null;
+  const fill=()=>{
+    planGenCurrentPct=Math.min(100,planGenCurrentPct+2.5);
+    _planGenSetUI(planGenCurrentPct,planGenCurrentPct>=100?'Your plan is ready! ✨':'Finalizing…');
+    if(planGenCurrentPct<100)requestAnimationFrame(fill);
+    else setTimeout(onDone,500);
+  };
+  requestAnimationFrame(fill);
+}
+
+function stopPlanGenProgress(){
+  clearInterval(planGenInterval);planGenInterval=null;
+}
+
+// ─────────────────────────────────────────────────────────
+// DRAFT SAVING
+function getDrafts(){
+  try{return JSON.parse(localStorage.getItem('ritual_training_drafts')||'{}');}
+  catch(e){return {};}
+}
+function _saveDrafts(d){localStorage.setItem('ritual_training_drafts',JSON.stringify(d));}
+
+function showSaveDraftModal(){
+  const defaultName=trainingPlan?.plan_name||'My Training Plan';
+  const name=prompt('Save plan as:',defaultName);
+  if(!name||!name.trim())return;
+  const key=name.trim();
+  const drafts=getDrafts();
+  drafts[key]={plan:trainingPlan,setup:{...trainSetup,daySlots:trainSetup.daySlots.map(s=>({...s}))},savedAt:Date.now()};
+  try{
+    _saveDrafts(drafts);
+    const btn=document.querySelector('.train-save-draft-btn');
+    if(btn){const h=btn.innerHTML;btn.textContent='✓ Saved!';setTimeout(()=>{btn.innerHTML=h;},1600);}
+  }catch(e){alert('Could not save — storage may be full.');}
+}
+
+function showLoadDraftModal(){
+  const drafts=getDrafts();
+  _draftModalKeys=Object.keys(drafts).sort((a,b)=>(drafts[b].savedAt||0)-(drafts[a].savedAt||0));
+  const itemsHTML=_draftModalKeys.length?_draftModalKeys.map((name,idx)=>{
+    const d=drafts[name];
+    const date=d.savedAt?new Date(d.savedAt).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'';
+    const weeks=d.plan?.duration_weeks;
+    const goals=(d.setup?.goals||[]).map(g=>g.replace(/_/g,' ')).join(', ');
+    const meta=[weeks&&(weeks+'w'),goals,date].filter(Boolean).join(' · ');
+    return `<div class="draft-item">
+      <div class="draft-item-name">${escapeHtml(name)}</div>
+      ${meta?`<div class="draft-item-meta">${escapeHtml(meta)}</div>`:''}
+      <div class="draft-item-actions">
+        <button class="draft-act-btn primary" onclick="loadDraftByIdx(${idx});hideDraftModal()">Load</button>
+        <button class="draft-act-btn" onclick="renameDraftByIdx(${idx})">Rename</button>
+        <button class="draft-act-btn danger" onclick="deleteDraftByIdx(${idx})">Delete</button>
+      </div>
+    </div>`;
+  }).join(''):`<div class="draft-empty">No saved plans yet.<br>Generate a plan, then tap <strong>Save Draft</strong> to store it here.</div>`;
+  const ov=document.createElement('div');
+  ov.className='draft-overlay';ov.id='draftOverlay';
+  ov.innerHTML=`<div class="draft-sheet" onclick="event.stopPropagation()">
+    <div class="draft-sheet-title">Saved Plans</div>
+    <div id="draftList">${itemsHTML}</div>
+    <button class="draft-close-btn" onclick="hideDraftModal()">Close</button>
+  </div>`;
+  ov.addEventListener('click',hideDraftModal);
+  document.body.appendChild(ov);
+}
+
+function hideDraftModal(){const el=document.getElementById('draftOverlay');if(el)el.remove();}
+
+function loadDraftByIdx(idx){
+  const name=_draftModalKeys[idx];if(!name)return;
+  const d=getDrafts()[name];if(!d)return;
+  trainingPlan=d.plan||null;
+  if(d.setup)Object.assign(trainSetup,d.setup);
+  trainCoachMessages=[];shoppingList=null;shoppingChecked={};
+  trainPhaseIdx=0;trainingWeek=1;expandedDay=null;
+  saveTrainingPlan();saveTrainSetup();saveShoppingList();
+  renderTrainingView();
+}
+
+function renameDraftByIdx(idx){
+  const oldName=_draftModalKeys[idx];if(!oldName)return;
+  const newName=prompt('Rename:',oldName);
+  if(!newName||!newName.trim()||newName.trim()===oldName)return;
+  const key=newName.trim();
+  const drafts=getDrafts();
+  if(drafts[oldName]){drafts[key]=drafts[oldName];delete drafts[oldName];_saveDrafts(drafts);}
+  hideDraftModal();showLoadDraftModal();
+}
+
+function deleteDraftByIdx(idx){
+  const name=_draftModalKeys[idx];if(!name)return;
+  if(!confirm(`Delete "${name}"?`))return;
+  const drafts=getDrafts();delete drafts[name];_saveDrafts(drafts);
+  hideDraftModal();showLoadDraftModal();
 }
 
 // ─────────────────────────────────────────────────────────
@@ -6012,6 +6193,7 @@ function renderTrainSetupHTML(){
     </div>
 
     <button class="train-generate-btn" id="trainGenBtn" onclick="doGeneratePlan()">Generate My Plan</button>
+    <div class="train-load-draft-link" onclick="showLoadDraftModal()">📂 Load a saved plan</div>
     <div style="height:16px"></div>`;
 }
 
@@ -6085,8 +6267,7 @@ async function doGeneratePlan(){
 
   const btn=document.getElementById('trainGenBtn');
   if(btn)btn.disabled=true;
-  const tc=document.getElementById('trainTabContent');
-  if(tc)tc.innerHTML=`<div class="train-loading"><div class="train-loading-spinner"></div><div class="train-loading-text">Building your personalised plan…<br><span style="font-size:11px;color:var(--text-dimmer)">This takes about 20–30 seconds</span></div></div>`;
+  startPlanGenProgress();
 
   // Build day context string
   const fixedActivities=trainSetup.daySlots.map((s,i)=>{
@@ -6200,18 +6381,28 @@ weekly_schedule should include ${numDays} training session(s) per week. Include 
     const text=(data.content||[]).find(b=>b.type==='text')?.text||'';
     const jsonMatch=text.match(/\{[\s\S]*\}/);
     if(!jsonMatch)throw new Error('No JSON found in response');
-    trainingPlan=JSON.parse(jsonMatch[0]);
-    trainPhaseIdx=0;trainingWeek=1;expandedDay=null;
-    saveTrainingPlan();
-    renderTrainingView();
+    const plan=JSON.parse(jsonMatch[0]);
+    completePlanGenProgress(()=>{
+      trainingPlan=plan;
+      trainPhaseIdx=0;trainingWeek=1;expandedDay=null;
+      saveTrainingPlan();
+      renderTrainingView();
+    });
   }catch(err){
-    const isNetwork=err instanceof TypeError&&err.message.toLowerCase().includes('fetch');
-    const msg=isNetwork
-      ?'Network error — could not reach the AI. Check your internet connection, ensure your API key is valid, and try again.'
-      :'Generation failed: '+err.message;
+    stopPlanGenProgress();
+    console.error('[Ritual] Plan generation error:',err);
+    const isNetwork=err instanceof TypeError&&(err.message.includes('fetch')||err.message.includes('network')||err.message.includes('Network'));
+    const onFileProt=location.protocol==='file:';
+    let msg;
+    if(isNetwork){
+      msg=onFileProt
+        ?'Network error — direct browser API calls are sometimes blocked when opening the app as a local file (file:// URL). Try the Netlify-hosted version, or serve index.html via a local web server.'
+        :'Network error — could not reach the AI. Check your internet connection and make sure no browser extension (ad blockers, privacy tools) is blocking requests to api.anthropic.com. Also verify your API key in Settings.';
+    } else {
+      msg='Generation failed: '+err.message;
+    }
     renderTrainingView();
     showTrainError(msg);
-    // Re-enable generate button so they can retry without refreshing
     const b=document.getElementById('trainGenBtn');
     if(b)b.disabled=false;
   }
@@ -6311,10 +6502,16 @@ function renderTrainPlanHTML(){
     </div>`;
   }).join('');
 
-  const regenBtn=`<button class="train-regen-btn" onclick="confirmRegenPlan()">
-    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
-    Regenerate Plan
-  </button>`;
+  const actionRow=`<div class="train-draft-actions">
+    <button class="train-save-draft-btn" onclick="showSaveDraftModal()">
+      <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+      Save Draft
+    </button>
+    <button class="train-regen-btn" style="flex:1" onclick="confirmRegenPlan()">
+      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+      Regenerate
+    </button>
+  </div>`;
 
   return `
     <div class="train-plan-name">${escapeHtml(p.plan_name||'My Training Plan')}</div>
@@ -6323,7 +6520,7 @@ function renderTrainPlanHTML(){
     ${weekNav}${stepper}${phaseCard}${summaryCard}
     <div style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-dimmer);margin-bottom:8px">This Week</div>
     ${dayCrds}
-    <div style="margin-top:8px">${regenBtn}</div>
+    <div style="margin-top:8px">${actionRow}</div>
     <div style="height:16px"></div>`;
 }
 
@@ -6345,7 +6542,11 @@ function selectPhase(idx){
 }
 function toggleDayExpand(di){expandedDay=(expandedDay===di?null:di);renderTrainingView();}
 function confirmRegenPlan(){
-  if(confirm('Clear the current plan and generate a new one?')){clearTrainingPlan();renderTrainingView();}
+  if(confirm('Clear the current plan and generate a new one?\n\nTip: tap Cancel → Save Draft first to keep a copy of your current plan.')){
+    trainCoachMessages=[];
+    clearTrainingPlan();
+    renderTrainingView();
+  }
 }
 
 // ─────────────────────────────────────────────────────────
