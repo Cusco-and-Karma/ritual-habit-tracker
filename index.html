@@ -837,6 +837,27 @@
   .train-coach-thinking span:nth-child(2){animation-delay:.2s}
   .train-coach-thinking span:nth-child(3){animation-delay:.4s}
   @keyframes coachPulse{0%,80%,100%{opacity:.3;transform:scale(.8)}40%{opacity:1;transform:scale(1)}}
+  /* ── Shopping list ── */
+  .shop-list-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px;margin-bottom:12px}
+  .shop-list-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+  .shop-list-title{font-family:'DM Serif Display',serif;font-size:15px;color:var(--text)}
+  .shop-list-actions{display:flex;gap:6px;align-items:center}
+  .shop-btn{padding:4px 10px;border-radius:12px;border:1px solid var(--accent);background:none;color:var(--accent);font-family:var(--font-body);font-size:10px;cursor:pointer;letter-spacing:.04em;text-transform:uppercase;transition:all .2s;white-space:nowrap}
+  .shop-btn.ghost{border-color:var(--border);color:var(--text-dimmer)}
+  .shop-category{margin-bottom:12px}
+  .shop-category-name{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-dimmer);margin-bottom:6px;padding-bottom:4px;border-bottom:1px solid var(--border)}
+  .shop-item{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.04)}
+  .shop-item:last-child{border-bottom:none}
+  .shop-check{width:18px;height:18px;border-radius:4px;border:1.5px solid var(--border);background:none;flex-shrink:0;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;padding:0}
+  .shop-check.checked{background:var(--accent);border-color:var(--accent)}
+  .shop-check svg{width:10px;height:10px;stroke:#0a0a0f;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;opacity:0;transition:opacity .15s}
+  .shop-check.checked svg{opacity:1}
+  .shop-item-text{font-size:12px;color:var(--text);flex:1;line-height:1.4}
+  .shop-item-text.done{opacity:.38;text-decoration:line-through;text-decoration-color:var(--text-dimmer)}
+  .shop-item-qty{font-size:11px;color:var(--text-dimmer);white-space:nowrap;flex-shrink:0}
+  .shop-gen-btn{width:100%;padding:12px;border-radius:var(--r-sm);border:1px dashed var(--border);background:none;color:var(--text-dimmer);font-family:var(--font-body);font-size:12px;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:8px}
+  .shop-gen-btn:hover:not(:disabled){border-color:var(--accent);color:var(--accent)}
+  .shop-gen-btn:disabled{opacity:.4;cursor:default}
 </style>
 <!-- Firebase compat SDKs -->
 <script src="https://www.gstatic.com/firebasejs/10.12.1/firebase-app-compat.js"></script>
@@ -5470,9 +5491,35 @@ function saveTrainingPlan(){
 }
 function clearTrainingPlan(){
   trainingPlan=null;trainingWeek=1;expandedDay=null;
+  shoppingList=null;shoppingChecked={};
   localStorage.removeItem('ritual_training_plan');
   localStorage.removeItem('ritual_training_week');
   localStorage.removeItem('ritual_training_completions');
+  localStorage.removeItem('ritual_shopping_list');
+  localStorage.removeItem('ritual_shopping_checked');
+}
+// Shopping list persistence
+function loadShoppingList(){
+  try{
+    const s=localStorage.getItem('ritual_shopping_list');
+    if(s)shoppingList=JSON.parse(s);
+    const c=localStorage.getItem('ritual_shopping_checked');
+    if(c)shoppingChecked=JSON.parse(c);
+  }catch(e){shoppingList=null;shoppingChecked={};}
+}
+function saveShoppingList(){
+  if(shoppingList)localStorage.setItem('ritual_shopping_list',JSON.stringify(shoppingList));
+  else localStorage.removeItem('ritual_shopping_list');
+  localStorage.setItem('ritual_shopping_checked',JSON.stringify(shoppingChecked));
+}
+// Extract JSON from AI text (handles fenced code blocks and bare JSON)
+function extractJSONFromText(text){
+  if(!text)return null;
+  const fenced=text.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+  if(fenced){try{return JSON.parse(fenced[1]);}catch(e){}}
+  const start=text.indexOf('{');
+  if(start!==-1){try{return JSON.parse(text.slice(start));}catch(e){}}
+  return null;
 }
 
 // Completion key: "week-dayIdx-exIdx"
@@ -5546,6 +5593,8 @@ function showTrainError(msg){
 
 // ── Train AI coach ──
 let trainCoachMessages=[];  // [{role:'user'|'ai', text}]
+let shoppingList=null;      // {categories:[{name, items:[{name,qty,unit,notes}]}]}
+let shoppingChecked={};     // {key: true}  — key = "catIdx_itemIdx"
 
 function renderTrainCoachHTML(){
   const chips=[
@@ -5588,23 +5637,34 @@ async function askTrainCoach(question){
     trainCoachMessages.push({role:'ai',text:'<span style="color:#ef4444">Add your Anthropic API key in Settings → AI Settings first.</span>'});
     reRenderCoachMessages();return;
   }
-  // Clear input
   const inp=document.getElementById('trainCoachInput');
   if(inp)inp.value='';
   const sendBtn=document.getElementById('trainCoachSend');
   if(sendBtn)sendBtn.disabled=true;
 
   trainCoachMessages.push({role:'user',text:question});
-  reRenderCoachMessages(true); // show thinking dots
+  reRenderCoachMessages(true);
 
-  // Build context about current plan
-  const planCtx=trainingPlan?`Current plan: "${trainingPlan.plan_name}". Duration: ${trainingPlan.duration_weeks} weeks. Weekly schedule: ${(trainingPlan.weekly_schedule||[]).map(d=>`${d.day} — ${d.title||d.type}`).join(', ')}. Goals: ${trainSetup.goals.map(g=>g.replace(/_/g,' ')).join(' and ')}.`:'No training plan generated yet.';
+  // Build rich context
+  const scheduleCtx=(trainingPlan?.weekly_schedule||[]).map(d=>`${d.day} — ${d.title||d.type}${d.duration_minutes?' ('+d.duration_minutes+' min)':''}`).join('; ');
+  const planCtx=trainingPlan?`Plan: "${trainingPlan.plan_name}" · ${trainingPlan.duration_weeks} weeks · Goals: ${trainSetup.goals.map(g=>g.replace(/_/g,' ')).join(' & ')} · Schedule: ${scheduleCtx}`:'No training plan yet.';
+  const fullJSON=trainingPlan?JSON.stringify(trainingPlan.weekly_schedule,null,2):'';
 
-  const systemPrompt=`You are a knowledgeable personal training coach embedded in a habit tracker app. The user has a training plan and wants to make adjustments or ask questions about it.
+  const systemPrompt=`You are a knowledgeable personal training coach inside a habit tracker app.
 
 ${planCtx}
 
-Respond conversationally but concisely (2-4 short paragraphs max). When suggesting schedule changes, be specific — name the day, type of session, and how it fits with recovery and goals. Consider muscle group overlap, rest needs, and the user's stated goals. Use markdown-style **bold** for key points.`;
+Full weekly_schedule JSON:
+${fullJSON}
+
+INSTRUCTIONS:
+• If the user asks to MODIFY the schedule (add/remove session, swap day, change exercises, adjust duration, insert activity, etc.) respond ONLY with a fenced JSON block:
+\`\`\`json
+{"message":"Your brief conversational explanation","updated_weekly_schedule":[/* complete updated array — ALL days, same structure as original */]}
+\`\`\`
+The updated_weekly_schedule must be the FULL array. Keep each day object: {day, type, title, duration_minutes, fixed_commitment, sessions:[{name,sets,reps,note}]}.
+
+• If the user is ASKING a question (not requesting changes), respond with plain conversational text (no JSON, no code blocks). 2–4 short paragraphs max. Use **bold** for key points.`;
 
   try{
     const history=trainCoachMessages.slice(0,-1).slice(-6).map(m=>({
@@ -5616,14 +5676,31 @@ Respond conversationally but concisely (2-4 short paragraphs max). When suggesti
     const res=await fetch('https://api.anthropic.com/v1/messages',{
       method:'POST',
       headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-      body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:800,system:systemPrompt,messages:history})
+      body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:2000,system:systemPrompt,messages:history})
     });
     if(!res.ok){const e=await res.json().catch(()=>({}));throw new Error(e.error?.message||`API error ${res.status}`);}
     const data=await res.json();
     const reply=(data.content||[]).find(b=>b.type==='text')?.text||'Sorry, no response.';
-    // Convert basic markdown to HTML
-    const html=reply.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\n\n/g,'<br><br>').replace(/\n/g,'<br>');
-    trainCoachMessages.push({role:'ai',text:html});
+
+    // Try to extract a schedule update
+    let messageText=reply;
+    let scheduleUpdated=false;
+    const parsed=extractJSONFromText(reply);
+    if(parsed&&Array.isArray(parsed.updated_weekly_schedule)&&parsed.updated_weekly_schedule.length){
+      trainingPlan.weekly_schedule=parsed.updated_weekly_schedule;
+      saveTrainingPlan();
+      scheduleUpdated=true;
+      messageText=parsed.message||'Schedule updated!';
+      // Refresh plan tab if visible
+      if(trainingTab==='plan'){
+        const tc=document.getElementById('trainTabContent');
+        if(tc)tc.innerHTML=renderTrainPlanHTML();
+      }
+    }
+
+    const html=messageText.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\n\n/g,'<br><br>').replace(/\n/g,'<br>');
+    const badge=scheduleUpdated?`<div style="margin-top:8px;font-size:10px;color:#4ade80;letter-spacing:.04em">✓ Plan updated &amp; saved</div>`:'';
+    trainCoachMessages.push({role:'ai',text:html+badge});
   }catch(err){
     trainCoachMessages.push({role:'ai',text:`<span style="color:#ef4444">Error: ${escapeHtml(err.message)}</span>`});
   }
@@ -5639,6 +5716,124 @@ function reRenderCoachMessages(showThinking=false){
   const thinking=showThinking?`<div class="train-coach-thinking"><span></span><span></span><span></span></div>`:'';
   el.innerHTML=msgs+thinking;
   el.scrollTop=el.scrollHeight;
+}
+
+// ─────────────────────────────────────────────────────────
+// SHOPPING LIST
+function buildShoppingListHTML(){
+  if(!shoppingList||!shoppingList.categories||!shoppingList.categories.length)return '';
+  const totalItems=shoppingList.categories.reduce((s,c)=>s+(c.items||[]).length,0);
+  const checkedCount=Object.keys(shoppingChecked).length;
+  const categoriesHTML=shoppingList.categories.map((cat,ci)=>{
+    const items=(cat.items||[]).map((item,ii)=>{
+      const key=`${ci}_${ii}`;
+      const done=!!shoppingChecked[key];
+      const qty=item.qty?`${String(item.qty)} ${item.unit||''}`.trim():'';
+      const notesHTML=item.notes?` <em style="color:var(--text-dimmer);font-size:10px;font-style:normal">(${escapeHtml(item.notes)})</em>`:'';
+      return `<div class="shop-item">
+        <button class="shop-check${done?' checked':''}" onclick="toggleShoppingItem('${key}')" aria-label="Toggle ${escapeHtml(item.name)}">
+          <svg viewBox="0 0 12 12"><polyline points="2 6 5 9 10 3"/></svg>
+        </button>
+        <span class="shop-item-text${done?' done':''}">${escapeHtml(item.name)}${notesHTML}</span>
+        ${qty?`<span class="shop-item-qty">${escapeHtml(qty)}</span>`:''}
+      </div>`;
+    }).join('');
+    return `<div class="shop-category">
+      <div class="shop-category-name">${escapeHtml(cat.name)}</div>
+      ${items}
+    </div>`;
+  }).join('');
+  const progressHTML=totalItems>0?`<span style="font-size:10px;color:var(--text-dimmer)">${checkedCount}/${totalItems}</span>`:'';
+  return `<div class="shop-list-header">
+    <div class="shop-list-title">🛒 Weekly Shopping List</div>
+    <div class="shop-list-actions">
+      ${progressHTML}
+      ${checkedCount>0?`<button class="shop-btn ghost" onclick="resetShoppingChecks()">Uncheck all</button>`:''}
+      <button class="shop-btn ghost" onclick="clearShoppingList()">Clear</button>
+      <button class="shop-btn" onclick="generateShoppingList()">Refresh</button>
+    </div>
+  </div>
+  ${categoriesHTML}`;
+}
+
+function toggleShoppingItem(key){
+  if(shoppingChecked[key])delete shoppingChecked[key];
+  else shoppingChecked[key]=true;
+  saveShoppingList();
+  const container=document.getElementById('shopListContainer');
+  if(container)container.innerHTML=buildShoppingListHTML();
+}
+
+function resetShoppingChecks(){
+  shoppingChecked={};
+  saveShoppingList();
+  const container=document.getElementById('shopListContainer');
+  if(container)container.innerHTML=buildShoppingListHTML();
+}
+
+function clearShoppingList(){
+  shoppingList=null;shoppingChecked={};
+  saveShoppingList();
+  if(trainingTab==='diet'){
+    const tc=document.getElementById('trainTabContent');
+    if(tc){tc.innerHTML=renderDietHTML();bindTrainEvents();}
+  }
+}
+
+async function generateShoppingList(){
+  const apiKey=getApiKey();
+  if(!apiKey){alert('Add your Anthropic API key in Settings → AI Settings first.');return;}
+  if(!trainingPlan||!trainingPlan.diet){alert('Generate a training plan with nutrition first.');return;}
+
+  const btn=document.getElementById('shopGenBtn');
+  if(btn){btn.disabled=true;btn.innerHTML='<span style="opacity:.6">Generating list…</span>';}
+  // Also disable Refresh button inside list if visible
+  const refreshBtns=document.querySelectorAll('.shop-btn');
+  refreshBtns.forEach(b=>{b.disabled=true;});
+
+  const metric=isMetric();
+  const units=metric?'metric (g, kg, ml, L)':'imperial (oz, lbs, cups, fl oz)';
+  const planName=trainingPlan.plan_name||'Training Plan';
+  const dietJSON=JSON.stringify(trainingPlan.diet,null,2);
+
+  const prompt=`You are a meal prep assistant. Based on this weekly nutrition plan for "${planName}", generate a complete weekly shopping list.
+
+NUTRITION PLAN:
+${dietJSON}
+
+Return ONLY a valid JSON object — no markdown, no explanation, just the JSON. Use this exact structure:
+{"categories":[{"name":"Proteins","items":[{"name":"Chicken breast","qty":"900","unit":"g","notes":"boneless skinless"}]}]}
+
+Use these categories (only include ones that have items): Proteins, Vegetables & Greens, Fruits, Grains & Carbs, Dairy & Eggs, Healthy Fats & Oils, Condiments & Spices, Other
+Use ${units} for quantities. Scale for one week (multiply daily amounts by 7). Be specific and realistic.`;
+
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:2000,messages:[{role:'user',content:prompt}]})
+    });
+    if(!res.ok){const e=await res.json().catch(()=>({}));throw new Error(e.error?.message||`API error ${res.status}`);}
+    const data=await res.json();
+    const reply=(data.content||[]).find(b=>b.type==='text')?.text||'';
+    const parsed=extractJSONFromText(reply);
+    if(parsed&&Array.isArray(parsed.categories)&&parsed.categories.length){
+      shoppingList=parsed;
+      shoppingChecked={};
+      saveShoppingList();
+      // Re-render nutrition tab
+      if(trainingTab==='diet'){
+        const tc=document.getElementById('trainTabContent');
+        if(tc){tc.innerHTML=renderDietHTML();bindTrainEvents();}
+      }
+    } else {
+      throw new Error('Could not parse shopping list from AI response');
+    }
+  }catch(err){
+    refreshBtns.forEach(b=>{b.disabled=false;});
+    if(btn){btn.disabled=false;btn.innerHTML='🛒 Generate Weekly Shopping List';}
+    alert('Shopping list error: '+err.message);
+  }
 }
 
 // ─────────────────────────────────────────────────────────
@@ -6242,10 +6437,19 @@ function renderDietHTML(){
       ${principles.map(p=>`<div class="phase-milestone">${escapeHtml(p)}</div>`).join('')}
     </div>`:'';
 
+  // Shopping list section
+  const shopSectionHTML=`
+    <div style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-dimmer);margin-bottom:8px;margin-top:4px">Meal Prep</div>
+    ${shoppingList
+      ?`<div class="shop-list-wrap"><div id="shopListContainer">${buildShoppingListHTML()}</div></div>`
+      :`<button class="shop-gen-btn" id="shopGenBtn" onclick="generateShoppingList()">🛒 Generate Weekly Shopping List</button>`
+    }`;
+
   return `${macroBars}
     <div style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-dimmer);margin-bottom:8px">Meals</div>
     ${slotHTML}
     ${principlesHTML}
+    ${shopSectionHTML}
     <div style="height:16px"></div>`;
 }
 
@@ -6365,6 +6569,7 @@ function bindTrainEvents(){
 
 // Call at app init
 loadTrainingData();
+loadShoppingList();
 
 </script>
 </body>
