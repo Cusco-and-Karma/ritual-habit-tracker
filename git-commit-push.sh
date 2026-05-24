@@ -1,34 +1,46 @@
 #!/bin/bash
-# Run this from Terminal to clean stale locks and push the nutrition changes.
+# Run this from Terminal to commit and push the latest UI changes.
 cd "/Users/Barmey/Desktop/My Apps/Ritual Habit Tracker App"
 
-# Remove stale lock files left by a crashed git process
+# Remove stale lock files (harmless if they don't exist)
 rm -f .git/index.lock .git/HEAD.lock .git/objects/maintenance.lock
+echo "Cleared stale git lock files."
 
-# Stage and commit
+# Stage changes
 git add index.html
-git commit -m "feat: nutrition - day-by-day scroll, downloadable grocery list, AI preferences panel
+echo "Staged index.html."
 
-- Replace weekly meal accordion with horizontal day-tab selector (Mon-Sun).
-  Active day is highlighted; today tab has an accent border. Clicking a tab
-  swaps the meal panel in-place without a full page re-render.
+# Commit
+git commit -m "feat: date-based day scroller for nutrition & training, fix meal variation, occasional activity scheduling
 
-- Add Download button to the generated shopping list. Exports a clean
-  plain-text grocery list (categorised, with quantities and notes) as a
-  dated .txt file.
+- Nutrition: replace Mon-Sun tab strip with date-based day scroller
+  - Header shows today's actual date (e.g. 'Sun, May 24')
+  - Left/right arrows to navigate previous/next day
+  - Meals map to actual calendar dates via day-of-week
+  - Weekly View button opens full-page overlay of all 7 days
+  - Fallback to legacy single meals list removed entirely
+  - Shows 'No meals planned for this day' when a day has no AI-generated meals
+  - Debug log: console logs how many weekly_meals days the AI returned
 
-- Add Nutrition Preferences panel at the top of the Nutrition tab (visible
-  even before a plan exists). Includes:
-    - Dietary restriction pills (Vegan, Vegetarian, Gluten-free, Dairy-free,
-      Nut allergy, Halal, Kosher, Low-carb, Keto, Paleo, Low-FODMAP)
-    - Eating pattern selector (Standard / Intermittent Fasting)
-    - IF window selector (14:10, 16:8, 18:6, 20:4, OMAD)
-    - Free-text additional nutrition goals
-  All preferences are passed as hard constraints to the AI when generating
-  or regenerating a plan."
+- Training: date-based daily view as default
+  - Header shows today's date with left/right day navigation
+  - Each day shows that day's exercises, sets, reps, duration
+  - Rest days shown with a recovery card
+  - Weekly View button opens full-page overlay (existing weekly plan)
+  - Weekly overlay supports week/phase navigation and exercise checks
 
-# Push
+- Occasional activities (swimming, boxing a few times a month)
+  - AI now schedules these as specific dated entries in occasional_activities[]
+  - Appear only on their specific dates in the daily view
+  - Not added to weekly_schedule as recurring weekday entries
+
+- Code cleanup
+  - refreshTrainView() helper routes re-renders to overlay or main view correctly
+  - CSS class conflict fixed: new plan-date-nav classes instead of date-nav"
+
+echo ""
+# Push to GitHub
 git push origin main
 
 echo ""
-echo "Done - changes pushed to GitHub."
+echo "Done — changes committed and pushed to GitHub."

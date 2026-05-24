@@ -960,13 +960,29 @@
   .nutr-update-btn{width:100%;padding:11px;margin-top:12px;border:none;border-radius:var(--r-sm);background:var(--accent);color:var(--bg);font-family:var(--font-body);font-size:12px;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;transition:opacity .2s;font-weight:500}
   .nutr-update-btn:hover:not(:disabled){opacity:.85}
   .nutr-update-btn:disabled{opacity:.55;cursor:default}
-  /* ── nutrition day tabs ── */
-  .nutr-day-tabs{display:flex;gap:4px;overflow-x:auto;margin-bottom:12px;padding-bottom:2px;scrollbar-width:none}
-  .nutr-day-tabs::-webkit-scrollbar{display:none}
-  .nutr-day-tab{flex-shrink:0;padding:6px 12px;border-radius:20px;border:1px solid var(--border);background:none;color:var(--text-dimmer);font-family:var(--font-body);font-size:11px;cursor:pointer;transition:all .2s;letter-spacing:.04em;text-transform:uppercase;line-height:1}
-  .nutr-day-tab:hover{border-color:var(--accent);color:var(--accent)}
-  .nutr-day-tab.active{background:var(--accent);border-color:var(--accent);color:var(--bg);font-weight:500}
-  .nutr-day-tab.today-tab{border-color:rgba(200,180,240,.5);color:var(--text-dim)}
+  /* ── plan date-nav day scroller (nutrition + training tabs) ── */
+  .plan-date-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;padding:4px 0}
+  .plan-date-arrow{width:34px;height:34px;border-radius:50%;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:background .15s}
+  .plan-date-arrow:active{background:var(--border)}
+  .plan-date-arrow svg{width:16px;height:16px;stroke:var(--text-dim);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .plan-date-center{text-align:center}
+  .plan-date-title{font-family:'DM Serif Display',serif;font-size:18px;color:var(--text);line-height:1}
+  .plan-date-sub{font-size:10px;color:var(--accent);letter-spacing:.08em;text-transform:uppercase;margin-top:3px}
+  .weekly-view-btn{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:10px;border-radius:var(--r-sm);background:var(--surface2);border:1px solid var(--border);color:var(--text-dim);font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;transition:border-color .2s,color .2s;margin-bottom:12px}
+  .weekly-view-btn:hover{border-color:var(--accent);color:var(--accent)}
+  .weekly-view-btn svg{stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+  /* weekly view full-page overlay */
+  .weekly-overlay{position:fixed;inset:0;background:var(--bg);z-index:150;display:flex;flex-direction:column;max-width:420px;left:50%;transform:translateX(-50%);overflow:hidden;animation:fadeSlideIn .2s ease}
+  .weekly-overlay-header{display:flex;align-items:center;gap:12px;padding:52px 24px 14px;flex-shrink:0;background:var(--bg);border-bottom:1px solid var(--border)}
+  .weekly-overlay-title{font-family:'DM Serif Display',serif;font-size:20px;color:var(--text);flex:1}
+  .weekly-overlay-close{width:34px;height:34px;border-radius:50%;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0}
+  .weekly-overlay-close svg{width:16px;height:16px;stroke:var(--text-dim);fill:none;stroke-width:2;stroke-linecap:round}
+  .weekly-overlay-scroll{flex:1;overflow-y:auto;overscroll-behavior:contain;padding:16px 24px 100px;scrollbar-width:none}
+  .weekly-overlay-scroll::-webkit-scrollbar{display:none}
+  .no-meals-day{padding:20px 0;text-align:center;color:var(--text-dimmer);font-size:12px;letter-spacing:.04em;line-height:1.6}
+  .occasional-activity-card{background:rgba(160,228,200,.08);border:1px solid rgba(160,228,200,.25);border-radius:var(--r);padding:12px 14px;margin-bottom:10px}
+  .occasional-activity-title{font-family:'DM Serif Display',serif;font-size:15px;color:var(--accent3);margin-bottom:4px}
+  .occasional-activity-meta{font-size:11px;color:var(--text-dim)}
   /* ── nutrition settings panel ── */
   .nutr-settings-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);margin-bottom:12px;overflow:hidden;transition:border-color .2s}
   .nutr-settings-wrap.open{border-color:rgba(200,180,240,.35)}
@@ -5750,7 +5766,7 @@ function setCompletion(key,val){
 function isExerciseDone(week,dayIdx,exIdx){return !!getCompletions()[getCompletionKey(week,dayIdx,exIdx)];}
 function toggleExerciseDone(week,dayIdx,exIdx){
   setCompletion(getCompletionKey(week,dayIdx,exIdx),!isExerciseDone(week,dayIdx,exIdx));
-  renderTrainingView();
+  refreshTrainView();
 }
 function getDayCompletionStats(week,dayIdx,sessions){
   const c=getCompletions();
@@ -5808,82 +5824,168 @@ function toggleMealCheck(dayIdx,mealName){
   saveMealChecks(wk,checks);
   renderTrainingView();
 }
-let selectedNutritionDay=null; // null → auto (today); 0=Mon…6=Sun
+let nutritionDayOffset=0;   // days from today (0=today, -1=yesterday, +1=tomorrow)
+let trainingDayOffset=0;    // days from today for training daily view
 let nutritionSettingsOpen=false;
 
-function selectNutritionDay(dayIdx){
-  selectedNutritionDay=dayIdx;
-  const section=document.getElementById('weeklyMealSection');
-  if(section){section.outerHTML=renderWeeklyMealCards();}
+// ── Date helpers ──
+function getDateForOffset(offset){const d=new Date();d.setDate(d.getDate()+offset);return d;}
+function getDowForOffset(offset){const d=getDateForOffset(offset);return(d.getDay()||7)-1;} // 0=Mon…6=Sun
+function formatDateNav(offset){const d=getDateForOffset(offset);return d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});}
+
+function navigateNutritionDay(delta){
+  nutritionDayOffset+=delta;
+  const section=document.getElementById('nutritionDaySection');
+  if(section){section.outerHTML=renderNutritionDayView();}
   else renderTrainingView();
 }
 
-function getMealsForDay(dayIdx){
-  const diet=getDietTargets();
-  const weekly=Array.isArray(diet.weekly_meals)?diet.weekly_meals:null;
-  if(weekly&&weekly.length){
-    // Match by index first (Mon=0); fall back to matching by day name
-    const DAYS=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
-    const entry=weekly[dayIdx]
-      ||weekly.find(w=>(w.day||'').toLowerCase()===DAYS[dayIdx].toLowerCase());
-    if(entry&&Array.isArray(entry.meals)&&entry.meals.length)return entry.meals;
-  }
-  // Legacy plans: same meal list every day
-  return Array.isArray(diet.meals)?diet.meals:[];
+function navigateTrainingDay(delta){
+  trainingDayOffset+=delta;
+  const section=document.getElementById('trainDailySection');
+  if(section){section.outerHTML=renderTrainDailyHTML();}
+  else renderTrainingView();
 }
 
-function renderWeeklyMealCards(){
+function getMealsForDow(dow){
+  const diet=getDietTargets();
+  const weekly=Array.isArray(diet.weekly_meals)?diet.weekly_meals:null;
+  if(!weekly||!weekly.length){
+    console.log('[Ritual] weekly_meals: none found in plan');
+    return null;
+  }
+  console.log('[Ritual] weekly_meals days returned by AI:',weekly.length,'days:',weekly.map(d=>d.day).join(', '));
   const DAYS=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
-  const SHORT=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
-  const todayDow=(new Date().getDay()||7)-1; // 0=Mon…6=Sun
-  const activeDay=(selectedNutritionDay!==null?selectedNutritionDay:todayDow);
-  const meals=getMealsForDay(activeDay);
-  if(!meals.length)return '<div id="weeklyMealSection"></div>';
+  const entry=weekly[dow]||weekly.find(w=>(w.day||'').toLowerCase()===DAYS[dow].toLowerCase());
+  if(entry&&Array.isArray(entry.meals)&&entry.meals.length)return entry.meals;
+  return null; // Day found but empty — caller shows "No meals planned for this day"
+}
+// Backward-compat alias (returns [] instead of null for older callers)
+function getMealsForDay(dayIdx){return getMealsForDow(dayIdx)||[];}
+
+function renderNutritionDayView(){
+  const dow=getDowForOffset(nutritionDayOffset);
+  const dateLabel=formatDateNav(nutritionDayOffset);
+  const isToday=nutritionDayOffset===0;
+  const meals=getMealsForDow(dow);
   const wk=currentWeekKey();
   const checks=getMealChecks(wk);
 
-  // Day selector tabs
-  const tabs=DAYS.map((dayName,di)=>{
-    const isToday=di===todayDow;
-    const isActive=di===activeDay;
-    return `<button class="nutr-day-tab${isActive?' active':''}${isToday&&!isActive?' today-tab':''}"
-      onclick="selectNutritionDay(${di})" aria-label="${dayName}" title="${dayName}">${SHORT[di]}</button>`;
-  }).join('');
-
-  // Meals for selected day
-  const mealRows=meals.map(meal=>{
-    const ck=activeDay+'_'+meal.name;
-    const done=checks[ck]||false;
-    const cals=Math.round((meal.protein_g||0)*4+(meal.carbs_g||0)*4+(meal.fat_g||0)*9);
-    return `<div class="meal-check-row">
-      <div class="meal-check-box${done?' checked':''}" onclick="toggleMealCheck(${activeDay},'${escapeHtml(meal.name)}')" role="checkbox" aria-checked="${done}" tabindex="0"
-        onkeydown="if(event.key==='Enter'||event.key===' ')toggleMealCheck(${activeDay},'${escapeHtml(meal.name)}')"></div>
-      <div class="meal-check-info">
-        <div class="meal-check-name">${escapeHtml(meal.name)}</div>
-        ${meal.description?`<div class="meal-check-desc" ${done?'style="opacity:.5;text-decoration:line-through"':''}>${escapeHtml(meal.description)}</div>`:''}
-        ${cals>0?`<div class="meal-check-macros">P ${meal.protein_g||0}g · C ${meal.carbs_g||0}g · F ${meal.fat_g||0}g · ${cals} kcal</div>`:''}
-      </div>
-    </div>`;
-  }).join('');
-
-  const doneCount=meals.filter(m=>checks[activeDay+'_'+m.name]).length;
-  const allDone=doneCount===meals.length&&meals.length>0;
-  const dayLabel=DAYS[activeDay]+(activeDay===todayDow?' — Today':'');
-  const progressTag=allDone
-    ?`<span style="font-size:9px;letter-spacing:.08em;text-transform:uppercase;padding:2px 7px;border-radius:99px;background:rgba(160,228,200,.18);color:var(--accent3)">done</span>`
-    :(doneCount>0?`<span style="font-size:10px;color:var(--text-dimmer)">${doneCount}/${meals.length} checked</span>`:'');
-
-  return `<div id="weeklyMealSection">
-    <div style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-dimmer);margin-bottom:8px;margin-top:4px">This Week's Meals</div>
-    <div class="nutr-day-tabs">${tabs}</div>
-    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:12px">
+  let mealContent;
+  if(!meals){
+    mealContent=`<div class="no-meals-day">No meals planned for this day.<br>Generate or update your nutrition plan to fill in all 7 days.</div>`;
+  } else {
+    const mealRows=meals.map(meal=>{
+      const ck=dow+'_'+meal.name;
+      const done=checks[ck]||false;
+      const cals=Math.round((meal.protein_g||0)*4+(meal.carbs_g||0)*4+(meal.fat_g||0)*9);
+      return `<div class="meal-check-row">
+        <div class="meal-check-box${done?' checked':''}" onclick="toggleMealCheck(${dow},'${escapeHtml(meal.name)}')" role="checkbox" aria-checked="${done}" tabindex="0"
+          onkeydown="if(event.key==='Enter'||event.key===' ')toggleMealCheck(${dow},'${escapeHtml(meal.name)}')"></div>
+        <div class="meal-check-info">
+          <div class="meal-check-name">${escapeHtml(meal.name)}</div>
+          ${meal.description?`<div class="meal-check-desc"${done?' style="opacity:.5;text-decoration:line-through"':''}>${escapeHtml(meal.description)}</div>`:''}
+          ${cals>0?`<div class="meal-check-macros">P ${meal.protein_g||0}g · C ${meal.carbs_g||0}g · F ${meal.fat_g||0}g · ${cals} kcal</div>`:''}
+        </div>
+      </div>`;
+    }).join('');
+    const doneCount=meals.filter(m=>checks[dow+'_'+m.name]).length;
+    const allDone=doneCount===meals.length&&meals.length>0;
+    const progressTag=allDone
+      ?`<span style="font-size:9px;letter-spacing:.08em;text-transform:uppercase;padding:2px 7px;border-radius:99px;background:rgba(160,228,200,.18);color:var(--accent3)">done</span>`
+      :(doneCount>0?`<span style="font-size:10px;color:var(--text-dimmer)">${doneCount}/${meals.length} checked</span>`:'');
+    mealContent=`<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:12px">
       <div style="display:flex;align-items:center;padding:10px 14px;border-bottom:1px solid var(--border)">
-        <div style="font-family:'DM Serif Display',serif;font-size:14px;color:var(--text);flex:1">${escapeHtml(dayLabel)}</div>
+        <div style="font-family:'DM Serif Display',serif;font-size:14px;color:var(--text);flex:1">${escapeHtml(dateLabel)}${isToday?' — Today':''}</div>
         ${progressTag}
       </div>
       <div style="padding:0 14px">${mealRows}</div>
+    </div>`;
+  }
+
+  return `<div id="nutritionDaySection">
+    <div class="plan-date-nav">
+      <button class="plan-date-arrow" onclick="navigateNutritionDay(-1)" aria-label="Previous day">
+        <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <div class="plan-date-center">
+        <div class="plan-date-title">${escapeHtml(dateLabel)}</div>
+        ${isToday?'<div class="plan-date-sub">Today</div>':''}
+      </div>
+      <button class="plan-date-arrow" onclick="navigateNutritionDay(1)" aria-label="Next day">
+        <svg viewBox="0 0 24 24"><polyline points="9 6 15 12 9 18"/></svg>
+      </button>
     </div>
+    ${mealContent}
+    <button class="weekly-view-btn" onclick="openNutritionWeeklyView()">
+      <svg viewBox="0 0 24 24" width="13" height="13"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      Weekly View
+    </button>
   </div>`;
+}
+
+function openNutritionWeeklyView(){
+  const DAYS=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+  const wk=currentWeekKey();
+  const checks=getMealChecks(wk);
+  const todayDow=(new Date().getDay()||7)-1;
+  const today=new Date();
+  const monday=new Date(today);
+  monday.setDate(today.getDate()-todayDow);
+
+  const cards=DAYS.map((dayName,di)=>{
+    const date=new Date(monday);
+    date.setDate(monday.getDate()+di);
+    const dateStr=date.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
+    const isToday=di===todayDow;
+    const meals=getMealsForDow(di);
+    let mealContent;
+    if(!meals){
+      mealContent=`<div class="no-meals-day">No meals planned.</div>`;
+    } else {
+      const mealRows=meals.map(meal=>{
+        const ck=di+'_'+meal.name;
+        const done=checks[ck]||false;
+        const cals=Math.round((meal.protein_g||0)*4+(meal.carbs_g||0)*4+(meal.fat_g||0)*9);
+        return `<div class="meal-check-row">
+          <div class="meal-check-box${done?' checked':''}" style="cursor:default"></div>
+          <div class="meal-check-info">
+            <div class="meal-check-name">${escapeHtml(meal.name)}</div>
+            ${meal.description?`<div class="meal-check-desc">${escapeHtml(meal.description)}</div>`:''}
+            ${cals>0?`<div class="meal-check-macros">P ${meal.protein_g||0}g · C ${meal.carbs_g||0}g · F ${meal.fat_g||0}g · ${cals} kcal</div>`:''}
+          </div>
+        </div>`;
+      }).join('');
+      mealContent=`<div style="padding:0 2px">${mealRows}</div>`;
+    }
+    return `<div class="weekly-meal-card${isToday?' today-card':''}">
+      <div class="weekly-meal-card-header">
+        <div>
+          <div class="weekly-meal-card-day">${escapeHtml(dateStr)}</div>
+        </div>
+        ${isToday?'<span class="weekly-meal-card-tag">today</span>':''}
+      </div>
+      <div class="weekly-meal-card-body">${mealContent}</div>
+    </div>`;
+  }).join('');
+
+  const overlay=document.createElement('div');
+  overlay.className='weekly-overlay';
+  overlay.id='nutritionWeeklyOverlay';
+  overlay.innerHTML=`
+    <div class="weekly-overlay-header">
+      <button class="weekly-overlay-close" onclick="closeNutritionWeeklyView()" aria-label="Close">
+        <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <div class="weekly-overlay-title">This Week's Meals</div>
+    </div>
+    <div class="weekly-overlay-scroll">${cards}</div>`;
+  document.getElementById('app').appendChild(overlay);
+}
+
+function closeNutritionWeeklyView(){
+  const el=document.getElementById('nutritionWeeklyOverlay');
+  if(el)el.remove();
 }
 function getDayTotals(log){
   return (log||[]).reduce((acc,item)=>{
@@ -6115,13 +6217,13 @@ The updated_weekly_schedule must be the FULL array. Keep each day object: {day, 
     trainCoachMessages.push({role:'ai',text:html+badge});
 
     if(scheduleUpdated){
-      // Full re-render so day cards update — but preserve coach messages by injecting directly
-      // Re-render the tab content, then re-inject coach messages to avoid scroll-to-top flash
       if(trainingTab==='plan'){
         const tc=document.getElementById('trainTabContent');
-        if(tc)tc.innerHTML=renderTrainPlanHTML();
+        if(tc)tc.innerHTML=renderTrainDailyHTML();
+        // If weekly overlay is open, update it too
+        const weeklyScroll=document.getElementById('trainingWeeklyScroll');
+        if(weeklyScroll)weeklyScroll.innerHTML=renderTrainPlanHTML();
       }
-      // Re-render coach messages (was queued above, do it now before the final reRenderCoachMessages)
     }
   }catch(err){
     trainCoachMessages.push({role:'ai',text:`<span style="color:#ef4444">Error: ${escapeHtml(err.message)}</span>`});
@@ -6443,7 +6545,7 @@ function renderTrainingView(){
   if(!tc)return;
   if(trainingTab==='plan'){
     if(!trainingPlan)tc.innerHTML=renderTrainSetupHTML();
-    else tc.innerHTML=renderTrainPlanHTML();
+    else tc.innerHTML=renderTrainDailyHTML(); // daily view by default; Weekly View button opens overlay
   } else {
     tc.innerHTML=renderDietHTML();
   }
@@ -6452,6 +6554,139 @@ function renderTrainingView(){
   if(coachEl&&trainingPlan)coachEl.innerHTML=renderTrainCoachHTML();
   // After render, wire up dynamic event listeners
   bindTrainEvents();
+}
+
+// ─────────────────────────────────────────────────────────
+// TRAINING DAILY VIEW (date-based scroller)
+function renderTrainDailyHTML(){
+  if(!trainingPlan)return renderTrainSetupHTML();
+  const schedule=trainingPlan.weekly_schedule||[];
+  const dateLabel=formatDateNav(trainingDayOffset);
+  const isToday=trainingDayOffset===0;
+  const dow=getDowForOffset(trainingDayOffset);
+  const DAY_NAMES_FULL=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+  const dayName=DAY_NAMES_FULL[dow];
+  const dayData=schedule.find(d=>(d.day||'').toLowerCase()===dayName.toLowerCase());
+  const di=dayData?schedule.indexOf(dayData):-1;
+
+  // Occasional activities for this specific calendar date
+  const dateISO=getDateForOffset(trainingDayOffset).toISOString().slice(0,10);
+  const occasionalActivities=(trainingPlan.occasional_activities||[]).filter(a=>a.date===dateISO);
+
+  const dateNav=`<div class="plan-date-nav">
+    <button class="plan-date-arrow" onclick="navigateTrainingDay(-1)" aria-label="Previous day">
+      <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+    </button>
+    <div class="plan-date-center">
+      <div class="plan-date-title">${escapeHtml(dateLabel)}</div>
+      ${isToday?'<div class="plan-date-sub">Today</div>':''}
+    </div>
+    <button class="plan-date-arrow" onclick="navigateTrainingDay(1)" aria-label="Next day">
+      <svg viewBox="0 0 24 24"><polyline points="9 6 15 12 9 18"/></svg>
+    </button>
+  </div>`;
+
+  const TYPE_COLOR={strength:'#a78bfa',cardio:'#34d399',hiit:'#fb923c',flexibility:'#38bdf8',rest:'#94a3b8',mixed:'#f0e0a0'};
+  let dayContent;
+  if(!dayData){
+    dayContent=`<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:20px 14px;text-align:center;margin-bottom:10px">
+      <div class="no-meals-day" style="padding:8px 0">No workout scheduled for ${escapeHtml(dayName)}.</div>
+    </div>`;
+  } else if(dayData.type==='rest'){
+    dayContent=`<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:24px 14px;text-align:center;margin-bottom:10px">
+      <div style="font-size:28px;margin-bottom:8px">😴</div>
+      <div style="font-family:'DM Serif Display',serif;font-size:17px;color:var(--text);margin-bottom:4px">Rest Day</div>
+      <div style="font-size:12px;color:var(--text-dimmer)">Recovery is part of the process.</div>
+    </div>`;
+  } else {
+    const sessions=dayData.sessions||[];
+    const type=(dayData.type||'rest').toLowerCase();
+    const dotColor=TYPE_COLOR[type]||'#94a3b8';
+    const {done,total}=getDayCompletionStats(trainingWeek,di,sessions);
+    const allDone=total>0&&done===total;
+    const exRows=sessions.map((ex,ei)=>{
+      const chk=isExerciseDone(trainingWeek,di,ei);
+      const exNoteKey=`${trainingWeek}_${di}_${ei}`;
+      const savedNote=getExNotes()[exNoteKey]||'';
+      const savedPhoto=getExPhotos()[exNoteKey]||'';
+      const hasNote=savedNote.trim().length>0;
+      const hasPhoto=savedPhoto.length>0;
+      return `<div class="train-ex-row">
+        <div class="train-ex-check${chk?' done':''}" onclick="toggleExerciseDone(${trainingWeek},${di},${ei})" role="checkbox" aria-checked="${chk}" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' ')toggleExerciseDone(${trainingWeek},${di},${ei})">${chk?'✓':''}</div>
+        <div class="train-ex-info" style="cursor:pointer" onclick="openExDetail(${trainingWeek},${di},${ei})">
+          <div class="train-ex-name" style="display:flex;align-items:center;gap:6px">${escapeHtml(ex.name)}${hasNote||hasPhoto?`<span style="font-size:9px;color:var(--accent);letter-spacing:.04em">${hasPhoto?'📷 ':''}${hasNote?'📝':''}</span>`:''}
+          </div>
+          <div class="train-ex-meta">${ex.sets?ex.sets+' sets':''} ${ex.reps?'× '+ex.reps:''} ${ex.duration?`<span style="color:var(--accent2);margin-left:2px">⏱ ${escapeHtml(ex.duration)}</span>`:''} <span style="color:var(--accent);font-size:9px;margin-left:4px">tap for details</span></div>
+          ${ex.note?`<div class="train-ex-note">${escapeHtml(ex.note)}</div>`:''}
+        </div>
+      </div>`;
+    }).join('');
+    dayContent=`<div class="train-day-card">
+      <div class="train-day-header" style="cursor:default">
+        <div class="train-day-dot" style="background:${dotColor}"></div>
+        <div class="train-day-name">${escapeHtml(dayName)}</div>
+        <div style="flex:1">
+          <div class="train-day-title">${escapeHtml(dayData.title||type)}</div>
+          <div style="font-size:10px;color:var(--text-dimmer);margin-top:1px;display:flex;gap:8px;flex-wrap:wrap">
+            <span>${total>0?done+'/'+total+' done':'no exercises'}</span>
+            ${dayData.duration_minutes?`<span style="color:var(--accent);opacity:.75">⏱ ${dayData.duration_minutes} min</span>`:''}
+          </div>
+        </div>
+        <div class="train-type-pill train-type-${type}">${type}</div>
+        ${total>0?`<div class="train-day-check${allDone?' done':''}">✓</div>`:''}
+      </div>
+      ${sessions.length?`<div class="train-day-body">${exRows}</div>`:''}
+    </div>`;
+  }
+
+  const occasionalHTML=occasionalActivities.length?occasionalActivities.map(a=>`
+    <div class="occasional-activity-card">
+      <div class="occasional-activity-title">${escapeHtml(a.name)}</div>
+      <div class="occasional-activity-meta">${a.duration_minutes?a.duration_minutes+' min':''}${a.note?' · '+escapeHtml(a.note):''}</div>
+    </div>`).join(''):'';
+
+  const weeklyBtn=`<button class="weekly-view-btn" onclick="openTrainingWeeklyView()">
+    <svg viewBox="0 0 24 24" width="13" height="13"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+    Weekly View
+  </button>`;
+
+  return `<div id="trainDailySection">
+    ${dateNav}
+    ${dayContent}
+    ${occasionalHTML}
+    ${weeklyBtn}
+  </div>`;
+}
+
+function openTrainingWeeklyView(){
+  const overlay=document.createElement('div');
+  overlay.className='weekly-overlay';
+  overlay.id='trainingWeeklyOverlay';
+  overlay.innerHTML=`
+    <div class="weekly-overlay-header">
+      <button class="weekly-overlay-close" onclick="closeTrainingWeeklyView()" aria-label="Close">
+        <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <div class="weekly-overlay-title">Weekly Training Plan</div>
+    </div>
+    <div class="weekly-overlay-scroll" id="trainingWeeklyScroll"></div>`;
+  document.getElementById('app').appendChild(overlay);
+  const scrollEl=document.getElementById('trainingWeeklyScroll');
+  if(scrollEl)scrollEl.innerHTML=renderTrainPlanHTML();
+}
+
+function closeTrainingWeeklyView(){
+  const el=document.getElementById('trainingWeeklyOverlay');
+  if(el)el.remove();
+}
+
+// Helper: re-render whichever training UI is currently active
+function refreshTrainView(){
+  const weeklyScroll=document.getElementById('trainingWeeklyScroll');
+  if(weeklyScroll){weeklyScroll.innerHTML=renderTrainPlanHTML();return;}
+  const dailySection=document.getElementById('trainDailySection');
+  if(dailySection&&trainingPlan&&trainingTab==='plan'){dailySection.outerHTML=renderTrainDailyHTML();}
+  else{renderTrainingView();}
 }
 
 function switchTrainTab(tab){trainingTab=tab;renderTrainingView();}
@@ -6761,6 +6996,10 @@ Return ONLY valid JSON in this exact structure (no markdown fences, no explanati
       ]
     }
   ],
+  "occasional_activities": [
+    {"date":"${new Date(Date.now()+4*86400000).toISOString().slice(0,10)}","name":"Example: Swimming","duration_minutes":45,"note":"easy 30 laps"},
+    {"date":"${new Date(Date.now()+11*86400000).toISOString().slice(0,10)}","name":"Example: Swimming","duration_minutes":45,"note":""}
+  ],
   "phases": [
     {"phase_number":1,"label":"Phase 1","weeks":"1-4","focus":"string","milestones":["string","string"]}
   ],
@@ -6783,6 +7022,10 @@ Return ONLY valid JSON in this exact structure (no markdown fences, no explanati
 }
 
 IMPORTANT — every session object in "sessions" MUST include a "duration" field with a concrete time estimate (e.g. "30 mins", "45-60 mins", "20 seconds x 3 sets", "30 seconds rest"). Never use vague placeholders like "See phase notes" or omit the field. If an exercise is timed rather than set/rep based, set "sets" and "reps" to null and express the full prescription in "duration" (e.g. "duration":"20 min easy jog").
+
+OCCASIONAL ACTIVITIES — if the user's notes mention any activity described as "a few times a month", "occasional", "2-3 times a month", or similar irregular frequency (e.g. swimming, boxing, Capoeira a few times a month), do NOT add them to weekly_schedule as recurring days. Instead schedule them on specific calendar dates in the "occasional_activities" array, spread across the first 4 weeks of the plan starting from today (${new Date().toISOString().slice(0,10)}). Generate 4-8 dated entries covering the frequency mentioned. Each entry needs: "date" (YYYY-MM-DD), "name", "duration_minutes", "note". If the user mentions no occasional activities, set "occasional_activities" to [].
+
+Remove any placeholder example entries from "occasional_activities" — only include real activities the user actually mentioned.
 
 CRITICAL — "weekly_meals" MUST contain ALL 7 days (Monday through Sunday). EVERY day must have a fully populated "meals" array — do NOT leave any day as an empty array []. Each day must have GENUINELY DIFFERENT meals from every other day: different protein source (rotate through chicken, salmon, tofu, eggs, lean beef, shrimp, Greek yogurt, lentils, turkey, tuna), different carbohydrate source (oats, rice, quinoa, sweet potato, sourdough, pasta, barley, corn tortillas), different vegetables, and different cuisine style (Mediterranean, Asian, Mexican, classic American, Middle-Eastern, Indian). If a meal name like "Grilled Chicken" appears on Monday, it must NOT appear on Tuesday through Sunday — use a completely different protein and preparation. Each day's meals should sum approximately to daily_calories and the macro targets. For Intermittent Fasting, follow the meal-slot rules stated above — no Breakfast for 16:8/18:6/20:4/OMAD; for standard eating patterns include Breakfast, Lunch, Dinner, and 1-2 Snacks.
 
@@ -7123,7 +7366,9 @@ function changeTrainWeek(delta){
   trainPhaseIdx=getCurrentPhase(trainingWeek,trainingPlan?.phases||[]);
   expandedDay=null;
   saveTrainingPlan();
-  renderTrainingView();
+  const weeklyScroll=document.getElementById('trainingWeeklyScroll');
+  if(weeklyScroll)weeklyScroll.innerHTML=renderTrainPlanHTML();
+  else renderTrainingView();
 }
 function selectPhase(idx){
   trainPhaseIdx=idx;
@@ -7131,12 +7376,20 @@ function selectPhase(idx){
   if(ph){const m=String(ph.weeks||'').match(/(\d+)/);if(m)trainingWeek=parseInt(m[1]);}
   expandedDay=null;
   saveTrainingPlan();
-  renderTrainingView();
+  const weeklyScroll=document.getElementById('trainingWeeklyScroll');
+  if(weeklyScroll)weeklyScroll.innerHTML=renderTrainPlanHTML();
+  else renderTrainingView();
 }
-function toggleDayExpand(di){expandedDay=(expandedDay===di?null:di);renderTrainingView();}
+function toggleDayExpand(di){
+  expandedDay=(expandedDay===di?null:di);
+  const weeklyScroll=document.getElementById('trainingWeeklyScroll');
+  if(weeklyScroll)weeklyScroll.innerHTML=renderTrainPlanHTML();
+  else renderTrainingView();
+}
 function confirmRegenPlan(){
   if(confirm('Clear the current plan and generate a new one?\n\nTip: tap Cancel → Save Draft first to keep a copy of your current plan.')){
     trainCoachMessages=[];
+    closeTrainingWeeklyView();
     clearTrainingPlan();
     renderTrainingView();
   }
@@ -7261,8 +7514,8 @@ function renderDietHTML(){
       :`<button class="shop-gen-btn" id="shopGenBtn" onclick="generateShoppingList()">🛒 Generate Weekly Shopping List</button>`
     }`;
 
-  // Weekly meal cards
-  const weeklyMealCardsHTML=renderWeeklyMealCards();
+  // Daily meal view (date-based scroller)
+  const weeklyMealCardsHTML=renderNutritionDayView();
 
   return `${settingsHTML}${macroBars}
     <div style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-dimmer);margin-bottom:8px">Today's Log</div>
