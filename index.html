@@ -839,6 +839,25 @@
   .food-add-confirm{padding:7px 14px;border:none;border-radius:var(--r-sm);background:var(--accent);color:var(--bg);font-family:var(--font-body);font-size:11px;cursor:pointer}
   .food-key-note{font-size:10px;color:var(--text-dimmer);padding:8px 0 2px;line-height:1.6}
   .diet-no-plan{text-align:center;padding:48px 24px;color:var(--text-dimmer);font-size:13px;line-height:1.7}
+  /* weekly meal cards */
+  .weekly-meal-cards{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}
+  .weekly-meal-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;transition:border-color .2s}
+  .weekly-meal-card.today-card{border-color:rgba(200,180,240,.45)}
+  .weekly-meal-card-header{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;cursor:pointer;user-select:none}
+  .weekly-meal-card-day{font-family:'DM Serif Display',serif;font-size:14px;color:var(--text)}
+  .weekly-meal-card-tag{font-size:9px;letter-spacing:.08em;text-transform:uppercase;padding:2px 7px;border-radius:99px;background:rgba(200,180,240,.18);color:var(--accent)}
+  .weekly-meal-card-toggle{font-size:16px;color:var(--text-dimmer);transition:transform .2s}
+  .weekly-meal-card.open .weekly-meal-card-toggle{transform:rotate(45deg)}
+  .weekly-meal-card-body{padding:0 14px 12px;border-top:1px solid var(--border)}
+  .meal-check-row{display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.04)}
+  .meal-check-row:last-child{border-bottom:none}
+  .meal-check-box{width:18px;height:18px;border-radius:4px;border:1.5px solid var(--border);flex-shrink:0;cursor:pointer;margin-top:1px;display:flex;align-items:center;justify-content:center;transition:all .2s;background:transparent}
+  .meal-check-box.checked{background:var(--accent3);border-color:var(--accent3)}
+  .meal-check-box.checked::after{content:'✓';font-size:10px;color:var(--bg);line-height:1}
+  .meal-check-info{flex:1;min-width:0}
+  .meal-check-name{font-size:12px;color:var(--text-dim);letter-spacing:.04em;text-transform:uppercase;margin-bottom:2px}
+  .meal-check-desc{font-size:12px;color:var(--text);line-height:1.45}
+  .meal-check-macros{font-size:10px;color:var(--text-dimmer);margin-top:2px}
   .train-plan-name{font-family:'DM Serif Display',serif;font-size:20px;color:var(--text);margin-bottom:2px}
   .train-plan-goal{font-size:12px;color:var(--text-dim);margin-bottom:16px;line-height:1.5}
   /* day slot rows */
@@ -938,6 +957,25 @@
   .shop-gen-btn{width:100%;padding:12px;border-radius:var(--r-sm);border:1px dashed var(--border);background:none;color:var(--text-dimmer);font-family:var(--font-body);font-size:12px;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:8px}
   .shop-gen-btn:hover:not(:disabled){border-color:var(--accent);color:var(--accent)}
   .shop-gen-btn:disabled{opacity:.4;cursor:default}
+  /* ── nutrition day tabs ── */
+  .nutr-day-tabs{display:flex;gap:4px;overflow-x:auto;margin-bottom:12px;padding-bottom:2px;scrollbar-width:none}
+  .nutr-day-tabs::-webkit-scrollbar{display:none}
+  .nutr-day-tab{flex-shrink:0;padding:6px 12px;border-radius:20px;border:1px solid var(--border);background:none;color:var(--text-dimmer);font-family:var(--font-body);font-size:11px;cursor:pointer;transition:all .2s;letter-spacing:.04em;text-transform:uppercase;line-height:1}
+  .nutr-day-tab:hover{border-color:var(--accent);color:var(--accent)}
+  .nutr-day-tab.active{background:var(--accent);border-color:var(--accent);color:var(--bg);font-weight:500}
+  .nutr-day-tab.today-tab{border-color:rgba(200,180,240,.5);color:var(--text-dim)}
+  /* ── nutrition settings panel ── */
+  .nutr-settings-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);margin-bottom:12px;overflow:hidden;transition:border-color .2s}
+  .nutr-settings-wrap.open{border-color:rgba(200,180,240,.35)}
+  .nutr-settings-header{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;cursor:pointer;user-select:none}
+  .nutr-settings-title{font-size:10px;color:var(--text-dim);letter-spacing:.1em;text-transform:uppercase}
+  .nutr-settings-toggle{font-size:18px;color:var(--text-dimmer);transition:transform .2s;line-height:1}
+  .nutr-settings-wrap.open .nutr-settings-toggle{transform:rotate(45deg)}
+  .nutr-settings-body{padding:0 14px 14px;border-top:1px solid var(--border)}
+  .nutr-restriction-pills{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px}
+  .nutr-pill{padding:5px 11px;border-radius:16px;border:1px solid var(--border);background:none;color:var(--text-dimmer);font-family:var(--font-body);font-size:10px;cursor:pointer;transition:all .15s;letter-spacing:.03em;line-height:1}
+  .nutr-pill:hover{border-color:var(--accent);color:var(--accent)}
+  .nutr-pill.active{background:rgba(200,180,240,.15);border-color:var(--accent);color:var(--accent)}
 </style>
 <!-- Firebase compat SDKs -->
 <script src="https://www.gstatic.com/firebasejs/10.12.1/firebase-app-compat.js"></script>
@@ -5617,7 +5655,11 @@ let trainSetup = {
   ],
   age:'', weight:'', targetWeight:'', heightFt:'', heightIn:'', heightCm:'',
   notes:'',
-  dietaryRestrictions:''
+  dietaryRestrictions:'',
+  restrictionTags:[],      // structured dietary restriction pills
+  eatPattern:'standard',   // 'standard' | 'if'
+  ifWindow:'16:8',         // IF eating window e.g. '16:8','18:6'
+  nutritionGoals:''        // free-text additional nutrition goals
 };
 let expandedDay = null;        // which day card is open
 let currentMealSlot = null;    // name of open meal slot
@@ -5740,6 +5782,92 @@ function cleanupOldFoodLogs(){
     if(new Date(d)<cutoff)localStorage.removeItem(k);
   });
 }
+
+// ── Weekly meal check state ──
+function getMealChecks(weekKey){
+  try{return JSON.parse(localStorage.getItem('ritual_meal_checks_'+weekKey)||'{}');}catch(e){return {};}
+}
+function saveMealChecks(weekKey,data){
+  try{localStorage.setItem('ritual_meal_checks_'+weekKey,JSON.stringify(data));}catch(e){}
+}
+// weekKey = ISO week string "YYYY-Www" derived from the Monday of the current week
+function currentWeekKey(){
+  const d=new Date();
+  const mon=new Date(d);
+  mon.setDate(d.getDate()-(d.getDay()||7)+1);
+  return fmtKey(mon.getFullYear(),mon.getMonth()+1,mon.getDate());
+}
+function toggleMealCheck(dayIdx,mealName){
+  const wk=currentWeekKey();
+  const checks=getMealChecks(wk);
+  const key=dayIdx+'_'+mealName;
+  checks[key]=!checks[key];
+  saveMealChecks(wk,checks);
+  renderTrainingView();
+}
+let selectedNutritionDay=null; // null → auto (today); 0=Mon…6=Sun
+let nutritionSettingsOpen=false;
+
+function selectNutritionDay(dayIdx){
+  selectedNutritionDay=dayIdx;
+  const section=document.getElementById('weeklyMealSection');
+  if(section){section.outerHTML=renderWeeklyMealCards();}
+  else renderTrainingView();
+}
+
+function renderWeeklyMealCards(){
+  const meals=(getDietTargets().meals||[]);
+  if(!meals.length)return '<div id="weeklyMealSection"></div>';
+  const DAYS=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+  const SHORT=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  const todayDow=(new Date().getDay()||7)-1; // 0=Mon…6=Sun
+  const activeDay=(selectedNutritionDay!==null?selectedNutritionDay:todayDow);
+  const wk=currentWeekKey();
+  const checks=getMealChecks(wk);
+
+  // Day selector tabs
+  const tabs=DAYS.map((dayName,di)=>{
+    const isToday=di===todayDow;
+    const isActive=di===activeDay;
+    return `<button class="nutr-day-tab${isActive?' active':''}${isToday&&!isActive?' today-tab':''}"
+      onclick="selectNutritionDay(${di})" aria-label="${dayName}" title="${dayName}">${SHORT[di]}</button>`;
+  }).join('');
+
+  // Meals for selected day
+  const mealRows=meals.map(meal=>{
+    const ck=activeDay+'_'+meal.name;
+    const done=checks[ck]||false;
+    const cals=Math.round((meal.protein_g||0)*4+(meal.carbs_g||0)*4+(meal.fat_g||0)*9);
+    return `<div class="meal-check-row">
+      <div class="meal-check-box${done?' checked':''}" onclick="toggleMealCheck(${activeDay},'${escapeHtml(meal.name)}')" role="checkbox" aria-checked="${done}" tabindex="0"
+        onkeydown="if(event.key==='Enter'||event.key===' ')toggleMealCheck(${activeDay},'${escapeHtml(meal.name)}')"></div>
+      <div class="meal-check-info">
+        <div class="meal-check-name">${escapeHtml(meal.name)}</div>
+        ${meal.description?`<div class="meal-check-desc" ${done?'style="opacity:.5;text-decoration:line-through"':''}>${escapeHtml(meal.description)}</div>`:''}
+        ${cals>0?`<div class="meal-check-macros">P ${meal.protein_g||0}g · C ${meal.carbs_g||0}g · F ${meal.fat_g||0}g · ${cals} kcal</div>`:''}
+      </div>
+    </div>`;
+  }).join('');
+
+  const doneCount=meals.filter(m=>checks[activeDay+'_'+m.name]).length;
+  const allDone=doneCount===meals.length&&meals.length>0;
+  const dayLabel=DAYS[activeDay]+(activeDay===todayDow?' — Today':'');
+  const progressTag=allDone
+    ?`<span style="font-size:9px;letter-spacing:.08em;text-transform:uppercase;padding:2px 7px;border-radius:99px;background:rgba(160,228,200,.18);color:var(--accent3)">done</span>`
+    :(doneCount>0?`<span style="font-size:10px;color:var(--text-dimmer)">${doneCount}/${meals.length} checked</span>`:'');
+
+  return `<div id="weeklyMealSection">
+    <div style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-dimmer);margin-bottom:8px;margin-top:4px">This Week's Meals</div>
+    <div class="nutr-day-tabs">${tabs}</div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:12px">
+      <div style="display:flex;align-items:center;padding:10px 14px;border-bottom:1px solid var(--border)">
+        <div style="font-family:'DM Serif Display',serif;font-size:14px;color:var(--text);flex:1">${escapeHtml(dayLabel)}</div>
+        ${progressTag}
+      </div>
+      <div style="padding:0 14px">${mealRows}</div>
+    </div>
+  </div>`;
+}
 function getDayTotals(log){
   return (log||[]).reduce((acc,item)=>{
     acc.calories+=(item.calories||0);
@@ -5752,6 +5880,87 @@ function getDayTotals(log){
 function getDietTargets(){
   if(trainingPlan&&trainingPlan.diet)return trainingPlan.diet;
   return {daily_calories:2000,protein_g:150,carbs_g:200,fat_g:65};
+}
+
+// ── Nutrition settings panel ──
+function toggleNutritionSettings(){
+  nutritionSettingsOpen=!nutritionSettingsOpen;
+  const wrap=document.getElementById('nutrSettingsWrap');
+  const body=document.getElementById('nutrSettingsBody');
+  if(wrap)wrap.classList.toggle('open',nutritionSettingsOpen);
+  if(body)body.style.display=nutritionSettingsOpen?'':'none';
+  const toggle=wrap?wrap.querySelector('.nutr-settings-toggle'):null;
+  if(toggle)toggle.style.transform=nutritionSettingsOpen?'rotate(45deg)':'';
+}
+
+function toggleNutrRestrictionTag(tag){
+  if(!trainSetup.restrictionTags)trainSetup.restrictionTags=[];
+  const idx=trainSetup.restrictionTags.indexOf(tag);
+  if(idx>=0)trainSetup.restrictionTags.splice(idx,1);
+  else trainSetup.restrictionTags.push(tag);
+  saveTrainSetup();
+  document.querySelectorAll('.nutr-restriction-pill').forEach(btn=>
+    btn.classList.toggle('active',trainSetup.restrictionTags.includes(btn.dataset.tag))
+  );
+}
+
+function setNutrEatPattern(pattern){
+  trainSetup.eatPattern=pattern;
+  saveTrainSetup();
+  document.querySelectorAll('.nutr-pattern-pill').forEach(btn=>
+    btn.classList.toggle('active',btn.dataset.pattern===pattern)
+  );
+  const ifRow=document.getElementById('nutrIFWindowRow');
+  if(ifRow)ifRow.style.display=pattern==='if'?'':'none';
+}
+
+function setNutrIFWindow(win){
+  trainSetup.ifWindow=win;
+  saveTrainSetup();
+  document.querySelectorAll('.nutr-if-pill').forEach(btn=>
+    btn.classList.toggle('active',btn.dataset.win===win)
+  );
+}
+
+function renderNutritionSettingsHTML(){
+  const RESTRICTION_TAGS=['Vegan','Vegetarian','Gluten-free','Dairy-free','Nut allergy','Halal','Kosher','Low-carb','Keto','Paleo','Low-FODMAP'];
+  const restrictions=trainSetup.restrictionTags||[];
+  const pillsHTML=RESTRICTION_TAGS.map(t=>`<button class="nutr-pill nutr-restriction-pill${restrictions.includes(t)?' active':''}" onclick="toggleNutrRestrictionTag('${t}')" data-tag="${t}">${t}</button>`).join('');
+
+  const EAT_PATTERNS=[{v:'standard',l:'Standard'},{v:'if',l:'Intermittent Fasting'}];
+  const pat=trainSetup.eatPattern||'standard';
+  const patternHTML=EAT_PATTERNS.map(p=>`<button class="nutr-pill nutr-pattern-pill${pat===p.v?' active':''}" onclick="setNutrEatPattern('${p.v}')" data-pattern="${p.v}">${p.l}</button>`).join('');
+
+  const IF_WINDOWS=['14:10','16:8','18:6','20:4','OMAD'];
+  const curWin=trainSetup.ifWindow||'16:8';
+  const ifWindowHTML=IF_WINDOWS.map(w=>`<button class="nutr-pill nutr-if-pill${curWin===w?' active':''}" onclick="setNutrIFWindow('${w}')" data-win="${w}">${w}</button>`).join('');
+
+  const activeTagSummary=[...restrictions,(pat==='if'?'IF '+curWin:'')].filter(Boolean).join(' · ');
+
+  return `<div class="nutr-settings-wrap${nutritionSettingsOpen?' open':''}" id="nutrSettingsWrap">
+    <div class="nutr-settings-header" onclick="toggleNutritionSettings()">
+      <div class="nutr-settings-title">Nutrition Preferences</div>
+      <div style="display:flex;align-items:center;gap:8px">
+        ${activeTagSummary?`<span style="font-size:9px;color:var(--accent);letter-spacing:.05em;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(activeTagSummary)}</span>`:''}
+        <div class="nutr-settings-toggle" style="font-size:18px;color:var(--text-dimmer);transition:transform .2s;line-height:1${nutritionSettingsOpen?';transform:rotate(45deg)':''}">+</div>
+      </div>
+    </div>
+    <div id="nutrSettingsBody" style="display:${nutritionSettingsOpen?'':'none'}">
+      <div class="nutr-settings-body">
+        <div style="font-size:10px;color:var(--text-dimmer);margin-bottom:6px;margin-top:10px">Dietary Restrictions <span style="font-size:9px">— hard constraints applied to plan generation</span></div>
+        <div class="nutr-restriction-pills">${pillsHTML}</div>
+        <div style="font-size:10px;color:var(--text-dimmer);margin-bottom:6px">Eating Pattern</div>
+        <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px">${patternHTML}</div>
+        <div id="nutrIFWindowRow" style="display:${pat==='if'?'':'none'};margin-bottom:10px">
+          <div style="font-size:10px;color:var(--text-dimmer);margin-bottom:6px">Fasting Window</div>
+          <div style="display:flex;flex-wrap:wrap;gap:5px">${ifWindowHTML}</div>
+        </div>
+        <div style="font-size:10px;color:var(--text-dimmer);margin-bottom:6px;margin-top:10px">Additional Goals <span style="font-size:9px">optional</span></div>
+        <textarea class="train-input" rows="2" placeholder="e.g. high protein for muscle retention, anti-inflammatory focus, blood sugar management…" style="resize:none;line-height:1.5" oninput="trainSetup.nutritionGoals=this.value;saveTrainSetup()">${escapeHtml(trainSetup.nutritionGoals||'')}</textarea>
+        <div style="font-size:10px;color:var(--text-dimmer);margin-top:8px;line-height:1.6">Preferences are applied the next time you <strong style="color:var(--text-dim)">generate or regenerate</strong> a plan.</div>
+      </div>
+    </div>
+  </div>`;
 }
 
 // ── error display ──
@@ -5847,7 +6056,7 @@ INSTRUCTIONS:
 \`\`\`json
 {"message":"Your brief conversational explanation","updated_weekly_schedule":[/* complete updated array — ALL days, same structure as original */]}
 \`\`\`
-The updated_weekly_schedule must be the FULL array. Keep each day object: {day, type, title, duration_minutes, fixed_commitment, sessions:[{name,sets,reps,note}]}.
+The updated_weekly_schedule must be the FULL array. Keep each day object: {day, type, title, duration_minutes, fixed_commitment, sessions:[{name,sets,reps,duration,note}]}. Every session object MUST include a concrete "duration" value (e.g. "30 mins", "45-60 mins", "30 seconds x 2 sets") — never omit it or use vague placeholders.
 
 • If the user is ASKING a question (not requesting changes), respond with plain conversational text (no JSON, no code blocks). 2–4 short paragraphs max. Use **bold** for key points.`;
 
@@ -6083,6 +6292,7 @@ function buildShoppingListHTML(){
       ${progressHTML}
       ${checkedCount>0?`<button class="shop-btn ghost" onclick="resetShoppingChecks()">Uncheck all</button>`:''}
       <button class="shop-btn ghost" onclick="clearShoppingList()">Clear</button>
+      <button class="shop-btn ghost" onclick="downloadGroceryList()" title="Download as text file">Download</button>
       <button class="shop-btn" onclick="generateShoppingList()">Refresh</button>
     </div>
   </div>
@@ -6102,6 +6312,31 @@ function resetShoppingChecks(){
   saveShoppingList();
   const container=document.getElementById('shopListContainer');
   if(container)container.innerHTML=buildShoppingListHTML();
+}
+
+function downloadGroceryList(){
+  if(!shoppingList||!shoppingList.categories||!shoppingList.categories.length)return;
+  const planName=trainingPlan?(trainingPlan.plan_name||'Weekly Plan'):'Weekly Plan';
+  const dateStr=new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
+  const divider='─'.repeat(38);
+  let txt=`WEEKLY GROCERY LIST\n${planName}\nGenerated: ${dateStr}\n${divider}\n\n`;
+  shoppingList.categories.forEach(cat=>{
+    if(!cat.items||!cat.items.length)return;
+    txt+=`${cat.name.toUpperCase()}\n`;
+    cat.items.forEach(item=>{
+      const qty=item.qty?`${String(item.qty)} ${item.unit||''}`.trim():'';
+      const notes=item.notes?` (${item.notes})`:'';
+      txt+=`  - ${item.name}${qty?'  '+qty:''}${notes}\n`;
+    });
+    txt+='\n';
+  });
+  const blob=new Blob([txt],{type:'text/plain;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;
+  a.download=`grocery-list-${new Date().toISOString().slice(0,10)}.txt`;
+  document.body.appendChild(a);a.click();
+  document.body.removeChild(a);URL.revokeObjectURL(url);
 }
 
 function clearShoppingList(){
@@ -6481,6 +6716,9 @@ ${statsStr?statsStr+'.':''}
 ${hrZoneStr}
 ${trainSetup.notes?'Additional context: '+trainSetup.notes:''}
 ${trainSetup.dietaryRestrictions?'Dietary restrictions (MUST be strictly followed in the nutrition plan): '+trainSetup.dietaryRestrictions:''}
+${(trainSetup.restrictionTags&&trainSetup.restrictionTags.length)?'Dietary tags (hard constraints — every meal MUST comply): '+trainSetup.restrictionTags.join(', '):''}
+${trainSetup.eatPattern==='if'?'Eating pattern: Intermittent Fasting with a '+trainSetup.ifWindow+' eating window. Structure ALL meals so they fall within the eating window. Outside the window is fasting — no calories.':''}
+${trainSetup.nutritionGoals?'Additional nutrition goals: '+trainSetup.nutritionGoals:''}
 Use ${unitSystem} throughout — all body weight references, exercise loads, and food portion weights must be in ${unitSystem}.
 
 Return ONLY valid JSON in this exact structure (no markdown fences, no explanation outside the JSON):
@@ -6496,7 +6734,7 @@ Return ONLY valid JSON in this exact structure (no markdown fences, no explanati
       "duration_minutes": 55,
       "fixed_commitment": false,
       "sessions": [
-        {"name":"Exercise Name","sets":3,"reps":"10-12","note":"brief form tip or purpose"}
+        {"name":"Exercise Name","sets":3,"reps":"10-12","duration":"45 mins","note":"brief form tip or purpose"}
       ]
     }
   ],
@@ -6514,6 +6752,8 @@ Return ONLY valid JSON in this exact structure (no markdown fences, no explanati
     "key_principles": ["string","string","string"]
   }
 }
+
+IMPORTANT — every session object in "sessions" MUST include a "duration" field with a concrete time estimate (e.g. "30 mins", "45-60 mins", "20 seconds x 3 sets", "30 seconds rest"). Never use vague placeholders like "See phase notes" or omit the field. If an exercise is timed rather than set/rep based, set "sets" and "reps" to null and express the full prescription in "duration" (e.g. "duration":"20 min easy jog").
 
 weekly_schedule should include ${numDays} training session(s) per week. Include 4-6 exercises per session. Set duration_minutes to a realistic estimate of how long the full session will take (warm-up + exercises + cool-down). Fixed commitments marked fixed_commitment: true count as sessions if they are physically demanding (martial arts, yoga, etc). Use type values: strength, cardio, hiit, flexibility, rest.`;
 
@@ -6640,7 +6880,7 @@ function renderTrainPlanHTML(){
         <div class="train-ex-info" style="cursor:pointer" onclick="openExDetail(${trainingWeek},${di},${ei})">
           <div class="train-ex-name" style="display:flex;align-items:center;gap:6px">${escapeHtml(ex.name)}${hasNote||hasPhoto?`<span style="font-size:9px;color:var(--accent);letter-spacing:.04em">${hasPhoto?'📷 ':''}${hasNote?'📝':''}</span>`:''}
           </div>
-          <div class="train-ex-meta">${ex.sets?ex.sets+' sets':''} ${ex.reps?'× '+ex.reps:''} <span style="color:var(--accent);font-size:9px;margin-left:4px">tap for details</span></div>
+          <div class="train-ex-meta">${ex.sets?ex.sets+' sets':''} ${ex.reps?'× '+ex.reps:''} ${ex.duration?`<span style="color:var(--accent2);margin-left:2px">⏱ ${escapeHtml(ex.duration)}</span>`:''} <span style="color:var(--accent);font-size:9px;margin-left:4px">tap for details</span></div>
           ${ex.note?`<div class="train-ex-note">${escapeHtml(ex.note)}</div>`:''}
         </div>
       </div>`;
@@ -6728,9 +6968,10 @@ function renderDietHTML(){
   const targets=getDietTargets();
   const totals=getDayTotals(log);
   const today=new Date().toLocaleDateString('en-US',{weekday:'long',month:'short',day:'numeric'});
+  const settingsHTML=renderNutritionSettingsHTML();
 
   if(!trainingPlan){
-    return `<div class="diet-no-plan">
+    return `${settingsHTML}<div class="diet-no-plan">
       <div style="font-size:32px;margin-bottom:12px">🥗</div>
       <div style="font-family:'DM Serif Display',serif;font-size:18px;color:var(--text);margin-bottom:8px">No Plan Yet</div>
       Generate a training plan first — your personalised nutrition targets and meal suggestions will appear here.
@@ -6839,9 +7080,13 @@ function renderDietHTML(){
       :`<button class="shop-gen-btn" id="shopGenBtn" onclick="generateShoppingList()">🛒 Generate Weekly Shopping List</button>`
     }`;
 
-  return `${macroBars}
-    <div style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-dimmer);margin-bottom:8px">Meals</div>
+  // Weekly meal cards
+  const weeklyMealCardsHTML=renderWeeklyMealCards();
+
+  return `${settingsHTML}${macroBars}
+    <div style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-dimmer);margin-bottom:8px">Today's Log</div>
     ${slotHTML}
+    ${weeklyMealCardsHTML}
     ${principlesHTML}
     ${shopSectionHTML}
     <div style="height:16px"></div>`;
@@ -7007,10 +7252,18 @@ function fileToBase64(file){
 }
 
 // ── Save daily journal entry ──
+// The "daily notes" field is shared with the Home page reflection.
+// Both read/write getDayData(key).reflection so they stay in sync.
 function saveJournalEntry(){
   const dateStr=getTodayDateStr();
+  const dailyText=document.getElementById('journalDailyNotes').value;
+  // Persist to the shared day-data store so Home page stays in sync
+  const dd=getDayData(dateStr);
+  dd.reflection=dailyText;
+  saveDayData(dateStr,dd);
+  // Also persist extended note to the journal-specific store
   const entry=loadJournalEntry(dateStr);
-  entry.daily=document.getElementById('journalDailyNotes').value;
+  entry.daily=dailyText;
   entry.extended=document.getElementById('journalExtended').value;
   saveJournalEntryData(dateStr,entry);
   const tag=document.getElementById('journalSavedTag');
@@ -7027,10 +7280,24 @@ function renderJournalView(){
   const chip=document.getElementById('journalDateChip');
   if(chip){const d=new Date();chip.textContent=d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});}
 
-  // Fill notes
+  // Fill notes — daily note is shared with Home page (getDayData reflection)
   const dailyEl=document.getElementById('journalDailyNotes');
   const extEl=document.getElementById('journalExtended');
-  if(dailyEl)dailyEl.value=entry.daily||'';
+  if(dailyEl){
+    // Prefer the shared store; fall back to the legacy journal store for old entries
+    const dayReflection=getDayData(dateStr).reflection;
+    dailyEl.value=dayReflection||entry.daily||'';
+    // Wire auto-save so typing in Journal syncs to Home immediately
+    dailyEl.oninput=()=>{
+      const dd=getDayData(dateStr);
+      dd.reflection=dailyEl.value;
+      saveDayData(dateStr,dd);
+      // keep journal-specific store in sync too
+      const e=loadJournalEntry(dateStr);
+      e.daily=dailyEl.value;
+      saveJournalEntryData(dateStr,e);
+    };
+  }
   if(extEl)extEl.value=entry.extended||'';
 
   // Training notes
@@ -7205,6 +7472,7 @@ function openExDetail(week,dayIdx,exIdx){
   document.getElementById('exDetailMeta').textContent=[
     ex.sets?ex.sets+' sets':'',
     ex.reps?'× '+ex.reps:'',
+    ex.duration?'⏱ '+ex.duration:'',
     day.day||'',
     `Week ${week}`
   ].filter(Boolean).join(' · ');
