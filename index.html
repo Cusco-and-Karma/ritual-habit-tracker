@@ -995,6 +995,12 @@
   .nutr-pill{padding:5px 11px;border-radius:16px;border:1px solid var(--border);background:none;color:var(--text-dimmer);font-family:var(--font-body);font-size:10px;cursor:pointer;transition:all .15s;letter-spacing:.03em;line-height:1}
   .nutr-pill:hover{border-color:var(--accent);color:var(--accent)}
   .nutr-pill.active{background:rgba(200,180,240,.15);border-color:var(--accent);color:var(--accent)}
+  /* ── Exercise Animation ── */
+  .ex-anim-wrap{width:68px;height:68px;flex-shrink:0;display:flex;align-items:center;justify-content:center;border-radius:10px;background:rgba(255,255,255,.03);border:1px solid var(--border);overflow:hidden;align-self:center}
+  .ex-anim-wrap svg{display:block;color:var(--text-dim)}
+  .ex-anim-detail-wrap{display:flex;justify-content:center;margin-bottom:14px}
+  .ex-anim-detail-inner{width:90px;height:90px;display:flex;align-items:center;justify-content:center;border-radius:14px;background:var(--surface2);border:1px solid var(--border);overflow:hidden}
+  .ex-anim-detail-inner svg{display:block;color:var(--text-dim)}
 </style>
 <!-- Firebase compat SDKs -->
 <script src="https://www.gstatic.com/firebasejs/10.12.1/firebase-app-compat.js"></script>
@@ -1607,6 +1613,7 @@
         <div class="ex-detail-meta" id="exDetailMeta"></div>
       </div>
       <div class="ex-detail-body">
+        <div class="ex-anim-detail-wrap"><div class="ex-anim-detail-inner" id="exDetailAnimWrap"></div></div>
         <div class="ex-detail-section">
           <div class="ex-detail-label">about this exercise</div>
           <div class="ex-detail-desc" id="exDetailDesc"></div>
@@ -6619,6 +6626,7 @@ function renderTrainDailyHTML(){
           <div class="train-ex-meta">${ex.sets?ex.sets+' sets':''} ${ex.reps?'× '+ex.reps:''} ${ex.duration?`<span style="color:var(--accent2);margin-left:2px">⏱ ${escapeHtml(ex.duration)}</span>`:''} <span style="color:var(--accent);font-size:9px;margin-left:4px">tap for details</span></div>
           ${ex.note?`<div class="train-ex-note">${escapeHtml(ex.note)}</div>`:''}
         </div>
+        <div class="ex-anim-wrap">${getExerciseAnimSVG(ex.name,60)}</div>
       </div>`;
     }).join('');
     dayContent=`<div class="train-day-card">
@@ -7307,6 +7315,7 @@ function renderTrainPlanHTML(){
           <div class="train-ex-meta">${ex.sets?ex.sets+' sets':''} ${ex.reps?'× '+ex.reps:''} ${ex.duration?`<span style="color:var(--accent2);margin-left:2px">⏱ ${escapeHtml(ex.duration)}</span>`:''} <span style="color:var(--accent);font-size:9px;margin-left:4px">tap for details</span></div>
           ${ex.note?`<div class="train-ex-note">${escapeHtml(ex.note)}</div>`:''}
         </div>
+        <div class="ex-anim-wrap">${getExerciseAnimSVG(ex.name,60)}</div>
       </div>`;
     }).join('');
 
@@ -7889,6 +7898,194 @@ async function transcribeJournalPhoto(){
 
 let _exDetailCtx={week:0,dayIdx:0,exIdx:0};
 
+// ── Exercise Animation Library ──────────────────────────────
+function getExerciseAnimSVG(name,size){
+  size=size||68;
+  const n=(name||'').toLowerCase();
+  if(/run|jog|sprint|treadmill/.test(n))           return _exAnim_running(size);
+  if(/squat|lunge|leg press|leg curl|leg ext/.test(n)) return _exAnim_squat(size);
+  if(/push.?up|pushup|press.up|dip/.test(n))       return _exAnim_pushup(size);
+  if(/plank|hollow|l.sit|isometric/.test(n))       return _exAnim_plank(size);
+  if(/swim|freestyle|stroke|lap/.test(n))          return _exAnim_swimming(size);
+  if(/cycl|bike|spin|pedal|stationary/.test(n))    return _exAnim_cycling(size);
+  if(/box|punch|shadow|mitt|bag/.test(n))          return _exAnim_boxing(size);
+  if(/jump|burpee|skip|rope|hop|plyom|bound/.test(n)) return _exAnim_jump(size);
+  if(/rest|recover|cool|foam|sauna|ice|massage|walk/.test(n)) return _exAnim_rest(size);
+  if(/stretch|flex|yoga|pigeon|cobra|warrior|hamstring|hip hinge|calf|mobility/.test(n)) return _exAnim_stretch(size);
+  if(/lift|deadlift|row|curl|press|pull|chin|raise|overhead|shoulder|bench|chest|arm|trap|dumbbell|barbell|cable|machine|weight|strength|power|clean|snatch|thruster|kettlebell|incline|decline|lat|tricep|bicep/.test(n)) return _exAnim_lift(size);
+  return _exAnim_active(size);
+}
+function _exSVG(sz,content){
+  return `<svg viewBox="0 0 80 80" width="${sz}" height="${sz}" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="display:block"><g stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" opacity="0.8">${content}</g></svg>`;
+}
+function _exAnim_running(sz){
+  return _exSVG(sz,`<g transform="translate(40,52)">
+    <animateTransform attributeName="transform" type="translate" values="40,51;40,49;40,51" dur="0.44s" repeatCount="indefinite" additive="replace"/>
+    <circle cx="2" cy="-39" r="7"/>
+    <line x1="2" y1="-32" x2="-1" y2="-8"/>
+    <g><animateTransform attributeName="transform" type="rotate" values="-45,2,-25;40,2,-25;-45,2,-25" dur="0.44s" repeatCount="indefinite"/>
+    <line x1="2" y1="-25" x2="-11" y2="-13"/></g>
+    <g><animateTransform attributeName="transform" type="rotate" values="40,2,-25;-45,2,-25;40,2,-25" dur="0.44s" repeatCount="indefinite"/>
+    <line x1="2" y1="-25" x2="14" y2="-13"/></g>
+    <g><animateTransform attributeName="transform" type="rotate" values="-48,-1,-8;38,-1,-8;-48,-1,-8" dur="0.44s" repeatCount="indefinite"/>
+    <line x1="-1" y1="-8" x2="-10" y2="16"/></g>
+    <g><animateTransform attributeName="transform" type="rotate" values="38,-1,-8;-48,-1,-8;38,-1,-8" dur="0.44s" repeatCount="indefinite"/>
+    <line x1="-1" y1="-8" x2="9" y2="16"/></g>
+  </g>`);
+}
+function _exAnim_squat(sz){
+  return _exSVG(sz,`<g transform="translate(40,52)">
+    <animateTransform attributeName="transform" type="translate" values="40,48;40,56;40,48" dur="0.9s" repeatCount="indefinite" additive="replace"/>
+    <circle cx="0" cy="-39" r="7"/>
+    <line x1="0" y1="-32" x2="0" y2="-10"/>
+    <line x1="0" y1="-26" x2="-12" y2="-14"/>
+    <line x1="0" y1="-26" x2="12" y2="-14"/>
+    <g><animateTransform attributeName="transform" type="rotate" values="5,0,-10;42,0,-10;5,0,-10" dur="0.9s" repeatCount="indefinite"/>
+    <line x1="0" y1="-10" x2="-11" y2="14"/></g>
+    <g><animateTransform attributeName="transform" type="rotate" values="-5,0,-10;-42,0,-10;-5,0,-10" dur="0.9s" repeatCount="indefinite"/>
+    <line x1="0" y1="-10" x2="11" y2="14"/></g>
+  </g>`);
+}
+function _exAnim_pushup(sz){
+  return _exSVG(sz,`<g transform="translate(10,44)">
+    <animateTransform attributeName="transform" type="translate" values="10,42;10,47;10,42" dur="0.85s" repeatCount="indefinite" additive="replace"/>
+    <circle cx="58" cy="-10" r="7"/>
+    <line x1="51" y1="-6" x2="18" y2="-6"/>
+    <g><animateTransform attributeName="transform" type="rotate" values="-78,51,-6;-105,51,-6;-78,51,-6" dur="0.85s" repeatCount="indefinite"/>
+    <line x1="51" y1="-6" x2="51" y2="10"/></g>
+    <g><animateTransform attributeName="transform" type="rotate" values="-102,18,-6;-75,18,-6;-102,18,-6" dur="0.85s" repeatCount="indefinite"/>
+    <line x1="18" y1="-6" x2="18" y2="10"/></g>
+    <line x1="18" y1="-6" x2="6" y2="4"/>
+  </g>`);
+}
+function _exAnim_plank(sz){
+  return _exSVG(sz,`<g transform="translate(10,46)">
+    <animateTransform attributeName="transform" type="translate" values="10,45;10,46;10,45" dur="2s" repeatCount="indefinite" additive="replace"/>
+    <circle cx="58" cy="-10" r="7"/>
+    <line x1="51" y1="-6" x2="14" y2="-6"/>
+    <line x1="51" y1="-6" x2="51" y2="8"/>
+    <line x1="14" y1="-6" x2="14" y2="8"/>
+    <line x1="14" y1="-6" x2="6" y2="4"/>
+  </g>`);
+}
+function _exAnim_stretch(sz){
+  return _exSVG(sz,`<g transform="translate(40,52)">
+    <circle cx="0" cy="-39" r="7"/>
+    <line x1="0" y1="-32" x2="0" y2="-8"/>
+    <g><animateTransform attributeName="transform" type="rotate" values="80,0,-24;-30,0,-24;80,0,-24" dur="1.4s" repeatCount="indefinite"/>
+    <line x1="0" y1="-24" x2="16" y2="-12"/></g>
+    <g><animateTransform attributeName="transform" type="rotate" values="-80,0,-24;30,0,-24;-80,0,-24" dur="1.4s" repeatCount="indefinite"/>
+    <line x1="0" y1="-24" x2="-16" y2="-12"/></g>
+    <line x1="0" y1="-8" x2="-12" y2="16"/>
+    <line x1="0" y1="-8" x2="12" y2="16"/>
+  </g>`);
+}
+function _exAnim_swimming(sz){
+  return _exSVG(sz,`<g transform="translate(40,42)">
+    <circle cx="0" cy="-8" r="7"/>
+    <line x1="0" y1="-1" x2="0" y2="14"/>
+    <g><animateTransform attributeName="transform" type="rotate" values="-20,0,-1;165,0,-1;-20,0,-1" dur="0.7s" repeatCount="indefinite"/>
+    <line x1="0" y1="-1" x2="-20" y2="6"/></g>
+    <g><animateTransform attributeName="transform" type="rotate" values="160,0,-1;-25,0,-1;160,0,-1" dur="0.7s" repeatCount="indefinite"/>
+    <line x1="0" y1="-1" x2="20" y2="6"/></g>
+    <line x1="0" y1="14" x2="-10" y2="24"/>
+    <line x1="0" y1="14" x2="10" y2="24"/>
+  </g>`);
+}
+function _exAnim_cycling(sz){
+  return _exSVG(sz,`<g transform="translate(40,48)">
+    <circle cx="0" cy="-36" r="7"/>
+    <line x1="0" y1="-29" x2="0" y2="-14"/>
+    <line x1="0" y1="-22" x2="-12" y2="-16"/>
+    <line x1="0" y1="-22" x2="12" y2="-16"/>
+    <circle cx="-12" cy="12" r="9" stroke-width="1.8"/>
+    <circle cx="12" cy="12" r="9" stroke-width="1.8"/>
+    <line x1="-12" y1="12" x2="12" y2="12"/>
+    <g transform="translate(0,-14)">
+    <animateTransform attributeName="transform" type="rotate" values="0,0,-14;360,0,-14;0,0,-14" dur="0.9s" repeatCount="indefinite" additive="replace"/>
+    <line x1="0" y1="-14" x2="-12" y2="12"/>
+    <line x1="0" y1="-14" x2="12" y2="12"/>
+    </g>
+  </g>`);
+}
+function _exAnim_lift(sz){
+  return _exSVG(sz,`<g transform="translate(40,52)">
+    <animateTransform attributeName="transform" type="translate" values="40,51;40,49;40,51" dur="1s" repeatCount="indefinite" additive="replace"/>
+    <circle cx="0" cy="-39" r="7"/>
+    <line x1="0" y1="-32" x2="0" y2="-8"/>
+    <line x1="0" y1="-8" x2="-11" y2="16"/>
+    <line x1="0" y1="-8" x2="11" y2="16"/>
+    <g><animateTransform attributeName="transform" type="rotate" values="75,0,-25;-80,0,-25;75,0,-25" dur="1s" repeatCount="indefinite"/>
+    <line x1="0" y1="-25" x2="-18" y2="-16"/>
+    <line x1="-18" y1="-16" x2="-26" y2="-26"/></g>
+    <g><animateTransform attributeName="transform" type="rotate" values="-75,0,-25;80,0,-25;-75,0,-25" dur="1s" repeatCount="indefinite"/>
+    <line x1="0" y1="-25" x2="18" y2="-16"/>
+    <line x1="18" y1="-16" x2="26" y2="-26"/></g>
+  </g>`);
+}
+function _exAnim_jump(sz){
+  return _exSVG(sz,`<g transform="translate(40,52)">
+    <animateTransform attributeName="transform" type="translate" values="40,52;40,38;40,52" dur="0.65s" repeatCount="indefinite" additive="replace"/>
+    <circle cx="0" cy="-39" r="7"/>
+    <line x1="0" y1="-32" x2="0" y2="-10"/>
+    <g><animateTransform attributeName="transform" type="rotate" values="75,0,-24;-25,0,-24;75,0,-24" dur="0.65s" repeatCount="indefinite"/>
+    <line x1="0" y1="-24" x2="-16" y2="-14"/></g>
+    <g><animateTransform attributeName="transform" type="rotate" values="-75,0,-24;25,0,-24;-75,0,-24" dur="0.65s" repeatCount="indefinite"/>
+    <line x1="0" y1="-24" x2="16" y2="-14"/></g>
+    <g><animateTransform attributeName="transform" type="rotate" values="6,0,-10;-15,0,-10;6,0,-10" dur="0.65s" repeatCount="indefinite"/>
+    <line x1="0" y1="-10" x2="-11" y2="16"/></g>
+    <g><animateTransform attributeName="transform" type="rotate" values="-6,0,-10;15,0,-10;-6,0,-10" dur="0.65s" repeatCount="indefinite"/>
+    <line x1="0" y1="-10" x2="11" y2="16"/></g>
+  </g>`);
+}
+function _exAnim_boxing(sz){
+  return _exSVG(sz,`<g transform="translate(40,52)">
+    <circle cx="0" cy="-39" r="7"/>
+    <line x1="0" y1="-32" x2="0" y2="-8"/>
+    <line x1="0" y1="-8" x2="-10" y2="16"/>
+    <line x1="0" y1="-8" x2="10" y2="16"/>
+    <g><animateTransform attributeName="transform" type="rotate" values="30,0,-24;-65,0,-24;30,0,-24" dur="0.55s" repeatCount="indefinite"/>
+    <line x1="0" y1="-24" x2="-18" y2="-18"/>
+    <line x1="-18" y1="-18" x2="-32" y2="-22"/></g>
+    <g><animateTransform attributeName="transform" type="rotate" values="-30,0,-24;0,0,-24;-30,0,-24" dur="0.55s" begin="0.275s" repeatCount="indefinite"/>
+    <line x1="0" y1="-24" x2="18" y2="-18"/>
+    <line x1="18" y1="-18" x2="32" y2="-22"/></g>
+  </g>`);
+}
+function _exAnim_rest(sz){
+  return _exSVG(sz,`<g transform="translate(24,56)">
+    <animateTransform attributeName="transform" type="translate" values="24,55;24,56;24,55" dur="2.5s" repeatCount="indefinite" additive="replace"/>
+    <line x1="0" y1="0" x2="56" y2="0" stroke-width="1.6" opacity="0.4"/>
+    <circle cx="44" cy="-10" r="7"/>
+    <line x1="44" y1="-3" x2="44" y2="-3"/>
+    <line x1="26" y1="-3" x2="44" y2="-3"/>
+    <line x1="26" y1="-3" x2="10" y2="-10"/>
+    <line x1="44" y1="-3" x2="56" y2="-14"/>
+    <line x1="26" y1="-3" x2="20" y2="0"/>
+    <line x1="44" y1="-3" x2="50" y2="0"/>
+    <path d="M 54,-20 Q 58,-24 62,-20" stroke-width="1.6" opacity="0.6">
+      <animate attributeName="opacity" values="0.2;0.7;0.2" dur="2.5s" repeatCount="indefinite"/>
+    </path>
+    <path d="M 58,-26 Q 63,-31 68,-26" stroke-width="1.4" opacity="0.4">
+      <animate attributeName="opacity" values="0;0.5;0" dur="2.5s" begin="0.4s" repeatCount="indefinite"/>
+    </path>
+  </g>`);
+}
+function _exAnim_active(sz){
+  return _exSVG(sz,`<g transform="translate(40,52)">
+    <animateTransform attributeName="transform" type="translate" values="40,52;40,46;40,52" dur="0.7s" repeatCount="indefinite" additive="replace"/>
+    <circle cx="0" cy="-39" r="7"/>
+    <line x1="0" y1="-32" x2="0" y2="-8"/>
+    <g><animateTransform attributeName="transform" type="rotate" values="60,0,-24;-20,0,-24;60,0,-24" dur="0.7s" repeatCount="indefinite"/>
+    <line x1="0" y1="-24" x2="-16" y2="-14"/></g>
+    <g><animateTransform attributeName="transform" type="rotate" values="-60,0,-24;20,0,-24;-60,0,-24" dur="0.7s" repeatCount="indefinite"/>
+    <line x1="0" y1="-24" x2="16" y2="-14"/></g>
+    <line x1="0" y1="-8" x2="-11" y2="16"/>
+    <line x1="0" y1="-8" x2="11" y2="16"/>
+  </g>`);
+}
+// ────────────────────────────────────────────────────────────
+
 function openExDetail(week,dayIdx,exIdx){
   const plan=trainingPlan;
   if(!plan)return;
@@ -7913,6 +8110,10 @@ function openExDetail(week,dayIdx,exIdx){
 
   // Description from note field, or default text
   document.getElementById('exDetailDesc').textContent=ex.note||'No description available. Add notes below to track your experience with this exercise.';
+
+  // Animation
+  const animEl=document.getElementById('exDetailAnimWrap');
+  if(animEl)animEl.innerHTML=getExerciseAnimSVG(ex.name,90);
 
   // Saved notes
   document.getElementById('exDetailNotes').value=notes[key]||'';
