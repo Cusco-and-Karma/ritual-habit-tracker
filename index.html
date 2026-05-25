@@ -6626,7 +6626,6 @@ function renderTrainDailyHTML(){
           <div class="train-ex-meta">${ex.sets?ex.sets+' sets':''} ${ex.reps?'× '+ex.reps:''} ${ex.duration?`<span style="color:var(--accent2);margin-left:2px">⏱ ${escapeHtml(ex.duration)}</span>`:''} <span style="color:var(--accent);font-size:9px;margin-left:4px">tap for details</span></div>
           ${ex.note?`<div class="train-ex-note">${escapeHtml(ex.note)}</div>`:''}
         </div>
-        <div class="ex-anim-wrap">${getExerciseAnimSVG(ex.name,60)}</div>
       </div>`;
     }).join('');
     dayContent=`<div class="train-day-card">
@@ -7315,7 +7314,6 @@ function renderTrainPlanHTML(){
           <div class="train-ex-meta">${ex.sets?ex.sets+' sets':''} ${ex.reps?'× '+ex.reps:''} ${ex.duration?`<span style="color:var(--accent2);margin-left:2px">⏱ ${escapeHtml(ex.duration)}</span>`:''} <span style="color:var(--accent);font-size:9px;margin-left:4px">tap for details</span></div>
           ${ex.note?`<div class="train-ex-note">${escapeHtml(ex.note)}</div>`:''}
         </div>
-        <div class="ex-anim-wrap">${getExerciseAnimSVG(ex.name,60)}</div>
       </div>`;
     }).join('');
 
@@ -7902,179 +7900,384 @@ let _exDetailCtx={week:0,dayIdx:0,exIdx:0};
 function getExerciseAnimSVG(name,size){
   size=size||68;
   const n=(name||'').toLowerCase();
-  if(/run|jog|sprint|treadmill/.test(n))           return _exAnim_running(size);
-  if(/squat|lunge|leg press|leg curl|leg ext/.test(n)) return _exAnim_squat(size);
-  if(/push.?up|pushup|press.up|dip/.test(n))       return _exAnim_pushup(size);
-  if(/plank|hollow|l.sit|isometric/.test(n))       return _exAnim_plank(size);
-  if(/swim|freestyle|stroke|lap/.test(n))          return _exAnim_swimming(size);
-  if(/cycl|bike|spin|pedal|stationary/.test(n))    return _exAnim_cycling(size);
-  if(/box|punch|shadow|mitt|bag/.test(n))          return _exAnim_boxing(size);
-  if(/jump|burpee|skip|rope|hop|plyom|bound/.test(n)) return _exAnim_jump(size);
-  if(/rest|recover|cool|foam|sauna|ice|massage|walk/.test(n)) return _exAnim_rest(size);
-  if(/stretch|flex|yoga|pigeon|cobra|warrior|hamstring|hip hinge|calf|mobility/.test(n)) return _exAnim_stretch(size);
-  if(/lift|deadlift|row|curl|press|pull|chin|raise|overhead|shoulder|bench|chest|arm|trap|dumbbell|barbell|cable|machine|weight|strength|power|clean|snatch|thruster|kettlebell|incline|decline|lat|tricep|bicep/.test(n)) return _exAnim_lift(size);
+  // Specific exercise matches — most specific first
+  if(/bench.*press|chest.*press|incline.*press|decline.*press/.test(n))      return _exAnim_bench_press(size);
+  if(/deadlift|romanian.*dead|\brdl\b|sumo.*dead/.test(n))                   return _exAnim_deadlift(size);
+  if(/bent.?over.*row|barbell.*row|t.?bar.*row|pendlay|db.*row/.test(n))     return _exAnim_row(size);
+  if(/overhead.*press|shoulder.*press|military.*press|\bohp\b|arnold.*press/.test(n)) return _exAnim_shoulder_press(size);
+  if(/lat.*pull|pull.*down/.test(n))                                          return _exAnim_lat_pulldown(size);
+  if(/bicep.*curl|hammer.*curl|concentration.*curl|barbell.*curl|dumbbell.*curl|ez.*curl|preacher.*curl|\bcurl\b/.test(n)) return _exAnim_bicep_curl(size);
+  if(/lunge|split.*squat|bulgarian|reverse.*lunge|walking.*lunge/.test(n))   return _exAnim_lunge(size);
+  if(/squat|goblet|front.*squat|hack.*squat|leg.*press|leg.*curl|leg.*ext/.test(n)) return _exAnim_squat(size);
+  if(/push.?up|pushup|press.?up|\bdip\b/.test(n))                            return _exAnim_pushup(size);
+  if(/plank|hollow|l.?sit|isometric/.test(n))                                return _exAnim_plank(size);
+  if(/run|jog|sprint|treadmill/.test(n))                                      return _exAnim_running(size);
+  if(/swim|freestyle|stroke|lap/.test(n))                                     return _exAnim_swimming(size);
+  if(/cycl|bike|spin|pedal|stationary/.test(n))                              return _exAnim_cycling(size);
+  if(/box|punch|shadow.*box|mitt|bag/.test(n))                               return _exAnim_boxing(size);
+  if(/jump|burpee|skip|rope|hop|plyom|bound/.test(n))                        return _exAnim_jump(size);
+  if(/rest|recover|cool.?down|foam|sauna|ice|massage/.test(n))               return _exAnim_rest(size);
+  if(/stretch|flex|yoga|pigeon|cobra|warrior|hamstring|hip.*hinge|calf|mobility/.test(n)) return _exAnim_stretch(size);
+  // Catch-alls: any press goes to shoulder press; any row/pull goes to row
+  if(/press|push/.test(n))                                                    return _exAnim_shoulder_press(size);
+  if(/row|pull.?up|chin.?up|cable.*row|seated.*row/.test(n))                return _exAnim_row(size);
+  if(/curl|bicep/.test(n))                                                    return _exAnim_bicep_curl(size);
+  if(/lift|dumbbell|barbell|cable|machine|weight|strength|power|clean|snatch|thruster|kettlebell|tricep|raise/.test(n)) return _exAnim_lift(size);
   return _exAnim_active(size);
 }
 function _exSVG(sz,content){
   return `<svg viewBox="0 0 80 80" width="${sz}" height="${sz}" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="display:block"><g stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" opacity="0.8">${content}</g></svg>`;
 }
-function _exAnim_running(sz){
-  return _exSVG(sz,`<g transform="translate(40,52)">
-    <animateTransform attributeName="transform" type="translate" values="40,51;40,49;40,51" dur="0.44s" repeatCount="indefinite" additive="replace"/>
-    <circle cx="2" cy="-39" r="7"/>
-    <line x1="2" y1="-32" x2="-1" y2="-8"/>
-    <g><animateTransform attributeName="transform" type="rotate" values="-45,2,-25;40,2,-25;-45,2,-25" dur="0.44s" repeatCount="indefinite"/>
-    <line x1="2" y1="-25" x2="-11" y2="-13"/></g>
-    <g><animateTransform attributeName="transform" type="rotate" values="40,2,-25;-45,2,-25;40,2,-25" dur="0.44s" repeatCount="indefinite"/>
-    <line x1="2" y1="-25" x2="14" y2="-13"/></g>
-    <g><animateTransform attributeName="transform" type="rotate" values="-48,-1,-8;38,-1,-8;-48,-1,-8" dur="0.44s" repeatCount="indefinite"/>
-    <line x1="-1" y1="-8" x2="-10" y2="16"/></g>
-    <g><animateTransform attributeName="transform" type="rotate" values="38,-1,-8;-48,-1,-8;38,-1,-8" dur="0.44s" repeatCount="indefinite"/>
-    <line x1="-1" y1="-8" x2="9" y2="16"/></g>
-  </g>`);
+
+// BENCH PRESS — figure lying flat, barbell presses up from chest
+function _exAnim_bench_press(sz){
+  return _exSVG(sz,`
+    <circle cx="66" cy="36" r="6"/>
+    <line x1="60" y1="43" x2="12" y2="43"/>
+    <line x1="20" y1="43" x2="14" y2="56"/>
+    <line x1="50" y1="43" x2="50" y2="30"/>
+    <line x1="38" y1="43" x2="38" y2="30"/>
+    <g>
+      <animateTransform attributeName="transform" type="translate" values="0,-2;0,10;0,-2" dur="1.3s" repeatCount="indefinite"/>
+      <line x1="26" y1="28" x2="62" y2="28"/>
+      <line x1="26" y1="23" x2="26" y2="33"/>
+      <line x1="62" y1="23" x2="62" y2="33"/>
+    </g>
+  `);
 }
+
+// SQUAT — figure stands, bends deep at knees and hips, rises
 function _exAnim_squat(sz){
-  return _exSVG(sz,`<g transform="translate(40,52)">
-    <animateTransform attributeName="transform" type="translate" values="40,48;40,56;40,48" dur="0.9s" repeatCount="indefinite" additive="replace"/>
-    <circle cx="0" cy="-39" r="7"/>
-    <line x1="0" y1="-32" x2="0" y2="-10"/>
-    <line x1="0" y1="-26" x2="-12" y2="-14"/>
-    <line x1="0" y1="-26" x2="12" y2="-14"/>
-    <g><animateTransform attributeName="transform" type="rotate" values="5,0,-10;42,0,-10;5,0,-10" dur="0.9s" repeatCount="indefinite"/>
-    <line x1="0" y1="-10" x2="-11" y2="14"/></g>
-    <g><animateTransform attributeName="transform" type="rotate" values="-5,0,-10;-42,0,-10;-5,0,-10" dur="0.9s" repeatCount="indefinite"/>
-    <line x1="0" y1="-10" x2="11" y2="14"/></g>
+  return _exSVG(sz,`<g>
+    <animateTransform attributeName="transform" type="translate" values="0,-4;0,6;0,-4" dur="1.0s" repeatCount="indefinite"/>
+    <circle cx="40" cy="14" r="6"/>
+    <line x1="40" y1="20" x2="40" y2="40"/>
+    <line x1="40" y1="30" x2="28" y2="40"/>
+    <line x1="40" y1="30" x2="52" y2="40"/>
+    <line x1="40" y1="40" x2="32" y2="58"/>
+    <line x1="40" y1="40" x2="48" y2="58"/>
+    <line x1="32" y1="58" x2="28" y2="68"/>
+    <line x1="48" y1="58" x2="52" y2="68"/>
+  </g>
+  <line x1="22" y1="68" x2="34" y2="68"/>
+  <line x1="46" y1="68" x2="58" y2="68"/>`);
+}
+
+// DEADLIFT — figure hinges forward, bar rises from floor to hip height
+function _exAnim_deadlift(sz){
+  return _exSVG(sz,`
+    <line x1="24" y1="68" x2="36" y2="68"/>
+    <line x1="44" y1="68" x2="56" y2="68"/>
+    <line x1="32" y1="54" x2="30" y2="68"/>
+    <line x1="48" y1="54" x2="50" y2="68"/>
+    <line x1="32" y1="54" x2="48" y2="54"/>
+    <g>
+      <animateTransform attributeName="transform" type="rotate" values="55,40,54;0,40,54;55,40,54" dur="1.5s" repeatCount="indefinite"/>
+      <line x1="40" y1="54" x2="40" y2="24"/>
+      <circle cx="40" cy="18" r="6"/>
+      <line x1="36" y1="36" x2="34" y2="52"/>
+      <line x1="44" y1="36" x2="46" y2="52"/>
+    </g>
+    <line x1="12" y1="68" x2="68" y2="68">
+      <animate attributeName="y1" values="68;50;68" dur="1.5s" repeatCount="indefinite"/>
+      <animate attributeName="y2" values="68;50;68" dur="1.5s" repeatCount="indefinite"/>
+    </line>
+    <line x1="12" y1="64" x2="12" y2="72">
+      <animate attributeName="y1" values="64;46;64" dur="1.5s" repeatCount="indefinite"/>
+      <animate attributeName="y2" values="72;54;72" dur="1.5s" repeatCount="indefinite"/>
+    </line>
+    <line x1="68" y1="64" x2="68" y2="72">
+      <animate attributeName="y1" values="64;46;64" dur="1.5s" repeatCount="indefinite"/>
+      <animate attributeName="y2" values="72;54;72" dur="1.5s" repeatCount="indefinite"/>
+    </line>
+  `);
+}
+
+// BENT-OVER ROW — torso fixed forward, arms pull bar up toward chest
+function _exAnim_row(sz){
+  return _exSVG(sz,`
+    <line x1="28" y1="68" x2="40" y2="68"/>
+    <line x1="40" y1="68" x2="52" y2="68"/>
+    <line x1="34" y1="52" x2="32" y2="68"/>
+    <line x1="46" y1="52" x2="48" y2="68"/>
+    <line x1="34" y1="52" x2="46" y2="52"/>
+    <line x1="40" y1="52" x2="18" y2="38"/>
+    <circle cx="12" cy="32" r="6"/>
+    <g>
+      <animateTransform attributeName="transform" type="rotate" values="-50,24,42;20,24,42;-50,24,42" dur="1.0s" repeatCount="indefinite"/>
+      <line x1="24" y1="42" x2="16" y2="58"/>
+      <line x1="24" y1="42" x2="32" y2="58"/>
+      <line x1="8" y1="58" x2="44" y2="58"/>
+      <line x1="8" y1="54" x2="8" y2="62"/>
+      <line x1="44" y1="54" x2="44" y2="62"/>
+    </g>
+  `);
+}
+
+// SHOULDER PRESS — standing, barbell presses from shoulders to overhead
+function _exAnim_shoulder_press(sz){
+  return _exSVG(sz,`
+    <circle cx="40" cy="14" r="6"/>
+    <line x1="40" y1="20" x2="40" y2="46"/>
+    <line x1="40" y1="46" x2="34" y2="68"/>
+    <line x1="40" y1="46" x2="46" y2="68"/>
+    <line x1="40" y1="28" x2="26" y2="28"/>
+    <line x1="40" y1="28" x2="54" y2="28"/>
+    <line x1="26" y1="28" x2="26" y2="18">
+      <animate attributeName="y2" values="18;4;18" dur="1.2s" repeatCount="indefinite"/>
+    </line>
+    <line x1="54" y1="28" x2="54" y2="18">
+      <animate attributeName="y2" values="18;4;18" dur="1.2s" repeatCount="indefinite"/>
+    </line>
+    <line x1="14" y1="18" x2="66" y2="18">
+      <animate attributeName="y1" values="18;4;18" dur="1.2s" repeatCount="indefinite"/>
+      <animate attributeName="y2" values="18;4;18" dur="1.2s" repeatCount="indefinite"/>
+    </line>
+    <line x1="14" y1="14" x2="14" y2="22">
+      <animate attributeName="y1" values="14;0;14" dur="1.2s" repeatCount="indefinite"/>
+      <animate attributeName="y2" values="22;8;22" dur="1.2s" repeatCount="indefinite"/>
+    </line>
+    <line x1="66" y1="14" x2="66" y2="22">
+      <animate attributeName="y1" values="14;0;14" dur="1.2s" repeatCount="indefinite"/>
+      <animate attributeName="y2" values="22;8;22" dur="1.2s" repeatCount="indefinite"/>
+    </line>
+  `);
+}
+
+// LAT PULLDOWN — seated figure pulls cable bar from overhead to chest
+function _exAnim_lat_pulldown(sz){
+  return _exSVG(sz,`
+    <circle cx="40" cy="16" r="6"/>
+    <line x1="40" y1="22" x2="40" y2="50"/>
+    <line x1="28" y1="50" x2="52" y2="50"/>
+    <line x1="28" y1="50" x2="26" y2="68"/>
+    <line x1="52" y1="50" x2="54" y2="68"/>
+    <line x1="20" y1="68" x2="32" y2="68"/>
+    <line x1="48" y1="68" x2="60" y2="68"/>
+    <g>
+      <animateTransform attributeName="transform" type="translate" values="0,-14;0,10;0,-14" dur="1.2s" repeatCount="indefinite"/>
+      <line x1="16" y1="10" x2="64" y2="10"/>
+      <line x1="16" y1="6" x2="16" y2="14"/>
+      <line x1="64" y1="6" x2="64" y2="14"/>
+    </g>
+    <line x1="20" y1="10" x2="34" y2="32">
+      <animate attributeName="y1" values="-4;20;-4" dur="1.2s" repeatCount="indefinite"/>
+    </line>
+    <line x1="60" y1="10" x2="46" y2="32">
+      <animate attributeName="y1" values="-4;20;-4" dur="1.2s" repeatCount="indefinite"/>
+    </line>
+  `);
+}
+
+// BICEP CURL — standing, forearm curls up toward shoulder
+function _exAnim_bicep_curl(sz){
+  return _exSVG(sz,`
+    <circle cx="40" cy="12" r="6"/>
+    <line x1="40" y1="18" x2="40" y2="44"/>
+    <line x1="40" y1="44" x2="34" y2="68"/>
+    <line x1="40" y1="44" x2="46" y2="68"/>
+    <line x1="34" y1="28" x2="34" y2="44"/>
+    <line x1="46" y1="28" x2="46" y2="44"/>
+    <g>
+      <animateTransform attributeName="transform" type="rotate" values="0,34,44;-110,34,44;0,34,44" dur="1.1s" repeatCount="indefinite"/>
+      <line x1="34" y1="44" x2="34" y2="60"/>
+      <line x1="26" y1="60" x2="42" y2="60"/>
+      <line x1="26" y1="56" x2="26" y2="64"/>
+      <line x1="42" y1="56" x2="42" y2="64"/>
+    </g>
+    <line x1="46" y1="44" x2="46" y2="60"/>
+  `);
+}
+
+// LUNGE — split stance, body lowers and rises
+function _exAnim_lunge(sz){
+  return _exSVG(sz,`
+    <line x1="10" y1="68" x2="24" y2="68"/>
+    <line x1="56" y1="68" x2="70" y2="68"/>
+    <line x1="16" y1="52" x2="16" y2="68"/>
+    <line x1="64" y1="52" x2="64" y2="68"/>
+    <g>
+      <animateTransform attributeName="transform" type="translate" values="0,-6;0,6;0,-6" dur="1.2s" repeatCount="indefinite"/>
+      <circle cx="40" cy="10" r="6"/>
+      <line x1="40" y1="16" x2="40" y2="40"/>
+      <line x1="40" y1="26" x2="28" y2="38"/>
+      <line x1="40" y1="26" x2="52" y2="38"/>
+      <line x1="40" y1="40" x2="16" y2="52"/>
+      <line x1="40" y1="40" x2="64" y2="52"/>
+    </g>
+  `);
+}
+
+// RUNNING — alternating stride with arm swing
+function _exAnim_running(sz){
+  return _exSVG(sz,`<g>
+    <animateTransform attributeName="transform" type="translate" values="0,-2;0,2;0,-2" dur="0.44s" repeatCount="indefinite"/>
+    <circle cx="40" cy="12" r="6"/>
+    <line x1="40" y1="18" x2="40" y2="40"/>
+    <g><animateTransform attributeName="transform" type="rotate" values="-50,40,28;40,40,28;-50,40,28" dur="0.44s" repeatCount="indefinite"/>
+    <line x1="40" y1="28" x2="26" y2="40"/></g>
+    <g><animateTransform attributeName="transform" type="rotate" values="40,40,28;-50,40,28;40,40,28" dur="0.44s" repeatCount="indefinite"/>
+    <line x1="40" y1="28" x2="54" y2="40"/></g>
+    <g><animateTransform attributeName="transform" type="rotate" values="-50,40,40;42,40,40;-50,40,40" dur="0.44s" repeatCount="indefinite"/>
+    <line x1="40" y1="40" x2="30" y2="62"/>
+    <line x1="30" y1="62" x2="24" y2="62"/></g>
+    <g><animateTransform attributeName="transform" type="rotate" values="42,40,40;-50,40,40;42,40,40" dur="0.44s" repeatCount="indefinite"/>
+    <line x1="40" y1="40" x2="50" y2="62"/>
+    <line x1="50" y1="62" x2="56" y2="62"/></g>
   </g>`);
 }
-function _exAnim_pushup(sz){
-  return _exSVG(sz,`<g transform="translate(10,44)">
-    <animateTransform attributeName="transform" type="translate" values="10,42;10,47;10,42" dur="0.85s" repeatCount="indefinite" additive="replace"/>
-    <circle cx="58" cy="-10" r="7"/>
-    <line x1="51" y1="-6" x2="18" y2="-6"/>
-    <g><animateTransform attributeName="transform" type="rotate" values="-78,51,-6;-105,51,-6;-78,51,-6" dur="0.85s" repeatCount="indefinite"/>
-    <line x1="51" y1="-6" x2="51" y2="10"/></g>
-    <g><animateTransform attributeName="transform" type="rotate" values="-102,18,-6;-75,18,-6;-102,18,-6" dur="0.85s" repeatCount="indefinite"/>
-    <line x1="18" y1="-6" x2="18" y2="10"/></g>
-    <line x1="18" y1="-6" x2="6" y2="4"/>
-  </g>`);
-}
+
+// PLANK — horizontal hold with subtle breathing pulse
 function _exAnim_plank(sz){
-  return _exSVG(sz,`<g transform="translate(10,46)">
-    <animateTransform attributeName="transform" type="translate" values="10,45;10,46;10,45" dur="2s" repeatCount="indefinite" additive="replace"/>
-    <circle cx="58" cy="-10" r="7"/>
-    <line x1="51" y1="-6" x2="14" y2="-6"/>
-    <line x1="51" y1="-6" x2="51" y2="8"/>
-    <line x1="14" y1="-6" x2="14" y2="8"/>
-    <line x1="14" y1="-6" x2="6" y2="4"/>
+  return _exSVG(sz,`<g>
+    <animateTransform attributeName="transform" type="translate" values="0,0;0,1;0,0" dur="3s" repeatCount="indefinite"/>
+    <circle cx="62" cy="28" r="6"/>
+    <line x1="56" y1="33" x2="16" y2="33"/>
+    <line x1="56" y1="33" x2="56" y2="46"/>
+    <line x1="16" y1="33" x2="16" y2="46"/>
+    <line x1="50" y1="33" x2="58" y2="22"/>
+    <line x1="22" y1="33" x2="14" y2="22"/>
   </g>`);
 }
-function _exAnim_stretch(sz){
-  return _exSVG(sz,`<g transform="translate(40,52)">
-    <circle cx="0" cy="-39" r="7"/>
-    <line x1="0" y1="-32" x2="0" y2="-8"/>
-    <g><animateTransform attributeName="transform" type="rotate" values="80,0,-24;-30,0,-24;80,0,-24" dur="1.4s" repeatCount="indefinite"/>
-    <line x1="0" y1="-24" x2="16" y2="-12"/></g>
-    <g><animateTransform attributeName="transform" type="rotate" values="-80,0,-24;30,0,-24;-80,0,-24" dur="1.4s" repeatCount="indefinite"/>
-    <line x1="0" y1="-24" x2="-16" y2="-12"/></g>
-    <line x1="0" y1="-8" x2="-12" y2="16"/>
-    <line x1="0" y1="-8" x2="12" y2="16"/>
+
+// PUSH UP — horizontal body, arms bend and extend
+function _exAnim_pushup(sz){
+  return _exSVG(sz,`<g>
+    <animateTransform attributeName="transform" type="translate" values="0,-4;0,4;0,-4" dur="0.9s" repeatCount="indefinite"/>
+    <circle cx="62" cy="22" r="6"/>
+    <line x1="56" y1="28" x2="18" y2="28"/>
+    <line x1="18" y1="28" x2="10" y2="38"/>
+    <g><animateTransform attributeName="transform" type="rotate" values="-78,50,28;-110,50,28;-78,50,28" dur="0.9s" repeatCount="indefinite"/>
+    <line x1="50" y1="28" x2="50" y2="44"/></g>
+    <g><animateTransform attributeName="transform" type="rotate" values="-102,28,28;-70,28,28;-102,28,28" dur="0.9s" repeatCount="indefinite"/>
+    <line x1="28" y1="28" x2="28" y2="44"/></g>
   </g>`);
 }
+
+// SWIMMING — horizontal figure, alternating arm strokes
 function _exAnim_swimming(sz){
-  return _exSVG(sz,`<g transform="translate(40,42)">
-    <circle cx="0" cy="-8" r="7"/>
-    <line x1="0" y1="-1" x2="0" y2="14"/>
-    <g><animateTransform attributeName="transform" type="rotate" values="-20,0,-1;165,0,-1;-20,0,-1" dur="0.7s" repeatCount="indefinite"/>
-    <line x1="0" y1="-1" x2="-20" y2="6"/></g>
-    <g><animateTransform attributeName="transform" type="rotate" values="160,0,-1;-25,0,-1;160,0,-1" dur="0.7s" repeatCount="indefinite"/>
-    <line x1="0" y1="-1" x2="20" y2="6"/></g>
-    <line x1="0" y1="14" x2="-10" y2="24"/>
-    <line x1="0" y1="14" x2="10" y2="24"/>
+  return _exSVG(sz,`<g transform="translate(40,40)">
+    <circle cx="0" cy="-8" r="6"/>
+    <line x1="0" y1="-2" x2="0" y2="14"/>
+    <line x1="0" y1="14" x2="-10" y2="26"/>
+    <line x1="0" y1="14" x2="10" y2="26"/>
+    <g><animateTransform attributeName="transform" type="rotate" values="-20,0,-2;175,0,-2;-20,0,-2" dur="0.8s" repeatCount="indefinite"/>
+    <line x1="0" y1="-2" x2="-24" y2="8"/></g>
+    <g><animateTransform attributeName="transform" type="rotate" values="175,0,-2;-20,0,-2;175,0,-2" dur="0.8s" repeatCount="indefinite"/>
+    <line x1="0" y1="-2" x2="24" y2="8"/></g>
   </g>`);
 }
+
+// CYCLING — seated figure, legs pedal in circles
 function _exAnim_cycling(sz){
-  return _exSVG(sz,`<g transform="translate(40,48)">
-    <circle cx="0" cy="-36" r="7"/>
-    <line x1="0" y1="-29" x2="0" y2="-14"/>
-    <line x1="0" y1="-22" x2="-12" y2="-16"/>
-    <line x1="0" y1="-22" x2="12" y2="-16"/>
-    <circle cx="-12" cy="12" r="9" stroke-width="1.8"/>
-    <circle cx="12" cy="12" r="9" stroke-width="1.8"/>
-    <line x1="-12" y1="12" x2="12" y2="12"/>
-    <g transform="translate(0,-14)">
-    <animateTransform attributeName="transform" type="rotate" values="0,0,-14;360,0,-14;0,0,-14" dur="0.9s" repeatCount="indefinite" additive="replace"/>
-    <line x1="0" y1="-14" x2="-12" y2="12"/>
-    <line x1="0" y1="-14" x2="12" y2="12"/>
+  return _exSVG(sz,`<g transform="translate(40,42)">
+    <circle cx="0" cy="-32" r="6"/>
+    <line x1="0" y1="-26" x2="0" y2="-10"/>
+    <line x1="0" y1="-20" x2="-12" y2="-14"/>
+    <line x1="0" y1="-20" x2="12" y2="-14"/>
+    <circle cx="-14" cy="14" r="10" stroke-width="1.8"/>
+    <circle cx="14" cy="14" r="10" stroke-width="1.8"/>
+    <line x1="-14" y1="14" x2="14" y2="14"/>
+    <g>
+      <animateTransform attributeName="transform" type="rotate" values="0,0,-10;360,0,-10" dur="0.9s" repeatCount="indefinite" additive="replace"/>
+      <line x1="0" y1="-10" x2="-14" y2="14"/>
+      <line x1="0" y1="-10" x2="14" y2="14"/>
     </g>
   </g>`);
 }
-function _exAnim_lift(sz){
-  return _exSVG(sz,`<g transform="translate(40,52)">
-    <animateTransform attributeName="transform" type="translate" values="40,51;40,49;40,51" dur="1s" repeatCount="indefinite" additive="replace"/>
-    <circle cx="0" cy="-39" r="7"/>
-    <line x1="0" y1="-32" x2="0" y2="-8"/>
-    <line x1="0" y1="-8" x2="-11" y2="16"/>
-    <line x1="0" y1="-8" x2="11" y2="16"/>
-    <g><animateTransform attributeName="transform" type="rotate" values="75,0,-25;-80,0,-25;75,0,-25" dur="1s" repeatCount="indefinite"/>
-    <line x1="0" y1="-25" x2="-18" y2="-16"/>
-    <line x1="-18" y1="-16" x2="-26" y2="-26"/></g>
-    <g><animateTransform attributeName="transform" type="rotate" values="-75,0,-25;80,0,-25;-75,0,-25" dur="1s" repeatCount="indefinite"/>
-    <line x1="0" y1="-25" x2="18" y2="-16"/>
-    <line x1="18" y1="-16" x2="26" y2="-26"/></g>
-  </g>`);
-}
-function _exAnim_jump(sz){
-  return _exSVG(sz,`<g transform="translate(40,52)">
-    <animateTransform attributeName="transform" type="translate" values="40,52;40,38;40,52" dur="0.65s" repeatCount="indefinite" additive="replace"/>
-    <circle cx="0" cy="-39" r="7"/>
-    <line x1="0" y1="-32" x2="0" y2="-10"/>
-    <g><animateTransform attributeName="transform" type="rotate" values="75,0,-24;-25,0,-24;75,0,-24" dur="0.65s" repeatCount="indefinite"/>
-    <line x1="0" y1="-24" x2="-16" y2="-14"/></g>
-    <g><animateTransform attributeName="transform" type="rotate" values="-75,0,-24;25,0,-24;-75,0,-24" dur="0.65s" repeatCount="indefinite"/>
-    <line x1="0" y1="-24" x2="16" y2="-14"/></g>
-    <g><animateTransform attributeName="transform" type="rotate" values="6,0,-10;-15,0,-10;6,0,-10" dur="0.65s" repeatCount="indefinite"/>
-    <line x1="0" y1="-10" x2="-11" y2="16"/></g>
-    <g><animateTransform attributeName="transform" type="rotate" values="-6,0,-10;15,0,-10;-6,0,-10" dur="0.65s" repeatCount="indefinite"/>
-    <line x1="0" y1="-10" x2="11" y2="16"/></g>
-  </g>`);
-}
+
+// BOXING — alternating forward punches
 function _exAnim_boxing(sz){
   return _exSVG(sz,`<g transform="translate(40,52)">
-    <circle cx="0" cy="-39" r="7"/>
+    <circle cx="0" cy="-38" r="6"/>
     <line x1="0" y1="-32" x2="0" y2="-8"/>
     <line x1="0" y1="-8" x2="-10" y2="16"/>
     <line x1="0" y1="-8" x2="10" y2="16"/>
-    <g><animateTransform attributeName="transform" type="rotate" values="30,0,-24;-65,0,-24;30,0,-24" dur="0.55s" repeatCount="indefinite"/>
-    <line x1="0" y1="-24" x2="-18" y2="-18"/>
-    <line x1="-18" y1="-18" x2="-32" y2="-22"/></g>
-    <g><animateTransform attributeName="transform" type="rotate" values="-30,0,-24;0,0,-24;-30,0,-24" dur="0.55s" begin="0.275s" repeatCount="indefinite"/>
-    <line x1="0" y1="-24" x2="18" y2="-18"/>
-    <line x1="18" y1="-18" x2="32" y2="-22"/></g>
+    <g><animateTransform attributeName="transform" type="rotate" values="28,0,-22;-68,0,-22;28,0,-22" dur="0.6s" repeatCount="indefinite"/>
+    <line x1="0" y1="-22" x2="-18" y2="-16"/>
+    <line x1="-18" y1="-16" x2="-34" y2="-20"/></g>
+    <g><animateTransform attributeName="transform" type="rotate" values="-28,0,-22;0,0,-22;-28,0,-22" dur="0.6s" begin="0.3s" repeatCount="indefinite"/>
+    <line x1="0" y1="-22" x2="18" y2="-16"/>
+    <line x1="18" y1="-16" x2="34" y2="-20"/></g>
   </g>`);
 }
+
+// STRETCH / COOL DOWN — arms sweep wide in a slow arc
+function _exAnim_stretch(sz){
+  return _exSVG(sz,`<g transform="translate(40,52)">
+    <circle cx="0" cy="-38" r="6"/>
+    <line x1="0" y1="-32" x2="0" y2="-8"/>
+    <line x1="0" y1="-8" x2="-12" y2="16"/>
+    <line x1="0" y1="-8" x2="12" y2="16"/>
+    <g><animateTransform attributeName="transform" type="rotate" values="88,0,-22;-38,0,-22;88,0,-22" dur="2s" repeatCount="indefinite"/>
+    <line x1="0" y1="-22" x2="20" y2="-10"/></g>
+    <g><animateTransform attributeName="transform" type="rotate" values="-88,0,-22;38,0,-22;-88,0,-22" dur="2s" repeatCount="indefinite"/>
+    <line x1="0" y1="-22" x2="-20" y2="-10"/></g>
+  </g>`);
+}
+
+// REST — seated figure with slow breathing pulse and floating z's
 function _exAnim_rest(sz){
-  return _exSVG(sz,`<g transform="translate(24,56)">
-    <animateTransform attributeName="transform" type="translate" values="24,55;24,56;24,55" dur="2.5s" repeatCount="indefinite" additive="replace"/>
-    <line x1="0" y1="0" x2="56" y2="0" stroke-width="1.6" opacity="0.4"/>
-    <circle cx="44" cy="-10" r="7"/>
-    <line x1="44" y1="-3" x2="44" y2="-3"/>
-    <line x1="26" y1="-3" x2="44" y2="-3"/>
-    <line x1="26" y1="-3" x2="10" y2="-10"/>
-    <line x1="44" y1="-3" x2="56" y2="-14"/>
-    <line x1="26" y1="-3" x2="20" y2="0"/>
-    <line x1="44" y1="-3" x2="50" y2="0"/>
-    <path d="M 54,-20 Q 58,-24 62,-20" stroke-width="1.6" opacity="0.6">
-      <animate attributeName="opacity" values="0.2;0.7;0.2" dur="2.5s" repeatCount="indefinite"/>
+  return _exSVG(sz,`
+    <line x1="8" y1="68" x2="72" y2="68" stroke-width="1.4" opacity="0.35"/>
+    <circle cx="40" cy="22" r="6"/>
+    <line x1="40" y1="28" x2="40" y2="52"/>
+    <line x1="40" y1="52" x2="14" y2="60"/>
+    <line x1="40" y1="52" x2="66" y2="60"/>
+    <line x1="40" y1="38" x2="26" y2="52"/>
+    <line x1="40" y1="38" x2="54" y2="52"/>
+    <line x1="40" y1="30" x2="40" y2="48" stroke-width="5" opacity="0">
+      <animate attributeName="opacity" values="0;0.07;0" dur="4s" repeatCount="indefinite"/>
+      <animate attributeName="stroke-width" values="5;9;5" dur="4s" repeatCount="indefinite"/>
+    </line>
+    <path d="M54,18 L60,18 L54,12 L60,12" stroke-width="1.4">
+      <animate attributeName="opacity" values="0;0.55;0" dur="4s" begin="0.4s" repeatCount="indefinite"/>
     </path>
-    <path d="M 58,-26 Q 63,-31 68,-26" stroke-width="1.4" opacity="0.4">
-      <animate attributeName="opacity" values="0;0.5;0" dur="2.5s" begin="0.4s" repeatCount="indefinite"/>
+    <path d="M60,12 L64,12 L60,7 L64,7" stroke-width="1.2">
+      <animate attributeName="opacity" values="0;0.38;0" dur="4s" begin="1s" repeatCount="indefinite"/>
     </path>
+  `);
+}
+
+// GENERIC LIFT — arms raise dumbbell overhead (catch-all for strength exercises)
+function _exAnim_lift(sz){
+  return _exSVG(sz,`<g transform="translate(40,52)">
+    <animateTransform attributeName="transform" type="translate" values="40,51;40,49;40,51" dur="1s" repeatCount="indefinite" additive="replace"/>
+    <circle cx="0" cy="-38" r="6"/>
+    <line x1="0" y1="-32" x2="0" y2="-8"/>
+    <line x1="0" y1="-8" x2="-11" y2="16"/>
+    <line x1="0" y1="-8" x2="11" y2="16"/>
+    <g><animateTransform attributeName="transform" type="rotate" values="70,0,-24;-80,0,-24;70,0,-24" dur="1s" repeatCount="indefinite"/>
+    <line x1="0" y1="-24" x2="-18" y2="-14"/>
+    <line x1="-18" y1="-14" x2="-28" y2="-26"/></g>
+    <g><animateTransform attributeName="transform" type="rotate" values="-70,0,-24;80,0,-24;-70,0,-24" dur="1s" repeatCount="indefinite"/>
+    <line x1="0" y1="-24" x2="18" y2="-14"/>
+    <line x1="18" y1="-14" x2="28" y2="-26"/></g>
   </g>`);
 }
+
+// JUMP — burpee/jump rope, whole body bounces up
+function _exAnim_jump(sz){
+  return _exSVG(sz,`<g transform="translate(40,52)">
+    <animateTransform attributeName="transform" type="translate" values="40,52;40,36;40,52" dur="0.65s" repeatCount="indefinite" additive="replace"/>
+    <circle cx="0" cy="-38" r="6"/>
+    <line x1="0" y1="-32" x2="0" y2="-10"/>
+    <g><animateTransform attributeName="transform" type="rotate" values="70,0,-24;-20,0,-24;70,0,-24" dur="0.65s" repeatCount="indefinite"/>
+    <line x1="0" y1="-24" x2="-16" y2="-14"/></g>
+    <g><animateTransform attributeName="transform" type="rotate" values="-70,0,-24;20,0,-24;-70,0,-24" dur="0.65s" repeatCount="indefinite"/>
+    <line x1="0" y1="-24" x2="16" y2="-14"/></g>
+    <g><animateTransform attributeName="transform" type="rotate" values="8,0,-10;-18,0,-10;8,0,-10" dur="0.65s" repeatCount="indefinite"/>
+    <line x1="0" y1="-10" x2="-12" y2="16"/></g>
+    <g><animateTransform attributeName="transform" type="rotate" values="-8,0,-10;18,0,-10;-8,0,-10" dur="0.65s" repeatCount="indefinite"/>
+    <line x1="0" y1="-10" x2="12" y2="16"/></g>
+  </g>`);
+}
+
+// ACTIVE — generic fallback
 function _exAnim_active(sz){
   return _exSVG(sz,`<g transform="translate(40,52)">
     <animateTransform attributeName="transform" type="translate" values="40,52;40,46;40,52" dur="0.7s" repeatCount="indefinite" additive="replace"/>
-    <circle cx="0" cy="-39" r="7"/>
+    <circle cx="0" cy="-38" r="6"/>
     <line x1="0" y1="-32" x2="0" y2="-8"/>
     <g><animateTransform attributeName="transform" type="rotate" values="60,0,-24;-20,0,-24;60,0,-24" dur="0.7s" repeatCount="indefinite"/>
     <line x1="0" y1="-24" x2="-16" y2="-14"/></g>
@@ -8085,6 +8288,7 @@ function _exAnim_active(sz){
   </g>`);
 }
 // ────────────────────────────────────────────────────────────
+
 
 function openExDetail(week,dayIdx,exIdx){
   const plan=trainingPlan;
