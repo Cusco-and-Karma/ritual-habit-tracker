@@ -11,32 +11,15 @@ git add index.html
 echo "Staged index.html."
 
 # Commit
-git commit -m "feat: date-based day scroller for nutrition & training, fix meal variation, occasional activity scheduling
+git commit -m "feat: boxing weeks 6&11 only, phase exercise/meal variation, nutrition date scroller to top, grocery .docx export
 
-- Nutrition: replace Mon-Sun tab strip with date-based day scroller
-  - Header shows today's actual date (e.g. 'Sun, May 24')
-  - Left/right arrows to navigate previous/next day
-  - Meals map to actual calendar dates via day-of-week
-  - Weekly View button opens full-page overlay of all 7 days
-  - Fallback to legacy single meals list removed entirely
-  - Shows 'No meals planned for this day' when a day has no AI-generated meals
-  - Debug log: console logs how many weekly_meals days the AI returned
-
-- Training: date-based daily view as default
-  - Header shows today's date with left/right day navigation
-  - Each day shows that day's exercises, sets, reps, duration
-  - Rest days shown with a recovery card
-  - Weekly View button opens full-page overlay (existing weekly plan)
-  - Weekly overlay supports week/phase navigation and exercise checks
-
-- Occasional activities (swimming, boxing a few times a month)
-  - AI now schedules these as specific dated entries in occasional_activities[]
-  - Appear only on their specific dates in the daily view
-  - Not added to weekly_schedule as recurring weekday entries
-
-- Code cleanup
-  - refreshTrainView() helper routes re-renders to overlay or main view correctly
-  - CSS class conflict fixed: new plan-date-nav classes instead of date-nav"
+- Boxing appears exclusively on weeks 6 and 11 via week_overrides — fully replaces that day's workout; no boxing shown on any other week
+- Training AI prompt requires phase_schedules: completely different exercises per phase (hypertrophy -> strength -> functional), rotating movements and rep ranges week to week
+- getScheduleForWeek() picks the right exercise set based on phase boundaries; getWeekOverride() applies boxing/sport-specific day replacements
+- Nutrition AI prompt requires meal_rotations: phase-based meal plans so food genuinely varies across the program (Mediterranean -> Asian -> Mexican)
+- getMealsForDow() picks the correct meal rotation for the current training week using phase boundaries; falls back to single weekly_meals for existing plans
+- Nutrition tab date scroller (day nav + meal cards) moved to top of view, above macro bars and food log — matches training tab layout
+- Grocery list download now generates a proper .docx Word document via pure-JS ZIP + OOXML (no external dependencies), with heading, date, and categorised sections"
 
 echo ""
 # Push to GitHub

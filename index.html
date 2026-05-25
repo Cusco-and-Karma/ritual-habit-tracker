@@ -5856,13 +5856,37 @@ function navigateTrainingDay(delta){
 
 function getMealsForDow(dow){
   const diet=getDietTargets();
+  const DAYS=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+
+  // Prefer phase-based meal rotations (week-to-week variation)
+  const rotations=trainingPlan?.diet?.meal_rotations||diet.meal_rotations||[];
+  if(rotations.length){
+    const phases=trainingPlan?.phases||[];
+    let phaseWeeklyMeals=null;
+    for(const rot of rotations){
+      const phase=phases[(rot.phase_number||1)-1];
+      if(phase){
+        const m=String(phase.weeks||'').match(/(\d+)\s*[-–]\s*(\d+)/);
+        if(m&&trainingWeek>=parseInt(m[1])&&trainingWeek<=parseInt(m[2])){
+          phaseWeeklyMeals=rot.weekly_meals;break;
+        }
+      }
+    }
+    // If no phase matched (e.g. week exceeds last phase), use the last rotation
+    if(!phaseWeeklyMeals)phaseWeeklyMeals=rotations[rotations.length-1]?.weekly_meals;
+    if(phaseWeeklyMeals&&phaseWeeklyMeals.length){
+      const entry=phaseWeeklyMeals[dow]||phaseWeeklyMeals.find(w=>(w.day||'').toLowerCase()===DAYS[dow].toLowerCase());
+      if(entry&&Array.isArray(entry.meals)&&entry.meals.length)return entry.meals;
+    }
+  }
+
+  // Fall back to single weekly_meals
   const weekly=Array.isArray(diet.weekly_meals)?diet.weekly_meals:null;
   if(!weekly||!weekly.length){
     console.log('[Ritual] weekly_meals: none found in plan');
     return null;
   }
   console.log('[Ritual] weekly_meals days returned by AI:',weekly.length,'days:',weekly.map(d=>d.day).join(', '));
-  const DAYS=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
   const entry=weekly[dow]||weekly.find(w=>(w.day||'').toLowerCase()===DAYS[dow].toLowerCase());
   if(entry&&Array.isArray(entry.meals)&&entry.meals.length)return entry.meals;
   return null; // Day found but empty — caller shows "No meals planned for this day"
@@ -6424,7 +6448,7 @@ function buildShoppingListHTML(){
       ${progressHTML}
       ${checkedCount>0?`<button class="shop-btn ghost" onclick="resetShoppingChecks()">Uncheck all</button>`:''}
       <button class="shop-btn ghost" onclick="clearShoppingList()">Clear</button>
-      <button class="shop-btn ghost" onclick="downloadGroceryList()" title="Download as text file">Download</button>
+      <button class="shop-btn ghost" onclick="downloadGroceryList()" title="Download as Word .docx file">Download</button>
       <button class="shop-btn" onclick="generateShoppingList()">Refresh</button>
     </div>
   </div>
@@ -6446,27 +6470,124 @@ function resetShoppingChecks(){
   if(container)container.innerHTML=buildShoppingListHTML();
 }
 
+// ── Minimal CRC-32 for ZIP ──
+function _crc32(data){
+  let c=0xFFFFFFFF;
+  for(let i=0;i<data.length;i++){
+    c=(c>>>8)^_crc32Table[(c^data[i])&0xFF];
+  }
+  return(c^0xFFFFFFFF)>>>0;
+}
+const _crc32Table=(()=>{
+  const t=new Uint32Array(256);
+  for(let i=0;i<256;i++){
+    let c=i;
+    for(let j=0;j<8;j++)c=(c&1)?(0xEDB88320^(c>>>1)):(c>>>1);
+    t[i]=c;
+  }
+  return t;
+})();
+
+// ── Minimal ZIP packer (no compression — stored) ──
+function _packZip(files){
+  const enc=new TextEncoder();
+  const parts=[];
+  const cd=[];
+  let off=0;
+  for(const[name,content]of Object.entries(files)){
+    const nb=enc.encode(name);
+    const cb=typeof content==='string'?enc.encode(content):content;
+    const crc=_crc32(cb);
+    const lh=new Uint8Array(30+nb.length);
+    const lv=new DataView(lh.buffer);
+    lv.setUint32(0,0x04034b50,true);lv.setUint16(4,20,true);lv.setUint16(6,0,true);
+    lv.setUint16(8,0,true);lv.setUint16(10,0,true);lv.setUint16(12,0,true);
+    lv.setUint32(14,crc,true);lv.setUint32(18,cb.length,true);lv.setUint32(22,cb.length,true);
+    lv.setUint16(26,nb.length,true);lv.setUint16(28,0,true);lh.set(nb,30);
+    const ce=new Uint8Array(46+nb.length);
+    const cv=new DataView(ce.buffer);
+    cv.setUint32(0,0x02014b50,true);cv.setUint16(4,20,true);cv.setUint16(6,20,true);
+    cv.setUint16(8,0,true);cv.setUint16(10,0,true);cv.setUint16(12,0,true);cv.setUint16(14,0,true);
+    cv.setUint32(16,crc,true);cv.setUint32(20,cb.length,true);cv.setUint32(24,cb.length,true);
+    cv.setUint16(28,nb.length,true);cv.setUint16(30,0,true);cv.setUint16(32,0,true);
+    cv.setUint16(34,0,true);cv.setUint16(36,0,true);cv.setUint32(38,0,true);cv.setUint32(42,off,true);
+    ce.set(nb,46);
+    parts.push(lh,cb);cd.push(ce);
+    off+=lh.length+cb.length;
+  }
+  const cdSize=cd.reduce((s,e)=>s+e.length,0);
+  const eocd=new Uint8Array(22);const ev=new DataView(eocd.buffer);
+  ev.setUint32(0,0x06054b50,true);ev.setUint16(4,0,true);ev.setUint16(6,0,true);
+  ev.setUint16(8,cd.length,true);ev.setUint16(10,cd.length,true);
+  ev.setUint32(12,cdSize,true);ev.setUint32(16,off,true);ev.setUint16(20,0,true);
+  const all=[...parts,...cd,eocd];
+  const total=all.reduce((s,p)=>s+p.length,0);
+  const out=new Uint8Array(total);let pos=0;
+  for(const p of all){out.set(p,pos);pos+=p.length;}
+  return out;
+}
+
+// ── OOXML helpers ──
+function _xmlEsc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+function _docxPara(text,{bold=false,size=24,color='',spaceAfter=100}={}){
+  const rPr=[
+    bold?'<w:b/>':'',
+    `<w:sz w:val="${size}"/><w:szCs w:val="${size}"/>`,
+    color?`<w:color w:val="${color}"/>`:'',
+  ].join('');
+  return `<w:p><w:pPr><w:spacing w:after="${spaceAfter}"/></w:pPr>`+
+    `<w:r><w:rPr>${rPr}</w:rPr><w:t xml:space="preserve">${_xmlEsc(text)}</w:t></w:r></w:p>`;
+}
+
+function _buildDocxBlob(categories,planName,dateStr){
+  const WNS='xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"';
+  let body='';
+  // Title
+  body+=`<w:p><w:pPr><w:spacing w:after="80"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="40"/><w:szCs w:val="40"/><w:color w:val="2D1B69"/></w:rPr><w:t>Weekly Grocery List</w:t></w:r></w:p>`;
+  body+=_docxPara(planName,{bold:false,size:22,color:'555555',spaceAfter:60});
+  body+=_docxPara('Generated: '+dateStr,{bold:false,size:18,color:'888888',spaceAfter:160});
+  categories.forEach(cat=>{
+    if(!cat.items||!cat.items.length)return;
+    body+=_docxPara(cat.name.toUpperCase(),{bold:true,size:24,color:'4A3580',spaceAfter:60});
+    cat.items.forEach(item=>{
+      const qty=item.qty?` — ${String(item.qty)} ${item.unit||''}`.trim():'';
+      const note=item.notes?` (${item.notes})`:'';
+      body+=_docxPara(`• ${item.name}${qty}${note}`,{bold:false,size:22,color:'222222',spaceAfter:40});
+    });
+    body+=_docxPara('',{spaceAfter:80});
+  });
+  const docXml=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>`+
+    `<w:document ${WNS}><w:body>${body}<w:sectPr><w:pgSz w:w="12240" w:h="15840"/><w:pgMar w:top="1440" w:right="1440" w:bottom="1440" w:left="1440"/></w:sectPr></w:body></w:document>`;
+  const rels=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>`+
+    `<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"></Relationships>`;
+  const mainRels=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>`+
+    `<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">`+
+    `<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>`;
+  const ct=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>`+
+    `<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">`+
+    `<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>`+
+    `<Default Extension="xml" ContentType="application/xml"/>`+
+    `<Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>`+
+    `</Types>`;
+  const bytes=_packZip({
+    '[Content_Types].xml':ct,
+    '_rels/.rels':mainRels,
+    'word/document.xml':docXml,
+    'word/_rels/document.xml.rels':rels
+  });
+  return new Blob([bytes],{type:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'});
+}
+
 function downloadGroceryList(){
   if(!shoppingList||!shoppingList.categories||!shoppingList.categories.length)return;
   const planName=trainingPlan?(trainingPlan.plan_name||'Weekly Plan'):'Weekly Plan';
   const dateStr=new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
-  const divider='─'.repeat(38);
-  let txt=`WEEKLY GROCERY LIST\n${planName}\nGenerated: ${dateStr}\n${divider}\n\n`;
-  shoppingList.categories.forEach(cat=>{
-    if(!cat.items||!cat.items.length)return;
-    txt+=`${cat.name.toUpperCase()}\n`;
-    cat.items.forEach(item=>{
-      const qty=item.qty?`${String(item.qty)} ${item.unit||''}`.trim():'';
-      const notes=item.notes?` (${item.notes})`:'';
-      txt+=`  - ${item.name}${qty?'  '+qty:''}${notes}\n`;
-    });
-    txt+='\n';
-  });
-  const blob=new Blob([txt],{type:'text/plain;charset=utf-8'});
+  const blob=_buildDocxBlob(shoppingList.categories,planName,dateStr);
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a');
   a.href=url;
-  a.download=`grocery-list-${new Date().toISOString().slice(0,10)}.txt`;
+  a.download=`grocery-list-${new Date().toISOString().slice(0,10)}.docx`;
   document.body.appendChild(a);a.click();
   document.body.removeChild(a);URL.revokeObjectURL(url);
 }
@@ -6565,16 +6686,43 @@ function renderTrainingView(){
 
 // ─────────────────────────────────────────────────────────
 // TRAINING DAILY VIEW (date-based scroller)
+// Return the effective schedule for a given week (uses phase_schedules if available, falls back to weekly_schedule)
+function getScheduleForWeek(weekNum){
+  if(trainingPlan?.phase_schedules?.length){
+    const phases=trainingPlan.phases||[];
+    for(const ps of trainingPlan.phase_schedules){
+      const phase=phases[(ps.phase_number||1)-1];
+      if(phase){
+        const m=String(phase.weeks||'').match(/(\d+)\s*[-–]\s*(\d+)/);
+        if(m&&weekNum>=parseInt(m[1])&&weekNum<=parseInt(m[2]))return ps.schedule||[];
+      }
+    }
+    // Fall back to last phase's schedule
+    const last=trainingPlan.phase_schedules[trainingPlan.phase_schedules.length-1];
+    if(last?.schedule?.length)return last.schedule;
+  }
+  return trainingPlan?.weekly_schedule||[];
+}
+
+// Return a week_override for a specific week+day (boxing only on weeks 6 & 11, etc.)
+function getWeekOverride(weekNum,dayName){
+  const overrides=trainingPlan?.week_overrides||[];
+  return overrides.find(o=>o.week===weekNum&&(o.day||'').toLowerCase()===dayName.toLowerCase())||null;
+}
+
 function renderTrainDailyHTML(){
   if(!trainingPlan)return renderTrainSetupHTML();
-  const schedule=trainingPlan.weekly_schedule||[];
+  const schedule=getScheduleForWeek(trainingWeek);
   const dateLabel=formatDateNav(trainingDayOffset);
   const isToday=trainingDayOffset===0;
   const dow=getDowForOffset(trainingDayOffset);
   const DAY_NAMES_FULL=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
   const dayName=DAY_NAMES_FULL[dow];
-  const dayData=schedule.find(d=>(d.day||'').toLowerCase()===dayName.toLowerCase());
-  const di=dayData?schedule.indexOf(dayData):-1;
+  let dayData=schedule.find(d=>(d.day||'').toLowerCase()===dayName.toLowerCase());
+  // Apply week override (e.g. boxing on weeks 6 & 11 replaces that day's workout)
+  const override=getWeekOverride(trainingWeek,dayName);
+  if(override)dayData={...override};
+  const di=dayData?(getScheduleForWeek(trainingWeek)).indexOf(dayData):-1;
 
   // Occasional activities for this specific calendar date
   const dateISO=getDateForOffset(trainingDayOffset).toISOString().slice(0,10);
@@ -7003,6 +7151,21 @@ Return ONLY valid JSON in this exact structure (no markdown fences, no explanati
       ]
     }
   ],
+  "phase_schedules": [
+    {
+      "phase_number": 1,
+      "schedule": [
+        {"day":"Monday","type":"strength","title":"Phase 1 — Hypertrophy","duration_minutes":55,"sessions":[{"name":"Barbell Bench Press","sets":3,"reps":"10-12","duration":"45 mins","note":"Control the eccentric"}]}
+      ]
+    },
+    {
+      "phase_number": 2,
+      "schedule": [
+        {"day":"Monday","type":"strength","title":"Phase 2 — Strength","duration_minutes":60,"sessions":[{"name":"Incline Dumbbell Press","sets":4,"reps":"6-8","duration":"55 mins","note":"Heavier than Phase 1 — drive through the top"}]}
+      ]
+    }
+  ],
+  "week_overrides": [],
   "occasional_activities": [
     {"date":"${new Date(Date.now()+4*86400000).toISOString().slice(0,10)}","name":"Example: Swimming","duration_minutes":45,"note":"easy 30 laps"},
     {"date":"${new Date(Date.now()+11*86400000).toISOString().slice(0,10)}","name":"Example: Swimming","duration_minutes":45,"note":""}
@@ -7024,15 +7187,29 @@ Return ONLY valid JSON in this exact structure (no markdown fences, no explanati
       {"day":"Saturday","meals":[{"name":"fill all slots with DISTINCT meals unique to Saturday","description":"vary protein, carb, vegetable, and cuisine","protein_g":35,"carbs_g":50,"fat_g":14}]},
       {"day":"Sunday","meals":[{"name":"fill all slots with DISTINCT meals unique to Sunday","description":"vary protein, carb, vegetable, and cuisine","protein_g":35,"carbs_g":50,"fat_g":14}]}
     ],
+    "meal_rotations": [
+      {"phase_number":1,"weekly_meals":[{"day":"Monday","meals":[{"name":"Breakfast","description":"Phase 1 meal — e.g. oats with banana and almond butter","protein_g":20,"carbs_g":55,"fat_g":12},{"name":"Lunch","description":"e.g. grilled chicken with rice and roasted broccoli","protein_g":45,"carbs_g":55,"fat_g":10},{"name":"Dinner","description":"e.g. baked salmon with sweet potato and green beans","protein_g":40,"carbs_g":45,"fat_g":14}]}]},
+      {"phase_number":2,"weekly_meals":[{"day":"Monday","meals":[{"name":"Breakfast","description":"Phase 2 meal — DIFFERENT cuisine/protein from Phase 1 — e.g. Greek yogurt bowl with berries and granola","protein_g":25,"carbs_g":45,"fat_g":8},{"name":"Lunch","description":"e.g. tuna quinoa salad with avocado and cucumber","protein_g":42,"carbs_g":40,"fat_g":16},{"name":"Dinner","description":"e.g. turkey meatballs with pasta and marinara","protein_g":42,"carbs_g":55,"fat_g":12}]}]}
+    ],
     "key_principles": ["string","string","string"]
   }
 }
 
 IMPORTANT — every session object in "sessions" MUST include a "duration" field with a concrete time estimate (e.g. "30 mins", "45-60 mins", "20 seconds x 3 sets", "30 seconds rest"). Never use vague placeholders like "See phase notes" or omit the field. If an exercise is timed rather than set/rep based, set "sets" and "reps" to null and express the full prescription in "duration" (e.g. "duration":"20 min easy jog").
 
-OCCASIONAL ACTIVITIES — if the user's notes mention any activity described as "a few times a month", "occasional", "2-3 times a month", or similar irregular frequency (e.g. swimming, boxing, Capoeira a few times a month), do NOT add them to weekly_schedule as recurring days. Instead schedule them on specific calendar dates in the "occasional_activities" array, spread across the first 4 weeks of the plan starting from today (${new Date().toISOString().slice(0,10)}). Generate 4-8 dated entries covering the frequency mentioned. Each entry needs: "date" (YYYY-MM-DD), "name", "duration_minutes", "note". If the user mentions no occasional activities, set "occasional_activities" to [].
+PHASE-BASED EXERCISE VARIATION (REQUIRED) — The plan must feel like a real periodized program, not the same exercises repeated every week. Use "phase_schedules" to provide a completely different set of exercises for each phase. Rules:
+- Each phase_schedules entry must have a "phase_number" matching the phases array and a "schedule" with the same day/type structure as weekly_schedule.
+- Exercises MUST rotate between phases for every muscle group. If Phase 1 uses Barbell Bench Press, Phase 2 must use Incline Dumbbell Press, Phase 3 must use Cable Fly or Weighted Push-ups. Never repeat the same exercise across phases.
+- Rep ranges and intensity MUST change per phase: Phase 1 = moderate load, higher reps (10-15, hypertrophy focus); Phase 2 = heavier load, lower reps (5-8, strength focus); Phase 3 = varied intensity, functional/compound movements.
+- "weekly_schedule" should be identical to phase_schedules[0].schedule (Phase 1) for backward compatibility.
+
+WEEK OVERRIDES (boxing / sport-specific weeks) — If the user's notes mention boxing or any activity they want to do on specific weeks only (e.g. "boxing on weeks 6 and 11"), generate "week_overrides" as an array of day replacements. Each override needs: "week" (integer), "day" (day name matching weekly_schedule), "title", "type", "duration_minutes", and "sessions". The override completely replaces that day's workout for that specific week only. Do NOT include boxing or other week-specific activities in weekly_schedule or phase_schedules — they belong exclusively in week_overrides.
+
+OCCASIONAL ACTIVITIES — if the user's notes mention any activity described as "a few times a month", "occasional", "2-3 times a month", or similar irregular frequency (e.g. swimming, Capoeira a few times a month), do NOT add them to weekly_schedule as recurring days. Instead schedule them on specific calendar dates in the "occasional_activities" array, spread across the first 4 weeks of the plan starting from today (${new Date().toISOString().slice(0,10)}). Generate 4-8 dated entries covering the frequency mentioned. Each entry needs: "date" (YYYY-MM-DD), "name", "duration_minutes", "note". If the user mentions no occasional activities, set "occasional_activities" to [].
 
 Remove any placeholder example entries from "occasional_activities" — only include real activities the user actually mentioned.
+
+MEAL ROTATIONS (REQUIRED) — Generate "meal_rotations" inside "diet" as an array with one entry per phase. Each entry needs "phase_number" and "weekly_meals" (all 7 days, fully populated). Each phase's meals must be entirely different from every other phase: different protein sources, different carb sources, different cuisine styles. Example: Phase 1 = chicken, oats, Mediterranean; Phase 2 = salmon/tuna, quinoa, Asian; Phase 3 = turkey/lean beef, sweet potato, Mexican/Middle-Eastern. Each phase's weekly_meals must also rotate day-to-day within the week (no repeated proteins across Mon-Sun within the same phase). All daily totals must sum to the macro targets.
 
 CRITICAL — "weekly_meals" MUST contain ALL 7 days (Monday through Sunday). EVERY day must have a fully populated "meals" array — do NOT leave any day as an empty array []. Each day must have GENUINELY DIFFERENT meals from every other day: different protein source (rotate through chicken, salmon, tofu, eggs, lean beef, shrimp, Greek yogurt, lentils, turkey, tuna), different carbohydrate source (oats, rice, quinoa, sweet potato, sourdough, pasta, barley, corn tortillas), different vegetables, and different cuisine style (Mediterranean, Asian, Mexican, classic American, Middle-Eastern, Indian). If a meal name like "Grilled Chicken" appears on Monday, it must NOT appear on Tuesday through Sunday — use a completely different protein and preparation. Each day's meals should sum approximately to daily_calories and the macro targets. For Intermittent Fasting, follow the meal-slot rules stated above — no Breakfast for 16:8/18:6/20:4/OMAD; for standard eating patterns include Breakfast, Lunch, Dinner, and 1-2 Snacks.
 
@@ -7149,13 +7326,17 @@ async function regenerateNutrition(){
     trainSetup.dietaryRestrictions||''
   ].filter(Boolean).join(' · ');
 
-  const prompt=`Rebuild ONLY the nutrition portion of an existing training plan. Keep the macro targets unchanged — generate a new 7-day meal plan that respects the user's updated preferences and hits these daily targets.
+  const numPhases=(trainingPlan?.phases||[]).length||3;
+  const phaseSummary=(trainingPlan?.phases||[]).map(ph=>`Phase ${ph.phase_number} (${ph.weeks||''}): ${ph.focus||''}`).join('; ');
+  const prompt=`Rebuild ONLY the nutrition portion of an existing training plan. Keep the macro targets unchanged — generate phase-based meal rotations so the user's meals genuinely vary week to week across the program.
 
 DAILY TARGETS (do not change these):
 - Calories: ${daily} kcal
 - Protein: ${pg}g
 - Carbs: ${cg}g
 - Fat: ${fg}g
+
+PLAN PHASES: ${phaseSummary||`${numPhases} phases`}
 
 USER PREFERENCES:
 ${restrictionsCombined?'- Dietary restrictions (hard constraints — every meal MUST comply): '+restrictionsCombined:'- No specific dietary restrictions'}
@@ -7178,8 +7359,18 @@ Return ONLY valid JSON in this exact structure (no markdown fences, no commentar
     {"day":"Saturday","meals":[{"name":"fill all slots with DISTINCT meals unique to Saturday","description":"vary protein, carb, vegetable, and cuisine","protein_g":35,"carbs_g":50,"fat_g":14}]},
     {"day":"Sunday","meals":[{"name":"fill all slots with DISTINCT meals unique to Sunday","description":"vary protein, carb, vegetable, and cuisine","protein_g":35,"carbs_g":50,"fat_g":14}]}
   ],
+  "meal_rotations": [
+    {"phase_number":1,"weekly_meals":[{"day":"Monday","meals":[{"name":"Breakfast","description":"Phase 1 unique meal — Mediterranean style, chicken or eggs","protein_g":30,"carbs_g":45,"fat_g":12}]},{"day":"Tuesday","meals":[{"name":"Breakfast","description":"DIFFERENT from Monday within Phase 1","protein_g":30,"carbs_g":45,"fat_g":12}]}]},
+    {"phase_number":2,"weekly_meals":[{"day":"Monday","meals":[{"name":"Breakfast","description":"Phase 2 unique meal — Asian style, salmon or tuna — COMPLETELY DIFFERENT from Phase 1","protein_g":30,"carbs_g":45,"fat_g":12}]},{"day":"Tuesday","meals":[{"name":"Breakfast","description":"DIFFERENT from Monday within Phase 2","protein_g":30,"carbs_g":45,"fat_g":12}]}]}
+  ],
   "key_principles": ["string","string","string"]
 }
+
+MEAL ROTATIONS RULES — Generate ${numPhases} entries in "meal_rotations", one per phase. Each phase entry must have "phase_number" and a complete "weekly_meals" array (ALL 7 days, every meal slot filled). The protein source, carb source, and cuisine style must be completely different between phases:
+- Phase 1: lean chicken, oats/rice, Mediterranean/classic style
+- Phase 2: salmon, tuna, or shrimp; quinoa or barley; Asian/Japanese style
+- Phase 3 (if applicable): turkey, lean beef, or legumes; sweet potato or corn tortillas; Mexican/Middle-Eastern style
+Also vary day-to-day within each phase (no repeated proteins Mon-Sun within the same phase). Every daily total must hit the macro targets.
 
 CRITICAL — "weekly_meals" MUST contain ALL 7 days (Monday through Sunday). EVERY day must have a fully populated "meals" array — do NOT leave any day as an empty array []. Each day must have GENUINELY DIFFERENT meals from every other day: different protein source (rotate through chicken, salmon, tofu, eggs, lean beef, shrimp, Greek yogurt, lentils, turkey, tuna), different carbohydrate source (oats, rice, quinoa, sweet potato, sourdough, pasta, barley, corn tortillas), different vegetables, and different cuisine style (Mediterranean, Asian, Mexican, classic American, Middle-Eastern, Indian). If a meal name like "Grilled Chicken" appears on Monday, it must NOT appear Tuesday through Sunday. Each day's meals must sum approximately to the daily targets above. For Intermittent Fasting, follow the meal-slot rules stated above — no Breakfast for 16:8/18:6/20:4/OMAD. For standard eating patterns include Breakfast, Lunch, Dinner, and 1-2 Snacks.`;
 
@@ -7209,7 +7400,8 @@ CRITICAL — "weekly_meals" MUST contain ALL 7 days (Monday through Sunday). EVE
       carbs_g:parsed.carbs_g||cg,
       fat_g:parsed.fat_g||fg,
       weekly_meals:parsed.weekly_meals,
-      key_principles:Array.isArray(parsed.key_principles)?parsed.key_principles:(diet.key_principles||[])
+      key_principles:Array.isArray(parsed.key_principles)?parsed.key_principles:(diet.key_principles||[]),
+      meal_rotations:Array.isArray(parsed.meal_rotations)&&parsed.meal_rotations.length?parsed.meal_rotations:(diet.meal_rotations||[])
     };
     // Old "meals" array is now superseded by weekly_meals — clear it so the
     // renderer doesn't fall back to a stale single-day list.
@@ -7244,7 +7436,7 @@ function renderTrainPlanHTML(){
   trainPhaseIdx=getCurrentPhase(trainingWeek,phases);
 
   const phase=phases[trainPhaseIdx]||null;
-  const schedule=p.weekly_schedule||[];
+  const schedule=getScheduleForWeek(trainingWeek);
 
   // Week nav
   const weekNav=`<div class="week-counter">
@@ -7291,7 +7483,9 @@ function renderTrainPlanHTML(){
 
   // Day cards
   const TYPE_COLOR={strength:'#a78bfa',cardio:'#34d399',hiit:'#fb923c',flexibility:'#38bdf8',rest:'#94a3b8',mixed:'#f0e0a0'};
-  const dayCrds=schedule.map((day,di)=>{
+  const dayCrds=schedule.map((rawDay,di)=>{
+    // Apply week override (e.g. boxing replaces the workout for weeks 6 & 11 only)
+    const day=getWeekOverride(trainingWeek,rawDay.day)||rawDay;
     const type=(day.type||'rest').toLowerCase();
     const sessions=day.sessions||[];
     const {done,total}=getDayCompletionStats(trainingWeek,di,sessions);
@@ -7521,13 +7715,12 @@ function renderDietHTML(){
       :`<button class="shop-gen-btn" id="shopGenBtn" onclick="generateShoppingList()">🛒 Generate Weekly Shopping List</button>`
     }`;
 
-  // Daily meal view (date-based scroller)
+  // Daily meal view (date-based scroller) — rendered at the TOP of the nutrition view
   const weeklyMealCardsHTML=renderNutritionDayView();
 
-  return `${settingsHTML}${macroBars}
+  return `${settingsHTML}${weeklyMealCardsHTML}${macroBars}
     <div style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-dimmer);margin-bottom:8px">Today's Log</div>
     ${slotHTML}
-    ${weeklyMealCardsHTML}
     ${principlesHTML}
     ${shopSectionHTML}
     <div style="height:16px"></div>`;
