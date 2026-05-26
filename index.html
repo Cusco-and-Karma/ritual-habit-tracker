@@ -5688,6 +5688,8 @@ let trainSetup = {
   nutritionGoals:''        // free-text additional nutrition goals
 };
 let expandedDay = null;        // which day card is open
+let trainingViewMode = 'daily'; // 'daily' | 'weekly'
+let nutritionViewMode = 'daily'; // 'daily' | 'weekly'
 let currentMealSlot = null;    // name of open meal slot
 let pendingFood = null;        // food awaiting qty confirm
 let foodSearchTimer = null;    // debounce handle
@@ -5978,6 +5980,16 @@ function renderNutritionDayView(){
 }
 
 function openNutritionWeeklyView(){
+  nutritionViewMode='weekly';
+  renderTrainingView();
+}
+
+function closeNutritionWeeklyView(){
+  nutritionViewMode='daily';
+  renderTrainingView();
+}
+
+function renderNutritionWeeklyPageHTML(){
   const DAYS=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
   const wk=currentWeekKey();
   const checks=getMealChecks(wk);
@@ -6022,23 +6034,15 @@ function openNutritionWeeklyView(){
     </div>`;
   }).join('');
 
-  const overlay=document.createElement('div');
-  overlay.className='weekly-overlay';
-  overlay.id='nutritionWeeklyOverlay';
-  overlay.innerHTML=`
-    <div class="weekly-overlay-header">
-      <button class="weekly-overlay-close" onclick="closeNutritionWeeklyView()" aria-label="Close">
-        <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+  return `<div id="nutritionWeeklyPage">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;padding-top:4px">
+      <button onclick="closeNutritionWeeklyView()" style="width:34px;height:34px;border-radius:50%;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;color:var(--text-dim)">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
       </button>
-      <div class="weekly-overlay-title">This Week's Meals</div>
+      <div style="font-family:'DM Serif Display',serif;font-size:20px;color:var(--text)">This Week's Meals</div>
     </div>
-    <div class="weekly-overlay-scroll">${cards}</div>`;
-  document.getElementById('app').appendChild(overlay);
-}
-
-function closeNutritionWeeklyView(){
-  const el=document.getElementById('nutritionWeeklyOverlay');
-  if(el)el.remove();
+    ${cards}
+  </div>`;
 }
 function getDayTotals(log){
   return (log||[]).reduce((acc,item)=>{
@@ -6271,11 +6275,7 @@ The updated_weekly_schedule must be the FULL array. Keep each day object: {day, 
 
     if(scheduleUpdated){
       if(trainingTab==='plan'){
-        const tc=document.getElementById('trainTabContent');
-        if(tc)tc.innerHTML=renderTrainDailyHTML();
-        // If weekly overlay is open, update it too
-        const weeklyScroll=document.getElementById('trainingWeeklyScroll');
-        if(weeklyScroll)weeklyScroll.innerHTML=renderTrainPlanHTML();
+        renderTrainingView();
       }
     }
   }catch(err){
@@ -6694,35 +6694,22 @@ function renderTrainingView(){
   const tc=document.getElementById('trainTabContent');
   if(!tc)return;
   if(trainingTab==='plan'){
-    if(!trainingPlan)tc.innerHTML=renderTrainSetupHTML();
-    else tc.innerHTML=renderTrainDailyHTML(); // daily view by default; Weekly View button opens overlay
+    if(!trainingPlan){tc.innerHTML=renderTrainSetupHTML();}
+    else if(trainingViewMode==='weekly'){tc.innerHTML=renderTrainWeeklyPageHTML();}
+    else{tc.innerHTML=renderTrainDailyHTML();}
   } else {
-    tc.innerHTML=renderDietHTML();
+    if(nutritionViewMode==='weekly'){tc.innerHTML=renderNutritionWeeklyPageHTML();}
+    else{tc.innerHTML=renderDietHTML();}
   }
-  // Render coach section (only when plan exists)
+  // Render coach section (only when plan exists and in daily mode)
   const coachEl=document.getElementById('trainCoachSection');
-  if(coachEl&&trainingPlan)coachEl.innerHTML=renderTrainCoachHTML();
+  if(coachEl&&trainingPlan&&trainingViewMode==='daily'&&nutritionViewMode==='daily')coachEl.innerHTML=renderTrainCoachHTML();
   // After render, wire up dynamic event listeners
   bindTrainEvents();
 }
 
 // ─────────────────────────────────────────────────────────
 // TRAINING DAILY VIEW (date-based scroller)
-
-// Post-process: strip boxing exercises from all weeks EXCEPT 6 & 11 (hard enforcement regardless of AI output)
-function applyBoxingFilter(schedule,weekNum){
-  if(weekNum===6||weekNum===11)return schedule;
-  return schedule.map(day=>{
-    const titleIsBoxing=/\bbox/i.test(day.title||'');
-    const typeIsBoxing=/\bbox/i.test(day.type||'');
-    // If the entire day slot is boxing-themed and no sessions remain after filtering, make it a rest day
-    const filteredSessions=(day.sessions||[]).filter(s=>!/\bbox/i.test(s.name||''));
-    if(titleIsBoxing&&typeIsBoxing&&filteredSessions.length===0){
-      return {...day,type:'rest',title:'Rest Day',sessions:[]};
-    }
-    return {...day,sessions:filteredSessions};
-  });
-}
 
 // Return the effective schedule for a given week (uses phase_schedules if available)
 function getScheduleForWeek(weekNum){
@@ -6760,10 +6747,10 @@ function getScheduleForWeek(weekNum){
   }
   const totalPhases=(trainingPlan?.phase_schedules||[]).length;
   console.log(`[Ritual] getScheduleForWeek(${weekNum}): source=${source}, totalPhaseSchedules=${totalPhases}, scheduledays=${schedule.length}`);
-  return applyBoxingFilter(schedule,weekNum);
+  return schedule;
 }
 
-// Return a week_override for a specific week+day (boxing only on weeks 6 & 11, etc.)
+// Return a week_override for a specific week+day — week_overrides is the sole authority for one-off activities
 function getWeekOverride(weekNum,dayName){
   const overrides=trainingPlan?.week_overrides||[];
   return overrides.find(o=>o.week===weekNum&&(o.day||'').toLowerCase()===dayName.toLowerCase())||null;
@@ -6877,40 +6864,61 @@ function renderTrainDailyHTML(){
     Weekly View
   </button>`;
 
+  const dailyActions=`
+    <button class="train-progress-photo-btn" onclick="document.getElementById('progressPhotoInputDaily').click()">
+      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+      Take a Progress Photo
+    </button>
+    <input type="file" id="progressPhotoInputDaily" accept="image/*" style="display:none" onchange="handleProgressPhoto(event)">
+    <div class="train-draft-actions" style="margin-top:8px">
+      <button class="train-save-draft-btn" style="flex:1;justify-content:center" onclick="confirmRegenPlan()">
+        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+        Regenerate
+      </button>
+      <button class="train-save-draft-btn" style="flex:1;justify-content:center" onclick="showSaveDraftModal()">
+        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+        Save Draft
+      </button>
+      <button class="train-save-draft-btn" style="flex:1;justify-content:center" onclick="showLoadDraftModal()">
+        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>
+        Load Plan
+      </button>
+    </div>`;
+
   return `<div id="trainDailySection">
     ${dateNav}
     ${dayContent}
     ${occasionalHTML}
     ${weeklyBtn}
+    ${dailyActions}
   </div>`;
 }
 
 function openTrainingWeeklyView(){
-  const overlay=document.createElement('div');
-  overlay.className='weekly-overlay';
-  overlay.id='trainingWeeklyOverlay';
-  overlay.innerHTML=`
-    <div class="weekly-overlay-header">
-      <button class="weekly-overlay-close" onclick="closeTrainingWeeklyView()" aria-label="Close">
-        <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
-      </button>
-      <div class="weekly-overlay-title">Weekly Training Plan</div>
-    </div>
-    <div class="weekly-overlay-scroll" id="trainingWeeklyScroll"></div>`;
-  document.getElementById('app').appendChild(overlay);
-  const scrollEl=document.getElementById('trainingWeeklyScroll');
-  if(scrollEl)scrollEl.innerHTML=renderTrainPlanHTML();
+  trainingViewMode='weekly';
+  renderTrainingView();
 }
 
 function closeTrainingWeeklyView(){
-  const el=document.getElementById('trainingWeeklyOverlay');
-  if(el)el.remove();
+  trainingViewMode='daily';
+  renderTrainingView();
+}
+
+function renderTrainWeeklyPageHTML(){
+  return `<div id="trainWeeklyPage">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;padding-top:4px">
+      <button onclick="closeTrainingWeeklyView()" style="width:34px;height:34px;border-radius:50%;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;color:var(--text-dim)">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <div style="font-family:'DM Serif Display',serif;font-size:20px;color:var(--text)">Weekly Training Plan</div>
+    </div>
+    ${renderTrainPlanHTML()}
+  </div>`;
 }
 
 // Helper: re-render whichever training UI is currently active
 function refreshTrainView(){
-  const weeklyScroll=document.getElementById('trainingWeeklyScroll');
-  if(weeklyScroll){weeklyScroll.innerHTML=renderTrainPlanHTML();return;}
+  if(trainingViewMode==='weekly'){renderTrainingView();return;}
   const dailySection=document.getElementById('trainDailySection');
   if(dailySection&&trainingPlan&&trainingTab==='plan'){dailySection.outerHTML=renderTrainDailyHTML();}
   else{renderTrainingView();}
@@ -7130,7 +7138,8 @@ function toggleTrainDay(i){toggleTrainDayTrain(i);}
 // AI PLAN GENERATION
 async function doGeneratePlan(){
   const apiKey=getApiKey();
-  if(!apiKey){showTrainError('Add your Anthropic API key in Settings → AI Settings first.');return;}
+  if(!apiKey){showTrainError('No API key found. Open Settings → AI Settings and paste your Anthropic API key (starts with sk-ant-...).');return;}
+  if(!apiKey.startsWith('sk-ant-')){showTrainError('API key looks incorrect — Anthropic keys start with "sk-ant-". Open Settings → AI Settings to update it.');return;}
 
   // Validate: need at least 1 training day OR AI decides
   const trainDays=trainSetup.daySlots.filter(s=>s.train);
@@ -7276,7 +7285,7 @@ PHASE-BASED EXERCISE VARIATION (CRITICAL — THIS IS MANDATORY) — You MUST ret
 - "weekly_schedule" must be identical to phase_schedules[0].schedule (Phase 1) — it is only there for backward compatibility and will NOT be displayed.
 - If you return phase_schedules with fewer than 3 entries, or with repeated exercise names across phases, the plan will be considered invalid.
 
-WEEK OVERRIDES (boxing / sport-specific weeks) — If the user's notes mention boxing or any activity they want to do on specific weeks only (e.g. "boxing on weeks 6 and 11"), generate "week_overrides" as an array of day replacements. Each override needs: "week" (integer), "day" (day name matching weekly_schedule), "title", "type", "duration_minutes", and "sessions". The override completely replaces that day's workout for that specific week only. Do NOT include boxing or any boxing-related exercise (shadow boxing, bag work, mitt work, sparring, punching) in weekly_schedule or phase_schedules — boxing belongs EXCLUSIVELY in week_overrides. If boxing sessions appear in weekly_schedule or phase_schedules, they will be automatically removed.
+WEEK OVERRIDES (one-off sport or activity weeks) — Use "week_overrides" for any activity that the user wants on specific week numbers only (boxing, swimming galas, competition prep, sport clinics, etc.). Each override needs: "week" (integer — the exact week you choose), "day" (day name matching weekly_schedule), "title", "type", "duration_minutes", and "sessions". The override completely replaces that day's workout for that specific week only. "week_overrides" is the SOLE authority for when these one-off activities appear — do NOT put them in weekly_schedule or phase_schedules. You choose which week numbers to assign these activities; do NOT use any hardcoded or assumed week numbers. Schedule one-off activities (boxing, swimming, etc.) in week_overrides with the specific week numbers you decide are optimal for the user's plan — do not put them in phase_schedules.
 
 OCCASIONAL ACTIVITIES — if the user's notes mention any activity described as "a few times a month", "occasional", "2-3 times a month", or similar irregular frequency (e.g. swimming, Capoeira a few times a month), do NOT add them to weekly_schedule as recurring days. Instead schedule them on specific calendar dates in the "occasional_activities" array, spread across the first 4 weeks of the plan starting from today (${new Date().toISOString().slice(0,10)}). Generate 4-8 dated entries covering the frequency mentioned. Each entry needs: "date" (YYYY-MM-DD), "name", "duration_minutes", "note". If the user mentions no occasional activities, set "occasional_activities" to [].
 
@@ -7339,8 +7348,8 @@ weekly_schedule should include ${numDays} training session(s) per week. Include 
     let msg;
     if(isNetwork){
       msg=onFileProt
-        ?'Network error — direct browser API calls are sometimes blocked when opening the app as a local file (file:// URL). Try the Netlify-hosted version, or serve index.html via a local web server.'
-        :'Network error — could not reach the AI. Check your internet connection and make sure no browser extension (ad blockers, privacy tools) is blocking requests to api.anthropic.com. Also verify your API key in Settings.';
+        ?'Network error — direct browser API calls are blocked when opening the app as a local file (file:// URL). Serve via a local web server or use the hosted version.'
+        :'Network error — could not reach the AI. Things to check:\n1. Internet connection.\n2. Browser extensions — ad blockers, privacy tools, and VPN extensions can block api.anthropic.com.\n3. If you are using Brave: tap the Shields icon (🛡) in the address bar and turn Shields OFF for this site, then try again.\n4. Verify your API key is correct in Settings → AI Settings.';
     } else {
       msg='Generation failed: '+err.message;
     }
@@ -7501,8 +7510,7 @@ CRITICAL — "weekly_meals" MUST contain ALL 7 days (Monday through Sunday). EVE
     saveTrainingPlan();
     // Reset daily view to today and close any open weekly overlay before re-rendering
     nutritionDayOffset=0;
-    const existingWeeklyOverlay=document.getElementById('nutritionWeeklyOverlay');
-    if(existingWeeklyOverlay)existingWeeklyOverlay.remove();
+    nutritionViewMode='daily';
     // Always re-render the full training view so both daily and weekly meal sections reflect the new plan
     trainingTab='diet';
     renderTrainingView();
@@ -7511,7 +7519,7 @@ CRITICAL — "weekly_meals" MUST contain ALL 7 days (Monday through Sunday). EVE
     if(btn){btn.disabled=false;btn.textContent=origLabel;}
     const isNetwork=err instanceof TypeError&&(err.message.includes('fetch')||err.message.includes('network'));
     showErr(isNetwork
-      ?'Network error — could not reach the AI. Check your connection and verify your API key.'
+      ?'Network error — could not reach the AI. Check your connection and verify your API key. If using Brave, tap the Shields icon (🛡) in the address bar and disable shields for this site.'
       :'Update failed: '+err.message);
   }
 }
@@ -7623,11 +7631,6 @@ function renderTrainPlanHTML(){
       <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
       Regenerate Plan
     </button>
-    <button class="train-progress-photo-btn" onclick="document.getElementById('progressPhotoInput').click()">
-      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
-      Take a Progress Photo
-    </button>
-    <input type="file" id="progressPhotoInput" accept="image/*" style="display:none" onchange="handleProgressPhoto(event)">
     <div class="train-draft-actions">
       <button class="train-save-draft-btn" style="flex:1;justify-content:center" onclick="showSaveDraftModal()">
         <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
@@ -7656,9 +7659,7 @@ function changeTrainWeek(delta){
   trainPhaseIdx=getCurrentPhase(trainingWeek,trainingPlan?.phases||[]);
   expandedDay=null;
   saveTrainingPlan();
-  const weeklyScroll=document.getElementById('trainingWeeklyScroll');
-  if(weeklyScroll)weeklyScroll.innerHTML=renderTrainPlanHTML();
-  else renderTrainingView();
+  renderTrainingView();
 }
 function selectPhase(idx){
   trainPhaseIdx=idx;
@@ -7666,20 +7667,16 @@ function selectPhase(idx){
   if(ph){const m=String(ph.weeks||'').match(/(\d+)/);if(m)trainingWeek=parseInt(m[1]);}
   expandedDay=null;
   saveTrainingPlan();
-  const weeklyScroll=document.getElementById('trainingWeeklyScroll');
-  if(weeklyScroll)weeklyScroll.innerHTML=renderTrainPlanHTML();
-  else renderTrainingView();
+  renderTrainingView();
 }
 function toggleDayExpand(di){
   expandedDay=(expandedDay===di?null:di);
-  const weeklyScroll=document.getElementById('trainingWeeklyScroll');
-  if(weeklyScroll)weeklyScroll.innerHTML=renderTrainPlanHTML();
-  else renderTrainingView();
+  renderTrainingView();
 }
 function confirmRegenPlan(){
   if(confirm('Clear the current plan and generate a new one?\n\nTip: tap Cancel → Save Draft first to keep a copy of your current plan.')){
     trainCoachMessages=[];
-    closeTrainingWeeklyView();
+    trainingViewMode='daily';
     clearTrainingPlan();
     renderTrainingView();
   }
@@ -8207,91 +8204,90 @@ function getExerciseAnimSVG(name,size){
   if(/lift|dumbbell|barbell|cable|machine|weight|strength|power|clean|snatch|thruster|kettlebell|tricep|raise/.test(n)) return _exAnim_lift(size);
   return _exAnim_active(size);
 }
+// ─── Silhouette SVG helper — uses filled shapes for a sports-icon look ───
 function _exSVG(sz,content){
-  return `<svg viewBox="0 0 80 80" width="${sz}" height="${sz}" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="display:block"><g stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" opacity="0.8">${content}</g></svg>`;
+  return `<svg viewBox="0 0 80 80" width="${sz}" height="${sz}" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="display:block;opacity:.82">${content}</svg>`;
 }
+// Filled-ellipse head
+function _head(cx,cy,rx,ry){rx=rx||5;ry=ry||6;return `<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="currentColor"/>`;}
+// Filled rounded torso rect
+function _torso(x,y,w,h,r){r=r||4;return `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${r}" fill="currentColor"/>`;}
+// Filled rounded limb (rectangle between two points, with given thickness)
+function _limb(x1,y1,x2,y2,t){
+  t=t||4;
+  const dx=x2-x1,dy=y2-y1,len=Math.sqrt(dx*dx+dy*dy)||1;
+  const ux=dx/len,uy=dy/len,px=-uy*t/2,py=ux*t/2;
+  return `<polygon points="${x1+px},${y1+py} ${x1-px},${y1-py} ${x2-px},${y2-py} ${x2+px},${y2+py}" fill="currentColor"/>`;
+}
+// Barbell
+function _bar(x1,y,x2,platR){platR=platR||4;return `<rect x="${x1+platR}" y="${y-1.5}" width="${x2-x1-platR*2}" height="3" rx="1.5" fill="currentColor" opacity=".55"/><ellipse cx="${x1+platR}" cy="${y}" rx="${platR}" ry="${platR*1.6}" fill="currentColor" opacity=".55"/><ellipse cx="${x2-platR}" cy="${y}" rx="${platR}" ry="${platR*1.6}" fill="currentColor" opacity=".55"/>`;}
 
 // BENCH PRESS — figure lying flat, barbell presses up from chest
 function _exAnim_bench_press(sz){
   return _exSVG(sz,`
-    <circle cx="66" cy="36" r="6"/>
-    <line x1="60" y1="43" x2="12" y2="43"/>
-    <line x1="20" y1="43" x2="14" y2="56"/>
-    <line x1="50" y1="43" x2="50" y2="30"/>
-    <line x1="38" y1="43" x2="38" y2="30"/>
+    <g opacity="1">
+      ${_head(66,34,5,6)}
+      ${_torso(18,39,44,9,4)}
+      ${_limb(18,43,10,52,5)}
+      ${_limb(40,43,40,34,4)}
+      ${_limb(55,43,55,34,4)}
+    </g>
     <g>
-      <animateTransform attributeName="transform" type="translate" values="0,-2;0,10;0,-2" dur="1.3s" repeatCount="indefinite"/>
-      <line x1="26" y1="28" x2="62" y2="28"/>
-      <line x1="26" y1="23" x2="26" y2="33"/>
-      <line x1="62" y1="23" x2="62" y2="33"/>
+      <animateTransform attributeName="transform" type="translate" values="0,-3;0,9;0,-3" dur="1.3s" repeatCount="indefinite" calcMode="spline" keySplines=".4,0,.6,1;.4,0,.6,1"/>
+      ${_bar(24,30,64,5)}
     </g>
   `);
 }
 
 // SQUAT — figure stands, bends deep at knees and hips, rises
 function _exAnim_squat(sz){
-  return _exSVG(sz,`<g>
-    <animateTransform attributeName="transform" type="translate" values="0,-4;0,6;0,-4" dur="1.0s" repeatCount="indefinite"/>
-    <circle cx="40" cy="14" r="6"/>
-    <line x1="40" y1="20" x2="40" y2="40"/>
-    <line x1="40" y1="30" x2="28" y2="40"/>
-    <line x1="40" y1="30" x2="52" y2="40"/>
-    <line x1="40" y1="40" x2="32" y2="58"/>
-    <line x1="40" y1="40" x2="48" y2="58"/>
-    <line x1="32" y1="58" x2="28" y2="68"/>
-    <line x1="48" y1="58" x2="52" y2="68"/>
-  </g>
-  <line x1="22" y1="68" x2="34" y2="68"/>
-  <line x1="46" y1="68" x2="58" y2="68"/>`);
+  return _exSVG(sz,`
+    <line x1="22" y1="72" x2="34" y2="72" stroke="currentColor" stroke-width="3" stroke-linecap="round" opacity=".4"/>
+    <line x1="46" y1="72" x2="58" y2="72" stroke="currentColor" stroke-width="3" stroke-linecap="round" opacity=".4"/>
+    <g>
+      <animateTransform attributeName="transform" type="translate" values="0,-4;0,6;0,-4" dur="1.0s" repeatCount="indefinite" calcMode="spline" keySplines=".4,0,.6,1;.4,0,.6,1"/>
+      ${_head(40,12,5,6)}
+      ${_torso(32,18,16,16,4)}
+      ${_limb(34,28,26,42,5)}
+      ${_limb(46,28,54,42,5)}
+      ${_limb(34,34,28,28,3)}
+      ${_limb(46,34,52,28,3)}
+      ${_limb(26,42,28,58,5)}
+      ${_limb(54,42,52,58,5)}
+      ${_limb(28,58,24,68,5)}
+      ${_limb(52,58,56,68,5)}
+    </g>
+  `);
 }
 
 // DEADLIFT — figure hinges forward, bar rises from floor to hip height
 function _exAnim_deadlift(sz){
   return _exSVG(sz,`
-    <line x1="24" y1="68" x2="36" y2="68"/>
-    <line x1="44" y1="68" x2="56" y2="68"/>
-    <line x1="32" y1="54" x2="30" y2="68"/>
-    <line x1="48" y1="54" x2="50" y2="68"/>
-    <line x1="32" y1="54" x2="48" y2="54"/>
+    ${_limb(32,56,30,70,5)}
+    ${_limb(48,56,50,70,5)}
     <g>
-      <animateTransform attributeName="transform" type="rotate" values="55,40,54;0,40,54;55,40,54" dur="1.5s" repeatCount="indefinite"/>
-      <line x1="40" y1="54" x2="40" y2="24"/>
-      <circle cx="40" cy="18" r="6"/>
-      <line x1="36" y1="36" x2="34" y2="52"/>
-      <line x1="44" y1="36" x2="46" y2="52"/>
+      <animateTransform attributeName="transform" type="rotate" values="52,40,56;0,40,56;52,40,56" dur="1.5s" repeatCount="indefinite" calcMode="spline" keySplines=".4,0,.6,1;.4,0,.6,1"/>
+      ${_head(40,16,5,6)}
+      ${_torso(32,22,16,28,4)}
+      ${_limb(35,36,30,54,4)}
+      ${_limb(45,36,50,54,4)}
     </g>
-    <line x1="12" y1="68" x2="68" y2="68">
-      <animate attributeName="y1" values="68;50;68" dur="1.5s" repeatCount="indefinite"/>
-      <animate attributeName="y2" values="68;50;68" dur="1.5s" repeatCount="indefinite"/>
-    </line>
-    <line x1="12" y1="64" x2="12" y2="72">
-      <animate attributeName="y1" values="64;46;64" dur="1.5s" repeatCount="indefinite"/>
-      <animate attributeName="y2" values="72;54;72" dur="1.5s" repeatCount="indefinite"/>
-    </line>
-    <line x1="68" y1="64" x2="68" y2="72">
-      <animate attributeName="y1" values="64;46;64" dur="1.5s" repeatCount="indefinite"/>
-      <animate attributeName="y2" values="72;54;72" dur="1.5s" repeatCount="indefinite"/>
-    </line>
+    <g>
+      <animate attributeName="transform" attributeType="XML" type="translate" values="0,0;0,-18;0,0" dur="1.5s" repeatCount="indefinite" calcMode="spline" keySplines=".4,0,.6,1;.4,0,.6,1"/>
+      ${_bar(10,68,70,5)}
+    </g>
   `);
 }
 
 // BENT-OVER ROW — torso fixed forward, arms pull bar up toward chest
 function _exAnim_row(sz){
   return _exSVG(sz,`
-    <line x1="28" y1="68" x2="40" y2="68"/>
-    <line x1="40" y1="68" x2="52" y2="68"/>
-    <line x1="34" y1="52" x2="32" y2="68"/>
-    <line x1="46" y1="52" x2="48" y2="68"/>
-    <line x1="34" y1="52" x2="46" y2="52"/>
-    <line x1="40" y1="52" x2="18" y2="38"/>
-    <circle cx="12" cy="32" r="6"/>
-    <g>
-      <animateTransform attributeName="transform" type="rotate" values="-50,24,42;20,24,42;-50,24,42" dur="1.0s" repeatCount="indefinite"/>
-      <line x1="24" y1="42" x2="16" y2="58"/>
-      <line x1="24" y1="42" x2="32" y2="58"/>
-      <line x1="8" y1="58" x2="44" y2="58"/>
-      <line x1="8" y1="54" x2="8" y2="62"/>
-      <line x1="44" y1="54" x2="44" y2="62"/>
+    ${_limb(34,54,32,70,5)}
+    ${_limb(46,54,48,70,5)}
+    ${_torso(26,40,20,14,4)}
+    ${_head(14,32,5,6)}
+      ${_limb(28,44,10,60,4)}
+      ${_bar(8,60,46,4)}
     </g>
   `);
 }
@@ -8299,275 +8295,308 @@ function _exAnim_row(sz){
 // SHOULDER PRESS — standing, barbell presses from shoulders to overhead
 function _exAnim_shoulder_press(sz){
   return _exSVG(sz,`
-    <circle cx="40" cy="14" r="6"/>
-    <line x1="40" y1="20" x2="40" y2="46"/>
-    <line x1="40" y1="46" x2="34" y2="68"/>
-    <line x1="40" y1="46" x2="46" y2="68"/>
-    <line x1="40" y1="28" x2="26" y2="28"/>
-    <line x1="40" y1="28" x2="54" y2="28"/>
-    <line x1="26" y1="28" x2="26" y2="18">
-      <animate attributeName="y2" values="18;4;18" dur="1.2s" repeatCount="indefinite"/>
-    </line>
-    <line x1="54" y1="28" x2="54" y2="18">
-      <animate attributeName="y2" values="18;4;18" dur="1.2s" repeatCount="indefinite"/>
-    </line>
-    <line x1="14" y1="18" x2="66" y2="18">
-      <animate attributeName="y1" values="18;4;18" dur="1.2s" repeatCount="indefinite"/>
-      <animate attributeName="y2" values="18;4;18" dur="1.2s" repeatCount="indefinite"/>
-    </line>
-    <line x1="14" y1="14" x2="14" y2="22">
-      <animate attributeName="y1" values="14;0;14" dur="1.2s" repeatCount="indefinite"/>
-      <animate attributeName="y2" values="22;8;22" dur="1.2s" repeatCount="indefinite"/>
-    </line>
-    <line x1="66" y1="14" x2="66" y2="22">
-      <animate attributeName="y1" values="14;0;14" dur="1.2s" repeatCount="indefinite"/>
-      <animate attributeName="y2" values="22;8;22" dur="1.2s" repeatCount="indefinite"/>
-    </line>
+    ${_head(40,10,5,6)}
+    ${_torso(32,16,16,20,4)}
+    ${_limb(34,36,30,60,5)}
+    ${_limb(46,36,50,60,5)}
+    ${_limb(32,28,24,36,4)}
+    ${_limb(48,28,56,36,4)}
+    <g>
+      <animateTransform attributeName="transform" type="translate" values="0,0;0,-14;0,0" dur="1.2s" repeatCount="indefinite" calcMode="spline" keySplines=".4,0,.6,1;.4,0,.6,1"/>
+      ${_bar(14,36,66,5)}
+    </g>
   `);
 }
 
 // LAT PULLDOWN — seated figure pulls cable bar from overhead to chest
 function _exAnim_lat_pulldown(sz){
   return _exSVG(sz,`
-    <circle cx="40" cy="16" r="6"/>
-    <line x1="40" y1="22" x2="40" y2="50"/>
-    <line x1="28" y1="50" x2="52" y2="50"/>
-    <line x1="28" y1="50" x2="26" y2="68"/>
-    <line x1="52" y1="50" x2="54" y2="68"/>
-    <line x1="20" y1="68" x2="32" y2="68"/>
-    <line x1="48" y1="68" x2="60" y2="68"/>
+    ${_head(40,14,5,6)}
+    ${_torso(32,20,16,18,4)}
+    ${_torso(26,46,28,8,4)}
+    ${_limb(26,46,22,62,5)}
+    ${_limb(54,46,58,62,5)}
     <g>
-      <animateTransform attributeName="transform" type="translate" values="0,-14;0,10;0,-14" dur="1.2s" repeatCount="indefinite"/>
-      <line x1="16" y1="10" x2="64" y2="10"/>
-      <line x1="16" y1="6" x2="16" y2="14"/>
-      <line x1="64" y1="6" x2="64" y2="14"/>
+      <animateTransform attributeName="transform" type="translate" values="0,-10;0,12;0,-10" dur="1.2s" repeatCount="indefinite" calcMode="spline" keySplines=".4,0,.6,1;.4,0,.6,1"/>
+      ${_bar(12,8,68,4)}
     </g>
-    <line x1="20" y1="10" x2="34" y2="32">
-      <animate attributeName="y1" values="-4;20;-4" dur="1.2s" repeatCount="indefinite"/>
-    </line>
-    <line x1="60" y1="10" x2="46" y2="32">
-      <animate attributeName="y1" values="-4;20;-4" dur="1.2s" repeatCount="indefinite"/>
-    </line>
+    <g>
+      <animateTransform attributeName="transform" type="translate" values="0,-10;0,12;0,-10" dur="1.2s" repeatCount="indefinite" calcMode="spline" keySplines=".4,0,.6,1;.4,0,.6,1"/>
+      ${_limb(22,8,34,26,4)}
+      ${_limb(58,8,46,26,4)}
+    </g>
   `);
 }
 
 // BICEP CURL — standing, forearm curls up toward shoulder
 function _exAnim_bicep_curl(sz){
   return _exSVG(sz,`
-    <circle cx="40" cy="12" r="6"/>
-    <line x1="40" y1="18" x2="40" y2="44"/>
-    <line x1="40" y1="44" x2="34" y2="68"/>
-    <line x1="40" y1="44" x2="46" y2="68"/>
-    <line x1="34" y1="28" x2="34" y2="44"/>
-    <line x1="46" y1="28" x2="46" y2="44"/>
+    ${_head(40,10,5,6)}
+    ${_torso(32,16,16,22,4)}
+    ${_limb(34,38,30,60,5)}
+    ${_limb(46,38,50,60,5)}
+    ${_limb(32,28,28,38,4)}
     <g>
-      <animateTransform attributeName="transform" type="rotate" values="0,34,44;-110,34,44;0,34,44" dur="1.1s" repeatCount="indefinite"/>
-      <line x1="34" y1="44" x2="34" y2="60"/>
-      <line x1="26" y1="60" x2="42" y2="60"/>
-      <line x1="26" y1="56" x2="26" y2="64"/>
-      <line x1="42" y1="56" x2="42" y2="64"/>
+      <animateTransform attributeName="transform" type="rotate" values="0,28,38;-100,28,38;0,28,38" dur="1.1s" repeatCount="indefinite" calcMode="spline" keySplines=".4,0,.6,1;.4,0,.6,1"/>
+      ${_limb(28,38,22,54,4)}
+      <ellipse cx="20" cy="56" rx="4" ry="4" fill="currentColor" opacity=".6"/>
     </g>
-    <line x1="46" y1="44" x2="46" y2="60"/>
+    ${_limb(48,28,52,38,4)}
+    ${_limb(52,38,54,54,4)}
   `);
 }
 
 // LUNGE — split stance, body lowers and rises
 function _exAnim_lunge(sz){
   return _exSVG(sz,`
-    <line x1="10" y1="68" x2="24" y2="68"/>
-    <line x1="56" y1="68" x2="70" y2="68"/>
-    <line x1="16" y1="52" x2="16" y2="68"/>
-    <line x1="64" y1="52" x2="64" y2="68"/>
+    ${_limb(14,56,14,70,5)}
+    ${_limb(66,56,66,70,5)}
     <g>
-      <animateTransform attributeName="transform" type="translate" values="0,-6;0,6;0,-6" dur="1.2s" repeatCount="indefinite"/>
-      <circle cx="40" cy="10" r="6"/>
-      <line x1="40" y1="16" x2="40" y2="40"/>
-      <line x1="40" y1="26" x2="28" y2="38"/>
-      <line x1="40" y1="26" x2="52" y2="38"/>
-      <line x1="40" y1="40" x2="16" y2="52"/>
-      <line x1="40" y1="40" x2="64" y2="52"/>
+      <animateTransform attributeName="transform" type="translate" values="0,-6;0,6;0,-6" dur="1.2s" repeatCount="indefinite" calcMode="spline" keySplines=".4,0,.6,1;.4,0,.6,1"/>
+      ${_head(40,8,5,6)}
+      ${_torso(32,14,16,20,4)}
+      ${_limb(34,30,28,40,4)}
+      ${_limb(46,30,52,40,4)}
+      ${_limb(36,34,14,56,6)}
+      ${_limb(44,34,66,56,6)}
     </g>
   `);
 }
 
 // RUNNING — alternating stride with arm swing
 function _exAnim_running(sz){
-  return _exSVG(sz,`<g>
-    <animateTransform attributeName="transform" type="translate" values="0,-2;0,2;0,-2" dur="0.44s" repeatCount="indefinite"/>
-    <circle cx="40" cy="12" r="6"/>
-    <line x1="40" y1="18" x2="40" y2="40"/>
-    <g><animateTransform attributeName="transform" type="rotate" values="-50,40,28;40,40,28;-50,40,28" dur="0.44s" repeatCount="indefinite"/>
-    <line x1="40" y1="28" x2="26" y2="40"/></g>
-    <g><animateTransform attributeName="transform" type="rotate" values="40,40,28;-50,40,28;40,40,28" dur="0.44s" repeatCount="indefinite"/>
-    <line x1="40" y1="28" x2="54" y2="40"/></g>
-    <g><animateTransform attributeName="transform" type="rotate" values="-50,40,40;42,40,40;-50,40,40" dur="0.44s" repeatCount="indefinite"/>
-    <line x1="40" y1="40" x2="30" y2="62"/>
-    <line x1="30" y1="62" x2="24" y2="62"/></g>
-    <g><animateTransform attributeName="transform" type="rotate" values="42,40,40;-50,40,40;42,40,40" dur="0.44s" repeatCount="indefinite"/>
-    <line x1="40" y1="40" x2="50" y2="62"/>
-    <line x1="50" y1="62" x2="56" y2="62"/></g>
-  </g>`);
+  return _exSVG(sz,`
+    <g>
+      <animateTransform attributeName="transform" type="translate" values="0,-2;0,2;0,-2" dur="0.44s" repeatCount="indefinite"/>
+      ${_head(40,10,5,6)}
+      ${_torso(33,16,14,18,4)}
+      <g>
+        <animateTransform attributeName="transform" type="rotate" values="-40,40,26;35,40,26;-40,40,26" dur="0.44s" repeatCount="indefinite"/>
+        ${_limb(40,26,28,40,4)}
+      </g>
+      <g>
+        <animateTransform attributeName="transform" type="rotate" values="35,40,26;-40,40,26;35,40,26" dur="0.44s" repeatCount="indefinite"/>
+        ${_limb(40,26,52,40,4)}
+      </g>
+      <g>
+        <animateTransform attributeName="transform" type="rotate" values="-45,40,34;40,40,34;-45,40,34" dur="0.44s" repeatCount="indefinite"/>
+        ${_limb(40,34,28,58,5)}
+      </g>
+      <g>
+        <animateTransform attributeName="transform" type="rotate" values="40,40,34;-45,40,34;40,40,34" dur="0.44s" repeatCount="indefinite"/>
+        ${_limb(40,34,52,58,5)}
+      </g>
+    </g>
+  `);
 }
 
 // PLANK — horizontal hold with subtle breathing pulse
 function _exAnim_plank(sz){
-  return _exSVG(sz,`<g>
-    <animateTransform attributeName="transform" type="translate" values="0,0;0,1;0,0" dur="3s" repeatCount="indefinite"/>
-    <circle cx="62" cy="28" r="6"/>
-    <line x1="56" y1="33" x2="16" y2="33"/>
-    <line x1="56" y1="33" x2="56" y2="46"/>
-    <line x1="16" y1="33" x2="16" y2="46"/>
-    <line x1="50" y1="33" x2="58" y2="22"/>
-    <line x1="22" y1="33" x2="14" y2="22"/>
-  </g>`);
+  return _exSVG(sz,`
+    <g>
+      <animateTransform attributeName="transform" type="translate" values="0,0;0,1.5;0,0" dur="3s" repeatCount="indefinite"/>
+      ${_head(64,26,5,6)}
+      ${_torso(16,30,46,10,4)}
+      ${_limb(20,36,14,46,5)}
+      ${_limb(38,36,30,46,5)}
+      ${_limb(56,30,60,22,4)}
+      ${_limb(22,30,18,22,4)}
+    </g>
+  `);
 }
 
 // PUSH UP — horizontal body, arms bend and extend
 function _exAnim_pushup(sz){
-  return _exSVG(sz,`<g>
-    <animateTransform attributeName="transform" type="translate" values="0,-4;0,4;0,-4" dur="0.9s" repeatCount="indefinite"/>
-    <circle cx="62" cy="22" r="6"/>
-    <line x1="56" y1="28" x2="18" y2="28"/>
-    <line x1="18" y1="28" x2="10" y2="38"/>
-    <g><animateTransform attributeName="transform" type="rotate" values="-78,50,28;-110,50,28;-78,50,28" dur="0.9s" repeatCount="indefinite"/>
-    <line x1="50" y1="28" x2="50" y2="44"/></g>
-    <g><animateTransform attributeName="transform" type="rotate" values="-102,28,28;-70,28,28;-102,28,28" dur="0.9s" repeatCount="indefinite"/>
-    <line x1="28" y1="28" x2="28" y2="44"/></g>
-  </g>`);
+  return _exSVG(sz,`
+    <g>
+      <animateTransform attributeName="transform" type="translate" values="0,-5;0,5;0,-5" dur="0.9s" repeatCount="indefinite" calcMode="spline" keySplines=".4,0,.6,1;.4,0,.6,1"/>
+      ${_head(64,20,5,6)}
+      ${_torso(16,26,46,10,4)}
+      ${_limb(16,30,10,40,5)}
+      <g>
+        <animateTransform attributeName="transform" type="rotate" values="-80,50,26;-110,50,26;-80,50,26" dur="0.9s" repeatCount="indefinite" calcMode="spline" keySplines=".4,0,.6,1;.4,0,.6,1"/>
+        ${_limb(50,26,48,44,4)}
+      </g>
+      <g>
+        <animateTransform attributeName="transform" type="rotate" values="-100,28,26;-70,28,26;-100,28,26" dur="0.9s" repeatCount="indefinite" calcMode="spline" keySplines=".4,0,.6,1;.4,0,.6,1"/>
+        ${_limb(28,26,26,44,4)}
+      </g>
+    </g>
+  `);
 }
 
 // SWIMMING — horizontal figure, alternating arm strokes
 function _exAnim_swimming(sz){
-  return _exSVG(sz,`<g transform="translate(40,40)">
-    <circle cx="0" cy="-8" r="6"/>
-    <line x1="0" y1="-2" x2="0" y2="14"/>
-    <line x1="0" y1="14" x2="-10" y2="26"/>
-    <line x1="0" y1="14" x2="10" y2="26"/>
-    <g><animateTransform attributeName="transform" type="rotate" values="-20,0,-2;175,0,-2;-20,0,-2" dur="0.8s" repeatCount="indefinite"/>
-    <line x1="0" y1="-2" x2="-24" y2="8"/></g>
-    <g><animateTransform attributeName="transform" type="rotate" values="175,0,-2;-20,0,-2;175,0,-2" dur="0.8s" repeatCount="indefinite"/>
-    <line x1="0" y1="-2" x2="24" y2="8"/></g>
-  </g>`);
+  return _exSVG(sz,`
+    <g transform="translate(40,40)">
+      ${_head(0,-10,5,6)}
+      ${_torso(-8,-4,16,14,4)}
+      ${_limb(0,10,-10,22,4)}
+      ${_limb(0,10,10,22,4)}
+      <g>
+        <animateTransform attributeName="transform" type="rotate" values="-15,0,-2;170,0,-2;-15,0,-2" dur="0.8s" repeatCount="indefinite"/>
+        ${_limb(0,-2,-24,8,4)}
+      </g>
+      <g>
+        <animateTransform attributeName="transform" type="rotate" values="170,0,-2;-15,0,-2;170,0,-2" dur="0.8s" repeatCount="indefinite"/>
+        ${_limb(0,-2,24,8,4)}
+      </g>
+    </g>
+  `);
 }
 
 // CYCLING — seated figure, legs pedal in circles
 function _exAnim_cycling(sz){
-  return _exSVG(sz,`<g transform="translate(40,42)">
-    <circle cx="0" cy="-32" r="6"/>
-    <line x1="0" y1="-26" x2="0" y2="-10"/>
-    <line x1="0" y1="-20" x2="-12" y2="-14"/>
-    <line x1="0" y1="-20" x2="12" y2="-14"/>
-    <circle cx="-14" cy="14" r="10" stroke-width="1.8"/>
-    <circle cx="14" cy="14" r="10" stroke-width="1.8"/>
-    <line x1="-14" y1="14" x2="14" y2="14"/>
-    <g>
-      <animateTransform attributeName="transform" type="rotate" values="0,0,-10;360,0,-10" dur="0.9s" repeatCount="indefinite" additive="replace"/>
-      <line x1="0" y1="-10" x2="-14" y2="14"/>
-      <line x1="0" y1="-10" x2="14" y2="14"/>
+  return _exSVG(sz,`
+    <g transform="translate(40,36)">
+      ${_head(0,-28,5,6)}
+      ${_torso(-8,-22,16,18,4)}
+      ${_limb(-6,-14,-14,-6,3)}
+      ${_limb(6,-14,14,-6,3)}
+      <circle cx="-14" cy="16" r="10" fill="none" stroke="currentColor" stroke-width="3" opacity=".5"/>
+      <circle cx="14" cy="16" r="10" fill="none" stroke="currentColor" stroke-width="3" opacity=".5"/>
+      <g>
+        <animateTransform attributeName="transform" type="rotate" values="0,0,4;360,0,4" dur="0.9s" repeatCount="indefinite" additive="replace"/>
+        ${_limb(0,4,-14,16,4)}
+        ${_limb(0,4,14,16,4)}
+      </g>
     </g>
-  </g>`);
+  `);
 }
 
 // BOXING — alternating forward punches
 function _exAnim_boxing(sz){
-  return _exSVG(sz,`<g transform="translate(40,52)">
-    <circle cx="0" cy="-38" r="6"/>
-    <line x1="0" y1="-32" x2="0" y2="-8"/>
-    <line x1="0" y1="-8" x2="-10" y2="16"/>
-    <line x1="0" y1="-8" x2="10" y2="16"/>
-    <g><animateTransform attributeName="transform" type="rotate" values="28,0,-22;-68,0,-22;28,0,-22" dur="0.6s" repeatCount="indefinite"/>
-    <line x1="0" y1="-22" x2="-18" y2="-16"/>
-    <line x1="-18" y1="-16" x2="-34" y2="-20"/></g>
-    <g><animateTransform attributeName="transform" type="rotate" values="-28,0,-22;0,0,-22;-28,0,-22" dur="0.6s" begin="0.3s" repeatCount="indefinite"/>
-    <line x1="0" y1="-22" x2="18" y2="-16"/>
-    <line x1="18" y1="-16" x2="34" y2="-20"/></g>
-  </g>`);
+  return _exSVG(sz,`
+    <g transform="translate(40,52)">
+      ${_head(0,-38,5,6)}
+      ${_torso(-8,-32,16,24,4)}
+      ${_limb(-2,-8,-10,16,5)}
+      ${_limb(2,-8,10,16,5)}
+      <g>
+        <animateTransform attributeName="transform" type="rotate" values="25,0,-20;-65,0,-20;25,0,-20" dur="0.6s" repeatCount="indefinite"/>
+        ${_limb(0,-20,-16,-12,4)}
+        <ellipse cx="-18" cy="-10" rx="5" ry="5" fill="currentColor" opacity=".7"/>
+      </g>
+      <g>
+        <animateTransform attributeName="transform" type="rotate" values="-25,0,-20;0,0,-20;-25,0,-20" dur="0.6s" begin="0.3s" repeatCount="indefinite"/>
+        ${_limb(0,-20,16,-12,4)}
+        <ellipse cx="18" cy="-10" rx="5" ry="5" fill="currentColor" opacity=".7"/>
+      </g>
+    </g>
+  `);
 }
 
 // STRETCH / COOL DOWN — arms sweep wide in a slow arc
 function _exAnim_stretch(sz){
-  return _exSVG(sz,`<g transform="translate(40,52)">
-    <circle cx="0" cy="-38" r="6"/>
-    <line x1="0" y1="-32" x2="0" y2="-8"/>
-    <line x1="0" y1="-8" x2="-12" y2="16"/>
-    <line x1="0" y1="-8" x2="12" y2="16"/>
-    <g><animateTransform attributeName="transform" type="rotate" values="88,0,-22;-38,0,-22;88,0,-22" dur="2s" repeatCount="indefinite"/>
-    <line x1="0" y1="-22" x2="20" y2="-10"/></g>
-    <g><animateTransform attributeName="transform" type="rotate" values="-88,0,-22;38,0,-22;-88,0,-22" dur="2s" repeatCount="indefinite"/>
-    <line x1="0" y1="-22" x2="-20" y2="-10"/></g>
-  </g>`);
+  return _exSVG(sz,`
+    <g transform="translate(40,52)">
+      ${_head(0,-38,5,6)}
+      ${_torso(-8,-32,16,24,4)}
+      ${_limb(-2,-8,-10,16,5)}
+      ${_limb(2,-8,10,16,5)}
+      <g>
+        <animateTransform attributeName="transform" type="rotate" values="85,0,-22;-35,0,-22;85,0,-22" dur="2s" repeatCount="indefinite"/>
+        ${_limb(0,-22,22,-10,4)}
+      </g>
+      <g>
+        <animateTransform attributeName="transform" type="rotate" values="-85,0,-22;35,0,-22;-85,0,-22" dur="2s" repeatCount="indefinite"/>
+        ${_limb(0,-22,-22,-10,4)}
+      </g>
+    </g>
+  `);
 }
 
 // REST — seated figure with slow breathing pulse and floating z's
 function _exAnim_rest(sz){
   return _exSVG(sz,`
-    <line x1="8" y1="68" x2="72" y2="68" stroke-width="1.4" opacity="0.35"/>
-    <circle cx="40" cy="22" r="6"/>
-    <line x1="40" y1="28" x2="40" y2="52"/>
-    <line x1="40" y1="52" x2="14" y2="60"/>
-    <line x1="40" y1="52" x2="66" y2="60"/>
-    <line x1="40" y1="38" x2="26" y2="52"/>
-    <line x1="40" y1="38" x2="54" y2="52"/>
-    <line x1="40" y1="30" x2="40" y2="48" stroke-width="5" opacity="0">
-      <animate attributeName="opacity" values="0;0.07;0" dur="4s" repeatCount="indefinite"/>
-      <animate attributeName="stroke-width" values="5;9;5" dur="4s" repeatCount="indefinite"/>
-    </line>
-    <path d="M54,18 L60,18 L54,12 L60,12" stroke-width="1.4">
-      <animate attributeName="opacity" values="0;0.55;0" dur="4s" begin="0.4s" repeatCount="indefinite"/>
-    </path>
-    <path d="M60,12 L64,12 L60,7 L64,7" stroke-width="1.2">
-      <animate attributeName="opacity" values="0;0.38;0" dur="4s" begin="1s" repeatCount="indefinite"/>
-    </path>
+    <rect x="8" y="66" width="64" height="5" rx="2.5" fill="currentColor" opacity=".2"/>
+    ${_head(40,20,5,6)}
+    <g>
+      <animateTransform attributeName="transform" type="scale" values="1,1;1,1.02;1,1" dur="4s" repeatCount="indefinite" additive="sum"/>
+      ${_torso(32,26,16,20,4)}
+    </g>
+    ${_limb(34,44,14,58,5)}
+    ${_limb(46,44,66,58,5)}
+    ${_limb(34,38,26,50,4)}
+    ${_limb(46,38,54,50,4)}
+    <g opacity="0"><animate attributeName="opacity" values="0;0.7;0" dur="4s" begin="0.4s" repeatCount="indefinite"/>
+      <text x="54" y="18" font-size="10" fill="currentColor" font-family="serif">z</text>
+    </g>
+    <g opacity="0"><animate attributeName="opacity" values="0;0.5;0" dur="4s" begin="1.2s" repeatCount="indefinite"/>
+      <text x="60" y="10" font-size="8" fill="currentColor" font-family="serif">z</text>
+    </g>
   `);
 }
 
 // GENERIC LIFT — arms raise dumbbell overhead (catch-all for strength exercises)
 function _exAnim_lift(sz){
-  return _exSVG(sz,`<g transform="translate(40,52)">
-    <animateTransform attributeName="transform" type="translate" values="40,51;40,49;40,51" dur="1s" repeatCount="indefinite" additive="replace"/>
-    <circle cx="0" cy="-38" r="6"/>
-    <line x1="0" y1="-32" x2="0" y2="-8"/>
-    <line x1="0" y1="-8" x2="-11" y2="16"/>
-    <line x1="0" y1="-8" x2="11" y2="16"/>
-    <g><animateTransform attributeName="transform" type="rotate" values="70,0,-24;-80,0,-24;70,0,-24" dur="1s" repeatCount="indefinite"/>
-    <line x1="0" y1="-24" x2="-18" y2="-14"/>
-    <line x1="-18" y1="-14" x2="-28" y2="-26"/></g>
-    <g><animateTransform attributeName="transform" type="rotate" values="-70,0,-24;80,0,-24;-70,0,-24" dur="1s" repeatCount="indefinite"/>
-    <line x1="0" y1="-24" x2="18" y2="-14"/>
-    <line x1="18" y1="-14" x2="28" y2="-26"/></g>
-  </g>`);
+  return _exSVG(sz,`
+    <g>
+      <animateTransform attributeName="transform" type="translate" values="0,0;0,-2;0,0" dur="1s" repeatCount="indefinite"/>
+      ${_head(40,10,5,6)}
+      ${_torso(32,16,16,22,4)}
+      ${_limb(34,38,30,60,5)}
+      ${_limb(46,38,50,60,5)}
+      <g>
+        <animateTransform attributeName="transform" type="rotate" values="65,40,28;-75,40,28;65,40,28" dur="1s" repeatCount="indefinite"/>
+        ${_limb(40,28,26,18,4)}
+        <ellipse cx="23" cy="16" rx="5" ry="5" fill="currentColor" opacity=".6"/>
+      </g>
+      <g>
+        <animateTransform attributeName="transform" type="rotate" values="-65,40,28;75,40,28;-65,40,28" dur="1s" repeatCount="indefinite"/>
+        ${_limb(40,28,54,18,4)}
+        <ellipse cx="57" cy="16" rx="5" ry="5" fill="currentColor" opacity=".6"/>
+      </g>
+    </g>
+  `);
 }
 
 // JUMP — burpee/jump rope, whole body bounces up
 function _exAnim_jump(sz){
-  return _exSVG(sz,`<g transform="translate(40,52)">
-    <animateTransform attributeName="transform" type="translate" values="40,52;40,36;40,52" dur="0.65s" repeatCount="indefinite" additive="replace"/>
-    <circle cx="0" cy="-38" r="6"/>
-    <line x1="0" y1="-32" x2="0" y2="-10"/>
-    <g><animateTransform attributeName="transform" type="rotate" values="70,0,-24;-20,0,-24;70,0,-24" dur="0.65s" repeatCount="indefinite"/>
-    <line x1="0" y1="-24" x2="-16" y2="-14"/></g>
-    <g><animateTransform attributeName="transform" type="rotate" values="-70,0,-24;20,0,-24;-70,0,-24" dur="0.65s" repeatCount="indefinite"/>
-    <line x1="0" y1="-24" x2="16" y2="-14"/></g>
-    <g><animateTransform attributeName="transform" type="rotate" values="8,0,-10;-18,0,-10;8,0,-10" dur="0.65s" repeatCount="indefinite"/>
-    <line x1="0" y1="-10" x2="-12" y2="16"/></g>
-    <g><animateTransform attributeName="transform" type="rotate" values="-8,0,-10;18,0,-10;-8,0,-10" dur="0.65s" repeatCount="indefinite"/>
-    <line x1="0" y1="-10" x2="12" y2="16"/></g>
-  </g>`);
+  return _exSVG(sz,`
+    <g>
+      <animateTransform attributeName="transform" type="translate" values="0,0;0,-16;0,0" dur="0.65s" repeatCount="indefinite" calcMode="spline" keySplines=".4,0,.6,1;.4,0,.6,1"/>
+      ${_head(40,10,5,6)}
+      ${_torso(32,16,16,18,4)}
+      <g>
+        <animateTransform attributeName="transform" type="rotate" values="60,40,28;-20,40,28;60,40,28" dur="0.65s" repeatCount="indefinite"/>
+        ${_limb(40,28,26,18,4)}
+      </g>
+      <g>
+        <animateTransform attributeName="transform" type="rotate" values="-60,40,28;20,40,28;-60,40,28" dur="0.65s" repeatCount="indefinite"/>
+        ${_limb(40,28,54,18,4)}
+      </g>
+      <g>
+        <animateTransform attributeName="transform" type="rotate" values="10,40,34;-20,40,34;10,40,34" dur="0.65s" repeatCount="indefinite"/>
+        ${_limb(40,34,30,58,5)}
+      </g>
+      <g>
+        <animateTransform attributeName="transform" type="rotate" values="-10,40,34;20,40,34;-10,40,34" dur="0.65s" repeatCount="indefinite"/>
+        ${_limb(40,34,50,58,5)}
+      </g>
+    </g>
+  `);
 }
 
 // ACTIVE — generic fallback
 function _exAnim_active(sz){
-  return _exSVG(sz,`<g transform="translate(40,52)">
-    <animateTransform attributeName="transform" type="translate" values="40,52;40,46;40,52" dur="0.7s" repeatCount="indefinite" additive="replace"/>
-    <circle cx="0" cy="-38" r="6"/>
-    <line x1="0" y1="-32" x2="0" y2="-8"/>
-    <g><animateTransform attributeName="transform" type="rotate" values="60,0,-24;-20,0,-24;60,0,-24" dur="0.7s" repeatCount="indefinite"/>
-    <line x1="0" y1="-24" x2="-16" y2="-14"/></g>
-    <g><animateTransform attributeName="transform" type="rotate" values="-60,0,-24;20,0,-24;-60,0,-24" dur="0.7s" repeatCount="indefinite"/>
-    <line x1="0" y1="-24" x2="16" y2="-14"/></g>
-    <line x1="0" y1="-8" x2="-11" y2="16"/>
-    <line x1="0" y1="-8" x2="11" y2="16"/>
-  </g>`);
+  return _exSVG(sz,`
+    <g>
+      <animateTransform attributeName="transform" type="translate" values="0,0;0,-4;0,0" dur="0.7s" repeatCount="indefinite"/>
+      ${_head(40,10,5,6)}
+      ${_torso(32,16,16,22,4)}
+      <g>
+        <animateTransform attributeName="transform" type="rotate" values="55,40,28;-18,40,28;55,40,28" dur="0.7s" repeatCount="indefinite"/>
+        ${_limb(40,28,26,18,4)}
+      </g>
+      <g>
+        <animateTransform attributeName="transform" type="rotate" values="-55,40,28;18,40,28;-55,40,28" dur="0.7s" repeatCount="indefinite"/>
+        ${_limb(40,28,54,18,4)}
+      </g>
+      ${_limb(40,38,30,60,5)}
+      ${_limb(40,38,50,60,5)}
+    </g>
+  `);
 }
 // ────────────────────────────────────────────────────────────
 
