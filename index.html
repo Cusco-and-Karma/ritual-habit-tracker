@@ -954,6 +954,11 @@
   .shop-item-text{font-size:12px;color:var(--text);flex:1;line-height:1.4}
   .shop-item-text.done{opacity:.38;text-decoration:line-through;text-decoration-color:var(--text-dimmer)}
   .shop-item-qty{font-size:11px;color:var(--text-dimmer);white-space:nowrap;flex-shrink:0}
+  .shop-item-right{display:flex;align-items:center;gap:6px;flex-shrink:0}
+  .shop-item-price{font-size:11px;color:var(--accent3);white-space:nowrap;font-family:var(--font-body)}
+  .shop-total-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0 4px;border-top:1px solid var(--border);margin-top:4px}
+  .shop-total-label{font-size:11px;color:var(--text-dim);letter-spacing:.04em;text-transform:uppercase}
+  .shop-total-amount{font-family:'DM Serif Display',serif;font-size:18px;color:var(--accent3)}
   .shop-gen-btn{width:100%;padding:12px;border-radius:var(--r-sm);border:1px dashed var(--border);background:none;color:var(--text-dimmer);font-family:var(--font-body);font-size:12px;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:8px}
   .shop-gen-btn:hover:not(:disabled){border-color:var(--accent);color:var(--accent)}
   .shop-gen-btn:disabled{opacity:.4;cursor:default}
@@ -972,6 +977,39 @@
   .weekly-view-btn:hover{border-color:var(--accent);color:var(--accent)}
   .weekly-view-btn svg{stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
   /* weekly view full-page overlay */
+  /* ── Recipe page ── */
+  .recipe-page{position:fixed;inset:0;background:var(--bg);z-index:300;display:flex;flex-direction:column;max-width:420px;left:50%;transform:translateX(-50%);overflow:hidden}
+  .recipe-page.hidden{display:none}
+  .recipe-page.slide-in{animation:recipeSlideIn .22s cubic-bezier(.4,0,.2,1) both}
+  @keyframes recipeSlideIn{from{transform:translateX(calc(-50% + 40px));opacity:0}to{transform:translateX(-50%);opacity:1}}
+  .recipe-page-header{display:flex;align-items:center;gap:12px;padding:52px 24px 14px;flex-shrink:0;background:var(--bg);border-bottom:1px solid var(--border)}
+  .recipe-page-back{width:36px;height:36px;border-radius:50%;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:background .15s}
+  .recipe-page-back:active{background:var(--surface)}
+  .recipe-page-back svg{width:16px;height:16px;stroke:var(--text-dim);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .recipe-page-title{font-family:'DM Serif Display',serif;font-size:18px;color:var(--text);flex:1;line-height:1.2}
+  .recipe-page-scroll{flex:1;overflow-y:auto;overscroll-behavior:contain;padding:20px 24px 100px;scrollbar-width:none}
+  .recipe-page-scroll::-webkit-scrollbar{display:none}
+  .recipe-meta-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
+  .recipe-meta-chip{padding:5px 12px;border-radius:99px;background:var(--surface2);border:1px solid var(--border);font-size:11px;color:var(--text-dim);letter-spacing:.03em}
+  .recipe-section-title{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-dimmer);margin:20px 0 10px;display:flex;align-items:center;gap:8px}
+  .recipe-section-title::after{content:'';flex:1;height:1px;background:var(--border)}
+  .recipe-ingredient-row{display:flex;align-items:baseline;gap:8px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.04)}
+  .recipe-ingredient-row:last-child{border-bottom:none}
+  .recipe-ingredient-dot{width:5px;height:5px;border-radius:50%;background:var(--accent);flex-shrink:0;margin-top:6px}
+  .recipe-ingredient-text{font-size:13px;color:var(--text);line-height:1.45;flex:1}
+  .recipe-step-row{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.04)}
+  .recipe-step-row:last-child{border-bottom:none}
+  .recipe-step-num{width:24px;height:24px;border-radius:50%;background:var(--accent-glow);border:1px solid rgba(200,180,240,.3);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--accent);flex-shrink:0;font-family:'DM Serif Display',serif;margin-top:1px}
+  .recipe-step-text{font-size:13px;color:var(--text);line-height:1.6;flex:1}
+  .recipe-nutrition-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:6px}
+  .recipe-nutrition-cell{background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-sm);padding:10px 8px;text-align:center}
+  .recipe-nutrition-val{font-family:'DM Serif Display',serif;font-size:18px;color:var(--text);line-height:1}
+  .recipe-nutrition-lbl{font-size:9px;color:var(--text-dimmer);letter-spacing:.06em;text-transform:uppercase;margin-top:4px}
+  .recipe-loading{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;gap:14px;color:var(--text-dim);font-size:13px}
+  .recipe-loading-spinner{width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .9s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .recipe-meal-card{cursor:pointer;transition:border-color .2s,background .2s}
+  .recipe-meal-card:active{opacity:.85}
   .weekly-overlay{position:fixed;inset:0;background:var(--bg);z-index:150;display:flex;flex-direction:column;max-width:420px;left:50%;transform:translateX(-50%);overflow:hidden;animation:fadeSlideIn .2s ease}
   .weekly-overlay-header{display:flex;align-items:center;gap:12px;padding:52px 24px 14px;flex-shrink:0;background:var(--bg);border-bottom:1px solid var(--border)}
   .weekly-overlay-title{font-family:'DM Serif Display',serif;font-size:20px;color:var(--text);flex:1}
@@ -1748,6 +1786,22 @@
   <!-- TRAINING VIEW -->
   <div class="scroll-area view" id="trainView">
     <div id="trainContent"><!-- rendered by renderTrainingView() --></div>
+  </div>
+
+  <!-- Recipe full-screen page -->
+  <div class="recipe-page hidden" id="recipePage">
+    <div class="recipe-page-header">
+      <button class="recipe-page-back" onclick="closeRecipePage()" aria-label="Back">
+        <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <div class="recipe-page-title" id="recipePageTitle">Recipe</div>
+    </div>
+    <div class="recipe-page-scroll" id="recipePageBody">
+      <div class="recipe-loading">
+        <div class="recipe-loading-spinner"></div>
+        <span>Loading recipe…</span>
+      </div>
+    </div>
   </div>
 
   <button class="fab" id="fabBtn" aria-label="Add habit">
@@ -5992,11 +6046,14 @@ function renderNutritionDayView(){
       const ck=dow+'_'+meal.name;
       const done=checks[ck]||false;
       const cals=Math.round((meal.protein_g||0)*4+(meal.carbs_g||0)*4+(meal.fat_g||0)*9);
+      // Store meal in lookup so onclick can retrieve it safely (avoids quote-escaping in HTML attr)
+      const cacheKey=`${dow}_${meal.name}`;
+      _mealCardLookup[cacheKey]=meal;
       return `<div class="meal-check-row">
         <div class="meal-check-box${done?' checked':''}" onclick="toggleMealCheck(${dow},'${escapeHtml(meal.name)}')" role="checkbox" aria-checked="${done}" tabindex="0"
           onkeydown="if(event.key==='Enter'||event.key===' ')toggleMealCheck(${dow},'${escapeHtml(meal.name)}')"></div>
-        <div class="meal-check-info">
-          <div class="meal-check-name">${escapeHtml(meal.name)}</div>
+        <div class="meal-check-info recipe-meal-card" onclick="openRecipePage(_mealCardLookup['${cacheKey}'],${dow})" title="Tap to view recipe">
+          <div class="meal-check-name" style="display:flex;align-items:center;gap:6px">${escapeHtml(meal.name)}<svg viewBox="0 0 24 24" width="11" height="11" style="stroke:var(--text-dimmer);fill:none;stroke-width:2;stroke-linecap:round;flex-shrink:0"><polyline points="9 6 15 12 9 18"/></svg></div>
           ${meal.description?`<div class="meal-check-desc"${done?' style="opacity:.5;text-decoration:line-through"':''}>${escapeHtml(meal.description)}</div>`:''}
           ${cals>0?`<div class="meal-check-macros">P ${meal.protein_g||0}g · C ${meal.carbs_g||0}g · F ${meal.fat_g||0}g · ${cals} kcal</div>`:''}
         </div>
@@ -6070,10 +6127,12 @@ function renderNutritionWeeklyPageHTML(){
         const ck=di+'_'+meal.name;
         const done=checks[ck]||false;
         const cals=Math.round((meal.protein_g||0)*4+(meal.carbs_g||0)*4+(meal.fat_g||0)*9);
+        const cacheKey=`${di}_${meal.name}`;
+        _mealCardLookup[cacheKey]=meal;
         return `<div class="meal-check-row">
           <div class="meal-check-box${done?' checked':''}" style="cursor:default"></div>
-          <div class="meal-check-info">
-            <div class="meal-check-name">${escapeHtml(meal.name)}</div>
+          <div class="meal-check-info recipe-meal-card" onclick="openRecipePage(_mealCardLookup['${cacheKey}'],${di})" title="Tap to view recipe">
+            <div class="meal-check-name" style="display:flex;align-items:center;gap:6px">${escapeHtml(meal.name)}<svg viewBox="0 0 24 24" width="11" height="11" style="stroke:var(--text-dimmer);fill:none;stroke-width:2;stroke-linecap:round;flex-shrink:0"><polyline points="9 6 15 12 9 18"/></svg></div>
             ${meal.description?`<div class="meal-check-desc">${escapeHtml(meal.description)}</div>`:''}
             ${cals>0?`<div class="meal-check-macros">P ${meal.protein_g||0}g · C ${meal.carbs_g||0}g · F ${meal.fat_g||0}g · ${cals} kcal</div>`:''}
           </div>
@@ -6212,8 +6271,9 @@ function showTrainError(msg){
 
 // ── Train AI coach ──
 let trainCoachMessages=[];  // [{role:'user'|'ai', text}]
-let shoppingList=null;      // {categories:[{name, items:[{name,qty,unit,notes}]}]}
+let shoppingList=null;      // {categories:[{name, items:[{name,qty,unit,notes,price_usd}]}], recipes:[...]}
 let shoppingChecked={};     // {key: true}  — key = "catIdx_itemIdx"
+const _mealCardLookup={};   // dow_mealName -> meal object, for safe onclick binding
 // Plan generation progress
 let planGenInterval=null;
 let planGenCurrentPct=0;
@@ -6393,9 +6453,15 @@ function startPlanGenProgress(){
   planGenInterval=setInterval(()=>{
     elapsed+=150;
     targetPct=Math.min(maxPct,(elapsed/totalMs)*maxPct);
-    planGenCurrentPct+=(targetPct-planGenCurrentPct)*0.1;
-    const capIdx=Math.min(Math.floor(planGenCurrentPct/maxPct*PLAN_GEN_CAPTIONS.length),PLAN_GEN_CAPTIONS.length-1);
-    _planGenSetUI(planGenCurrentPct,PLAN_GEN_CAPTIONS[capIdx]);
+    // Strictly monotonic: only advance, never retreat.
+    // Without this guard the lerp formula can pull planGenCurrentPct *down*
+    // when the SSE stream has already pushed it past the timer's current target.
+    const candidate=planGenCurrentPct+(targetPct-planGenCurrentPct)*0.1;
+    if(candidate>planGenCurrentPct){
+      planGenCurrentPct=candidate;
+      const capIdx=Math.min(Math.floor(planGenCurrentPct/maxPct*PLAN_GEN_CAPTIONS.length),PLAN_GEN_CAPTIONS.length-1);
+      _planGenSetUI(planGenCurrentPct,PLAN_GEN_CAPTIONS[capIdx]);
+    }
   },150);
 }
 
@@ -6503,18 +6569,22 @@ function buildShoppingListHTML(){
   if(!shoppingList||!shoppingList.categories||!shoppingList.categories.length)return '';
   const totalItems=shoppingList.categories.reduce((s,c)=>s+(c.items||[]).length,0);
   const checkedCount=Object.keys(shoppingChecked).length;
+  // Compute total estimated cost
+  let totalCost=0;
+  shoppingList.categories.forEach(cat=>(cat.items||[]).forEach(item=>{if(item.price_usd)totalCost+=Number(item.price_usd)||0;}));
   const categoriesHTML=shoppingList.categories.map((cat,ci)=>{
     const items=(cat.items||[]).map((item,ii)=>{
       const key=`${ci}_${ii}`;
       const done=!!shoppingChecked[key];
       const qty=item.qty?`${String(item.qty)} ${item.unit||''}`.trim():'';
       const notesHTML=item.notes?` <em style="color:var(--text-dimmer);font-size:10px;font-style:normal">(${escapeHtml(item.notes)})</em>`:'';
+      const priceHTML=item.price_usd?`<span class="shop-item-price">~$${Number(item.price_usd).toFixed(2)}</span>`:'';
       return `<div class="shop-item">
         <button class="shop-check${done?' checked':''}" onclick="toggleShoppingItem('${key}')" aria-label="Toggle ${escapeHtml(item.name)}">
           <svg viewBox="0 0 12 12"><polyline points="2 6 5 9 10 3"/></svg>
         </button>
         <span class="shop-item-text${done?' done':''}">${escapeHtml(item.name)}${notesHTML}</span>
-        ${qty?`<span class="shop-item-qty">${escapeHtml(qty)}</span>`:''}
+        <span class="shop-item-right">${qty?`<span class="shop-item-qty">${escapeHtml(qty)}</span>`:''}${priceHTML}</span>
       </div>`;
     }).join('');
     return `<div class="shop-category">
@@ -6523,6 +6593,7 @@ function buildShoppingListHTML(){
     </div>`;
   }).join('');
   const progressHTML=totalItems>0?`<span style="font-size:10px;color:var(--text-dimmer)">${checkedCount}/${totalItems}</span>`:'';
+  const totalHTML=totalCost>0?`<div class="shop-total-row"><span class="shop-total-label">Estimated weekly total</span><span class="shop-total-amount">~$${totalCost.toFixed(2)}</span></div>`:'';
   return `<div class="shop-list-header">
     <div class="shop-list-title">🛒 Weekly Shopping List</div>
     <div class="shop-list-actions">
@@ -6533,7 +6604,8 @@ function buildShoppingListHTML(){
       <button class="shop-btn" onclick="generateShoppingList()">Refresh</button>
     </div>
   </div>
-  ${categoriesHTML}`;
+  ${categoriesHTML}
+  ${totalHTML}`;
 }
 
 function toggleShoppingItem(key){
@@ -6621,23 +6693,62 @@ function _docxPara(text,{bold=false,size=24,color='',spaceAfter=100}={}){
     `<w:r><w:rPr>${rPr}</w:rPr><w:t xml:space="preserve">${_xmlEsc(text)}</w:t></w:r></w:p>`;
 }
 
-function _buildDocxBlob(categories,planName,dateStr){
+function _buildDocxBlob(categories,planName,dateStr,recipes){
   const WNS='xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"';
   let body='';
   // Title
   body+=`<w:p><w:pPr><w:spacing w:after="80"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="40"/><w:szCs w:val="40"/><w:color w:val="2D1B69"/></w:rPr><w:t>Weekly Grocery List</w:t></w:r></w:p>`;
   body+=_docxPara(planName,{bold:false,size:22,color:'555555',spaceAfter:60});
   body+=_docxPara('Generated: '+dateStr,{bold:false,size:18,color:'888888',spaceAfter:160});
+  // Ingredient categories
+  let totalCost=0;
   categories.forEach(cat=>{
     if(!cat.items||!cat.items.length)return;
     body+=_docxPara(cat.name.toUpperCase(),{bold:true,size:24,color:'4A3580',spaceAfter:60});
     cat.items.forEach(item=>{
       const qty=item.qty?` — ${String(item.qty)} ${item.unit||''}`.trim():'';
       const note=item.notes?` (${item.notes})`:'';
-      body+=_docxPara(`• ${item.name}${qty}${note}`,{bold:false,size:22,color:'222222',spaceAfter:40});
+      const price=item.price_usd?`  ~$${Number(item.price_usd).toFixed(2)}`:'';
+      if(item.price_usd)totalCost+=Number(item.price_usd)||0;
+      body+=_docxPara(`• ${item.name}${qty}${note}${price}`,{bold:false,size:22,color:'222222',spaceAfter:40});
     });
     body+=_docxPara('',{spaceAfter:80});
   });
+  // Total estimated cost
+  if(totalCost>0){
+    body+=`<w:p><w:pPr><w:spacing w:before="80" w:after="200"/><w:pBdr><w:top w:val="single" w:sz="4" w:space="4" w:color="4A3580"/></w:pBdr></w:pPr>`+
+      `<w:r><w:rPr><w:b/><w:sz w:val="26"/><w:szCs w:val="26"/><w:color w:val="2D6A4F"/></w:rPr><w:t>Estimated weekly total: ~$${totalCost.toFixed(2)}</w:t></w:r></w:p>`;
+  }
+  // Recipes section
+  if(recipes&&recipes.length){
+    body+=`<w:p><w:pPr><w:pageBreakBefore/><w:spacing w:after="80"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="40"/><w:szCs w:val="40"/><w:color w:val="2D1B69"/></w:rPr><w:t>Weekly Recipes</w:t></w:r></w:p>`;
+    recipes.forEach((rec,ri)=>{
+      if(ri>0)body+=_docxPara('',{spaceAfter:120});
+      // Recipe title
+      body+=`<w:p><w:pPr><w:spacing w:before="160" w:after="40"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="30"/><w:szCs w:val="30"/><w:color w:val="4A3580"/></w:rPr><w:t>${_xmlEsc(rec.name||'Recipe')}</w:t></w:r></w:p>`;
+      // Meta line
+      const metaParts=[];
+      if(rec.meal_slot)metaParts.push(rec.meal_slot);
+      if(rec.day)metaParts.push(rec.day);
+      if(rec.prep_time)metaParts.push('Prep: '+rec.prep_time);
+      if(rec.cook_time)metaParts.push('Cook: '+rec.cook_time);
+      if(metaParts.length)body+=_docxPara(metaParts.join('  ·  '),{bold:false,size:18,color:'888888',spaceAfter:60});
+      // Ingredients
+      if(rec.ingredients&&rec.ingredients.length){
+        body+=_docxPara('Ingredients',{bold:true,size:22,color:'333333',spaceAfter:40});
+        rec.ingredients.forEach(ing=>{
+          body+=_docxPara(`• ${ing}`,{bold:false,size:20,color:'444444',spaceAfter:30});
+        });
+      }
+      // Steps
+      if(rec.steps&&rec.steps.length){
+        body+=_docxPara('Instructions',{bold:true,size:22,color:'333333',spaceAfter:40});
+        rec.steps.forEach((step,si)=>{
+          body+=_docxPara(`${si+1}. ${step}`,{bold:false,size:20,color:'444444',spaceAfter:40});
+        });
+      }
+    });
+  }
   const docXml=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>`+
     `<w:document ${WNS}><w:body>${body}<w:sectPr><w:pgSz w:w="12240" w:h="15840"/><w:pgMar w:top="1440" w:right="1440" w:bottom="1440" w:left="1440"/></w:sectPr></w:body></w:document>`;
   const rels=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>`+
@@ -6664,7 +6775,7 @@ function downloadGroceryList(){
   if(!shoppingList||!shoppingList.categories||!shoppingList.categories.length)return;
   const planName=trainingPlan?(trainingPlan.plan_name||'Weekly Plan'):'Weekly Plan';
   const dateStr=new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
-  const blob=_buildDocxBlob(shoppingList.categories,planName,dateStr);
+  const blob=_buildDocxBlob(shoppingList.categories,planName,dateStr,shoppingList.recipes||[]);
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a');
   a.href=url;
@@ -6698,13 +6809,32 @@ async function generateShoppingList(){
   const planName=trainingPlan.plan_name||'Training Plan';
   const dietJSON=JSON.stringify(trainingPlan.diet,null,2);
 
-  const prompt=`You are a meal prep assistant. Based on this weekly nutrition plan for "${planName}", generate a complete weekly shopping list.
+  const prompt=`You are a meal prep assistant. Based on this weekly nutrition plan for "${planName}", generate a complete weekly shopping list with estimated US supermarket prices and full recipes.
 
 NUTRITION PLAN:
 ${dietJSON}
 
 Return ONLY a valid JSON object — no markdown, no explanation, just the JSON. Use this exact structure:
-{"categories":[{"name":"Proteins","items":[{"name":"Chicken breast","qty":"900","unit":"g","notes":"boneless skinless"}]}]}
+{
+  "categories":[{"name":"Proteins","items":[{"name":"Chicken breast","qty":"900","unit":"g","notes":"boneless skinless","price_usd":6.50}]}],
+  "recipes":[
+    {
+      "name":"Grilled Chicken Quinoa Bowl",
+      "meal_slot":"Lunch",
+      "day":"Monday",
+      "prep_time":"10 mins",
+      "cook_time":"25 mins",
+      "ingredients":["2 chicken breasts (approx 300g)","1 cup quinoa","1 cup broccoli florets","2 tbsp olive oil","Salt and pepper to taste"],
+      "steps":["Rinse quinoa and cook in 2 cups water for 15 minutes until fluffy.","Season chicken with salt, pepper and olive oil. Grill 6-7 mins per side.","Steam broccoli 4 minutes until tender-crisp.","Slice chicken, serve over quinoa with broccoli."]
+    }
+  ]
+}
+
+PRICING RULES — use realistic average US supermarket prices (not organic, not Whole Foods pricing):
+Chicken breast ~$5-7/lb, Ground beef ~$5-6/lb, Salmon ~$8-12/lb, Eggs ~$3-4/dozen, Greek yogurt ~$1.50-2/cup, Milk ~$3-4/gallon, Cheese ~$4-6/block, Quinoa ~$5-6/lb, Rice ~$1-2/lb, Oats ~$2-3/lb, Sweet potato ~$1-1.50/lb, Broccoli ~$1.50-2/lb, Spinach ~$3-4/bag, Avocado ~$1-1.50 each, Olive oil ~$7-10/bottle, Almonds/nuts ~$6-8/lb, Almond butter ~$5-7/jar, Beans/lentils ~$1.50-2/lb dry.
+Estimate price_usd for the weekly quantity of each item. Round to 2 decimal places.
+
+RECIPE RULES — include one recipe per unique meal across the week (not every day, just unique meals). Each recipe must have realistic prep_time, cook_time, a full ingredient list with quantities, and clear numbered steps.
 
 Use these categories (only include ones that have items): Proteins, Vegetables & Greens, Fruits, Grains & Carbs, Dairy & Eggs, Healthy Fats & Oils, Condiments & Spices, Other
 Use ${units} for quantities. Scale for one week (multiply daily amounts by 7). Be specific and realistic.`;
@@ -6720,7 +6850,7 @@ Use ${units} for quantities. Scale for one week (multiply daily amounts by 7). B
     const reply=(data.content||[]).find(b=>b.type==='text')?.text||'';
     const parsed=extractJSONFromText(reply);
     if(parsed&&Array.isArray(parsed.categories)&&parsed.categories.length){
-      shoppingList=parsed;
+      shoppingList={categories:parsed.categories,recipes:Array.isArray(parsed.recipes)?parsed.recipes:[]};
       shoppingChecked={};
       saveShoppingList();
       // Re-render nutrition tab
@@ -6736,6 +6866,97 @@ Use ${units} for quantities. Scale for one week (multiply daily amounts by 7). B
     if(btn){btn.disabled=false;btn.innerHTML='🛒 Generate Weekly Shopping List';}
     alert('Shopping list error: '+err.message);
   }
+}
+
+// ─────────────────────────────────────────────────────────
+// RECIPE PAGE
+// Cache: mealRecipeCache[key] = {name, meal_slot, day, prep_time, cook_time, ingredients, steps, protein_g, carbs_g, fat_g}
+const mealRecipeCache={};
+
+function openRecipePage(meal,dow){
+  const page=document.getElementById('recipePage');
+  const titleEl=document.getElementById('recipePageTitle');
+  const bodyEl=document.getElementById('recipePageBody');
+  if(!page||!titleEl||!bodyEl)return;
+  const mealName=meal.name||'Recipe';
+  titleEl.textContent=mealName;
+  page.classList.remove('hidden');
+  page.classList.add('slide-in');
+
+  const cacheKey=`${dow}_${mealName}`;
+  // If recipe found in shopping list, use that
+  const shopRecipe=(shoppingList&&shoppingList.recipes||[]).find(r=>r.name===mealName||(r.meal_slot===mealName&&r.day));
+  if(shopRecipe||mealRecipeCache[cacheKey]){
+    _renderRecipePageContent(bodyEl,shopRecipe||mealRecipeCache[cacheKey],meal);
+    return;
+  }
+  // Show loading then fetch
+  bodyEl.innerHTML=`<div class="recipe-loading"><div class="recipe-loading-spinner"></div><span>Fetching recipe…</span></div>`;
+  _fetchMealRecipe(meal,dow,cacheKey).then(rec=>{
+    if(rec){mealRecipeCache[cacheKey]=rec;_renderRecipePageContent(bodyEl,rec,meal);}
+    else{bodyEl.innerHTML=`<div class="recipe-loading" style="color:var(--accent4)">Could not load recipe — check your API key in Settings.</div>`;}
+  });
+}
+
+async function _fetchMealRecipe(meal,dow,cacheKey){
+  const apiKey=getApiKey();
+  if(!apiKey)return null;
+  const prompt=`Give me a full recipe for: "${meal.name}".
+${meal.description?`Description: ${meal.description}`:''}
+Macros: Protein ${meal.protein_g||0}g, Carbs ${meal.carbs_g||0}g, Fat ${meal.fat_g||0}g.
+
+Return ONLY valid JSON, no markdown:
+{"name":"${meal.name}","prep_time":"10 mins","cook_time":"20 mins","ingredients":["ingredient with quantity"],"steps":["Step 1...","Step 2..."]}`;
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model:getModel(),max_tokens:800,messages:[{role:'user',content:prompt}]})
+    });
+    if(!res.ok)return null;
+    const data=await res.json();
+    const text=(data.content||[]).find(b=>b.type==='text')?.text||'';
+    return extractJSONFromText(text)||null;
+  }catch(e){return null;}
+}
+
+function _renderRecipePageContent(bodyEl,rec,meal){
+  const cals=Math.round((meal.protein_g||0)*4+(meal.carbs_g||0)*4+(meal.fat_g||0)*9);
+  const metaChips=[
+    rec.prep_time?`<span class="recipe-meta-chip">Prep: ${escapeHtml(rec.prep_time)}</span>`:'',
+    rec.cook_time?`<span class="recipe-meta-chip">Cook: ${escapeHtml(rec.cook_time)}</span>`:'',
+    rec.meal_slot?`<span class="recipe-meta-chip">${escapeHtml(rec.meal_slot)}</span>`:'',
+    rec.day?`<span class="recipe-meta-chip">${escapeHtml(rec.day)}</span>`:''
+  ].filter(Boolean).join('');
+  const ingredientsHTML=(rec.ingredients||[]).map(ing=>`
+    <div class="recipe-ingredient-row">
+      <div class="recipe-ingredient-dot"></div>
+      <div class="recipe-ingredient-text">${escapeHtml(ing)}</div>
+    </div>`).join('');
+  const stepsHTML=(rec.steps||[]).map((step,i)=>`
+    <div class="recipe-step-row">
+      <div class="recipe-step-num">${i+1}</div>
+      <div class="recipe-step-text">${escapeHtml(step)}</div>
+    </div>`).join('');
+  const nutritionHTML=(meal.protein_g||meal.carbs_g||meal.fat_g)?`
+    <div class="recipe-section-title">Nutrition</div>
+    <div class="recipe-nutrition-grid">
+      ${cals>0?`<div class="recipe-nutrition-cell"><div class="recipe-nutrition-val">${cals}</div><div class="recipe-nutrition-lbl">kcal</div></div>`:''}
+      <div class="recipe-nutrition-cell"><div class="recipe-nutrition-val">${meal.protein_g||0}g</div><div class="recipe-nutrition-lbl">Protein</div></div>
+      <div class="recipe-nutrition-cell"><div class="recipe-nutrition-val">${meal.carbs_g||0}g</div><div class="recipe-nutrition-lbl">Carbs</div></div>
+      <div class="recipe-nutrition-cell"><div class="recipe-nutrition-val">${meal.fat_g||0}g</div><div class="recipe-nutrition-lbl">Fat</div></div>
+    </div>`:'';
+  bodyEl.innerHTML=`
+    ${metaChips?`<div class="recipe-meta-row">${metaChips}</div>`:''}
+    ${meal.description?`<p style="font-size:13px;color:var(--text-dim);line-height:1.6;margin-bottom:16px">${escapeHtml(meal.description)}</p>`:''}
+    ${ingredientsHTML?`<div class="recipe-section-title">Ingredients</div><div>${ingredientsHTML}</div>`:''}
+    ${stepsHTML?`<div class="recipe-section-title">Instructions</div><div>${stepsHTML}</div>`:''}
+    ${nutritionHTML}`;
+}
+
+function closeRecipePage(){
+  const page=document.getElementById('recipePage');
+  if(page){page.classList.add('hidden');page.classList.remove('slide-in');}
 }
 
 // ─────────────────────────────────────────────────────────
@@ -6770,10 +6991,13 @@ function renderTrainingView(){
 // ─────────────────────────────────────────────────────────
 // TRAINING DAILY VIEW (date-based scroller)
 
-// Return the effective schedule for a given week (uses phase_schedules if available)
+// Return the effective schedule for a given week (uses phase_schedules if available).
+// If a day has accessory_weeks, the returned sessions are: compounds (fixed) + accessories
+// for the correct week within the phase (1-4 cycling), giving progressive weekly variety.
 function getScheduleForWeek(weekNum){
   let schedule=null;
   let source='unknown';
+  let phaseStartWeek=1; // track where the matched phase begins
   if(trainingPlan?.phase_schedules?.length){
     const phases=trainingPlan.phases||[];
     for(const ps of trainingPlan.phase_schedules){
@@ -6782,6 +7006,7 @@ function getScheduleForWeek(weekNum){
         const m=String(phase.weeks||'').match(/(\d+)\s*[-–]\s*(\d+)/);
         if(m&&weekNum>=parseInt(m[1])&&weekNum<=parseInt(m[2])){
           schedule=ps.schedule||[];
+          phaseStartWeek=parseInt(m[1]);
           source=`phase_schedules[phase_number=${ps.phase_number}, weeks=${phase.weeks}]`;
           break;
         }
@@ -6791,6 +7016,10 @@ function getScheduleForWeek(weekNum){
       const last=trainingPlan.phase_schedules[trainingPlan.phase_schedules.length-1];
       if(last?.schedule?.length){
         schedule=last.schedule;
+        // Determine last phase's start week for accessory cycling
+        const lastPhase=phases[(last.phase_number||1)-1];
+        const lm=String(lastPhase?.weeks||'').match(/(\d+)\s*[-–]\s*(\d+)/);
+        phaseStartWeek=lm?parseInt(lm[1]):1;
         source=`phase_schedules[last phase fallback, phase_number=${last.phase_number}]`;
       }
     }
@@ -6804,9 +7033,19 @@ function getScheduleForWeek(weekNum){
     schedule=trainingPlan?.weekly_schedule||[];
     source='weekly_schedule (fallback)';
   }
+  // Merge compound sessions + accessory_weeks for this specific week within the phase
+  const weekWithinPhase=Math.max(0,weekNum-phaseStartWeek); // 0-indexed
+  const mergedSchedule=schedule.map(dayData=>{
+    if(!dayData.accessory_weeks||!Array.isArray(dayData.accessory_weeks)||!dayData.accessory_weeks.length){
+      return dayData; // no accessories defined — pass through as-is
+    }
+    const accessoryIdx=weekWithinPhase%dayData.accessory_weeks.length;
+    const weekAccessories=dayData.accessory_weeks[accessoryIdx]||[];
+    return {...dayData,sessions:[...(dayData.sessions||[]),...weekAccessories]};
+  });
   const totalPhases=(trainingPlan?.phase_schedules||[]).length;
-  console.log(`[Ritual] getScheduleForWeek(${weekNum}): source=${source}, totalPhaseSchedules=${totalPhases}, scheduledays=${schedule.length}`);
-  return schedule;
+  console.log(`[Ritual] getScheduleForWeek(${weekNum}): source=${source}, weekWithinPhase=${weekWithinPhase+1}, totalPhaseSchedules=${totalPhases}, scheduledays=${schedule.length}`);
+  return mergedSchedule;
 }
 
 // Return a week_override for a specific week+day — week_overrides is the sole authority for one-off activities
@@ -7295,13 +7534,37 @@ Return ONLY valid JSON in this exact structure (no markdown fences, no explanati
     {
       "phase_number": 1,
       "schedule": [
-        {"day":"Monday","type":"strength","title":"Phase 1 — Hypertrophy","duration_minutes":55,"sessions":[{"name":"Barbell Bench Press","sets":3,"reps":"10-12","duration":"45 mins","note":"Control the eccentric"}]}
+        {
+          "day":"Monday","type":"strength","title":"Phase 1 — Hypertrophy","duration_minutes":60,
+          "sessions":[
+            {"name":"Barbell Bench Press","sets":4,"reps":"10-12","duration":"18 mins","note":"Primary compound — stays every week this phase","is_compound":true},
+            {"name":"Barbell Back Squat","sets":4,"reps":"10-12","duration":"18 mins","note":"Primary compound","is_compound":true}
+          ],
+          "accessory_weeks":[
+            [{"name":"Cable Fly","sets":3,"reps":"12-15","duration":"10 mins","note":"Week 1 — chest isolation","is_compound":false},{"name":"Leg Press","sets":3,"reps":"15","duration":"10 mins","note":"Week 1 — quad emphasis","is_compound":false}],
+            [{"name":"Dumbbell Incline Press","sets":3,"reps":"12","duration":"10 mins","note":"Week 2 — upper chest angle","is_compound":false},{"name":"Bulgarian Split Squat","sets":3,"reps":"10 each","duration":"12 mins","note":"Week 2 — single-leg","is_compound":false}],
+            [{"name":"Chest Dip","sets":3,"reps":"12","duration":"10 mins","note":"Week 3 — bodyweight push","is_compound":false},{"name":"Hack Squat","sets":3,"reps":"12","duration":"10 mins","note":"Week 3 — machine variation","is_compound":false}],
+            [{"name":"Pec Deck Fly","sets":3,"reps":"15","duration":"10 mins","note":"Week 4 — isolation peak","is_compound":false},{"name":"Walking Lunges","sets":3,"reps":"12 each","duration":"10 mins","note":"Week 4 — functional","is_compound":false}]
+          ]
+        }
       ]
     },
     {
       "phase_number": 2,
       "schedule": [
-        {"day":"Monday","type":"strength","title":"Phase 2 — Strength","duration_minutes":60,"sessions":[{"name":"Incline Dumbbell Press","sets":4,"reps":"6-8","duration":"55 mins","note":"Heavier than Phase 1 — drive through the top"}]}
+        {
+          "day":"Monday","type":"strength","title":"Phase 2 — Strength","duration_minutes":65,
+          "sessions":[
+            {"name":"Barbell Bench Press","sets":5,"reps":"4-6","duration":"22 mins","note":"Same compound, heavier — strength focus","is_compound":true},
+            {"name":"Barbell Back Squat","sets":5,"reps":"4-6","duration":"22 mins","note":"Heavier load, lower reps","is_compound":true}
+          ],
+          "accessory_weeks":[
+            [{"name":"Weighted Dip","sets":4,"reps":"8","duration":"12 mins","note":"Week 1 — loaded push","is_compound":false},{"name":"Front Squat","sets":3,"reps":"6-8","duration":"12 mins","note":"Week 1 — quad drive","is_compound":false}],
+            [{"name":"Close-Grip Bench Press","sets":3,"reps":"8","duration":"12 mins","note":"Week 2 — tricep emphasis","is_compound":false},{"name":"Pause Squat","sets":3,"reps":"6","duration":"12 mins","note":"Week 2 — tension at bottom","is_compound":false}],
+            [{"name":"Cable Crossover","sets":3,"reps":"12","duration":"10 mins","note":"Week 3 — pump work","is_compound":false},{"name":"Box Squat","sets":3,"reps":"6","duration":"12 mins","note":"Week 3 — power off the box","is_compound":false}],
+            [{"name":"Low Cable Fly","sets":3,"reps":"15","duration":"10 mins","note":"Week 4 — lower chest","is_compound":false},{"name":"Sissy Squat","sets":3,"reps":"12","duration":"10 mins","note":"Week 4 — terminal knee extension","is_compound":false}]
+          ]
+        }
       ]
     }
   ],
@@ -7337,12 +7600,18 @@ Return ONLY valid JSON in this exact structure (no markdown fences, no explanati
 
 IMPORTANT — every session object in "sessions" MUST include a "duration" field with a concrete time estimate (e.g. "30 mins", "45-60 mins", "20 seconds x 3 sets", "30 seconds rest"). Never use vague placeholders like "See phase notes" or omit the field. If an exercise is timed rather than set/rep based, set "sets" and "reps" to null and express the full prescription in "duration" (e.g. "duration":"20 min easy jog").
 
-PHASE-BASED EXERCISE VARIATION (CRITICAL — THIS IS MANDATORY) — You MUST return "phase_schedules" as an array with at least 3 entries (one per training phase). Each phase MUST have completely different exercise names — not just different rep ranges, but entirely different movements. "weekly_schedule" will be ignored by the app and exists only for legacy parsing; the app reads exclusively from "phase_schedules". Rules:
-- Return at least 3 phase_schedules entries. Each entry must have "phase_number" and a complete "schedule" array (all training days for that phase).
-- Every exercise name MUST be different between phases for the same muscle group. For example: Phase 1 chest = "Barbell Bench Press", Phase 2 chest = "Incline Dumbbell Press", Phase 3 chest = "Cable Fly or Weighted Push-ups". This applies to every muscle group — NO exercise name may appear in more than one phase.
-- Rep ranges and intensity MUST change per phase: Phase 1 = moderate load, higher reps (10-15, hypertrophy); Phase 2 = heavier load, lower reps (5-8, strength); Phase 3 = functional/compound, varied intensity.
-- "weekly_schedule" must be identical to phase_schedules[0].schedule (Phase 1) — it is only there for backward compatibility and will NOT be displayed.
-- If you return phase_schedules with fewer than 3 entries, or with repeated exercise names across phases, the plan will be considered invalid.
+PHASE-BASED EXERCISE VARIATION (CRITICAL — THIS IS MANDATORY) — You MUST return "phase_schedules" as an array with at least 3 entries (one per training phase). Each phase uses a COMPOUND + ACCESSORY structure where the big lifts stay stable and accessory work rotates weekly. "weekly_schedule" is legacy-only; the app reads exclusively from "phase_schedules". Rules:
+
+COMPOUND EXERCISES (is_compound: true) — these go in "sessions" and stay FIXED for the entire 4-week phase. Use only true compound lifts: Barbell Back Squat, Barbell Deadlift, Barbell Bench Press, Overhead Press (OHP), Pull-Ups/Weighted Pull-Ups, Barbell Rows, Romanian Deadlift, Front Squat, Trap Bar Deadlift. These are the foundation — the athlete loads them progressively week-to-week. They MUST be included in "sessions" on every training day in that phase and NEVER changed week-to-week.
+
+ACCESSORY EXERCISES (is_compound: false) — these go in "accessory_weeks", a 4-element array (one sub-array per week of the phase). Each week's sub-array has 2-4 accessories that target the same muscle groups as that day's compounds but from different angles. Week 1 accessories must be different from Week 2, 3, and 4. Use isolation and unilateral work: cable flys, split squats, leg press, face pulls, lateral raises, hammer curls, tricep pushdowns, calf raises, hip thrusts, landmine press, etc.
+
+BETWEEN-PHASE RULES — compound lifts in "sessions" MUST be different between phases (Phase 1 vs Phase 2 vs Phase 3). Phase 1 = hypertrophy (10-15 reps, moderate load). Phase 2 = strength (4-8 reps, heavy). Phase 3 = power/functional (3-6 reps or timed, varied modalities). Accessory exercises also rotate between phases.
+
+- Return at least 3 phase_schedules entries, each with "phase_number" and a full "schedule" array (all training days).
+- Every day object must have: day, type, title, duration_minutes, "sessions" (compounds only), and "accessory_weeks" (4 weekly accessory arrays).
+- "weekly_schedule" must equal phase_schedules[0].schedule sessions only (compounds), for backward compatibility.
+- If phase_schedules has fewer than 3 entries or compounds repeat across phases, the plan is invalid.
 
 WEEK OVERRIDES (one-off sport or activity weeks) — Use "week_overrides" for any activity that the user wants on specific week numbers only (boxing, swimming galas, competition prep, sport clinics, etc.). Each override needs: "week" (integer — the exact week you choose), "day" (day name matching weekly_schedule), "title", "type", "duration_minutes", and "sessions". The override completely replaces that day's workout for that specific week only. "week_overrides" is the SOLE authority for when these one-off activities appear — do NOT put them in weekly_schedule or phase_schedules. You choose which week numbers to assign these activities; do NOT use any hardcoded or assumed week numbers. Schedule one-off activities (boxing, swimming, etc.) in week_overrides with the specific week numbers you decide are optimal for the user's plan — do not put them in phase_schedules.
 
