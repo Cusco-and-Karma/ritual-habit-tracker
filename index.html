@@ -5230,10 +5230,10 @@ document.getElementById('signOutBtn').addEventListener('click',async()=>{
       status.textContent='API key removed.';
       return;
     }
-    if(!val.startsWith('sk-ant-')){
+    if(val.length<20){
       status.style.display='block';
       status.style.color='#f08080';
-      status.textContent='That does not look like a valid Anthropic key (should start with sk-ant-).';
+      status.textContent='That does not look like a valid Anthropic key — it is too short.';
       return;
     }
     localStorage.setItem('ritualApiKey',val);
@@ -7166,8 +7166,8 @@ function toggleTrainDay(i){toggleTrainDayTrain(i);}
 // AI PLAN GENERATION
 async function doGeneratePlan(){
   const apiKey=getApiKey();
-  if(!apiKey){showTrainError('No API key found. Open Settings → AI Settings and paste your Anthropic API key (starts with sk-ant-...).');return;}
-  if(!apiKey.startsWith('sk-ant-')){showTrainError('API key looks incorrect — Anthropic keys start with "sk-ant-". Open Settings → AI Settings to update it.');return;}
+  if(!apiKey){showTrainError('No API key found. Open Settings → AI Settings and paste your Anthropic API key.');return;}
+  if(apiKey.length<20){showTrainError('API key looks too short — check Settings → AI Settings and make sure you pasted the full key.');return;}
 
   // Validate: need at least 1 training day OR AI decides
   const trainDays=trainSetup.daySlots.filter(s=>s.train);
@@ -7326,8 +7326,11 @@ CRITICAL — "weekly_meals" MUST contain ALL 7 days (Monday through Sunday). EVE
 weekly_schedule should include ${numDays} training session(s) per week. Include 4-6 exercises per session. Set duration_minutes to a realistic estimate of how long the full session will take (warm-up + exercises + cool-down). Fixed commitments marked fixed_commitment: true count as sessions if they are physically demanding (martial arts, yoga, etc). Use type values: strength, cardio, hiit, flexibility, rest.`;
 
   try{
+    const _planAbort=new AbortController();
+    const _planTimeout=setTimeout(()=>_planAbort.abort(new Error('Request timed out after 120 seconds')),120000);
     const res=await fetch('https://api.anthropic.com/v1/messages',{
       method:'POST',
+      signal:_planAbort.signal,
       headers:{
         'Content-Type':'application/json',
         'x-api-key':apiKey,
@@ -7337,12 +7340,44 @@ weekly_schedule should include ${numDays} training session(s) per week. Include 
       body:JSON.stringify({
         model:'claude-sonnet-4-6',
         max_tokens:16000,
+        stream:true,
         messages:[{role:'user',content:prompt}]
       })
     });
+    clearTimeout(_planTimeout);
     if(!res.ok){const e=await res.json().catch(()=>({}));throw new Error(e.error?.message||`API error ${res.status}`);}
-    const data=await res.json();
-    const text=(data.content||[]).find(b=>b.type==='text')?.text||'';
+    // Read SSE stream and accumulate text deltas
+    const EXPECTED_CHARS=12000;
+    let accumulated='';
+    const reader=res.body.getReader();
+    const decoder=new TextDecoder();
+    let sseBuffer='';
+    while(true){
+      const{done,value}=await reader.read();
+      if(done)break;
+      sseBuffer+=decoder.decode(value,{stream:true});
+      const lines=sseBuffer.split('\n');
+      sseBuffer=lines.pop(); // keep incomplete last line
+      for(const line of lines){
+        if(!line.startsWith('data: '))continue;
+        const payload=line.slice(6).trim();
+        if(payload==='[DONE]')break;
+        try{
+          const evt=JSON.parse(payload);
+          if(evt.type==='content_block_delta'&&evt.delta?.type==='text_delta'){
+            accumulated+=evt.delta.text||'';
+            // Update progress ring based on chars received vs expected
+            const streamPct=Math.min(88,Math.round((accumulated.length/EXPECTED_CHARS)*88));
+            if(streamPct>planGenCurrentPct){
+              const capIdx=Math.min(Math.floor(streamPct/88*PLAN_GEN_CAPTIONS.length),PLAN_GEN_CAPTIONS.length-1);
+              _planGenSetUI(streamPct,PLAN_GEN_CAPTIONS[capIdx]);
+              planGenCurrentPct=streamPct;
+            }
+          }
+        }catch(e){/* ignore non-JSON lines */}
+      }
+    }
+    const text=accumulated;
     const plan=extractJSONFromText(text);
     if(!plan)throw new Error('Plan was too large to generate in one go — try reducing the plan duration or simplifying your goals');
     completePlanGenProgress(()=>{
@@ -7370,10 +7405,13 @@ weekly_schedule should include ${numDays} training session(s) per week. Include 
   }catch(err){
     stopPlanGenProgress();
     console.error('[Ritual] Plan generation error:',err);
+    const isAbort=err.name==='AbortError'||err.message?.includes('timed out');
     const isNetwork=err instanceof TypeError&&(err.message.includes('fetch')||err.message.includes('network')||err.message.includes('Network'));
     const onFileProt=location.protocol==='file:';
     let msg;
-    if(isNetwork){
+    if(isAbort){
+      msg='The request timed out (120 s). The plan is very large — try shortening the duration or simplifying your goals, then try again.';
+    } else if(isNetwork){
       msg=onFileProt
         ?'Network error — direct browser API calls are blocked when opening the app as a local file (file:// URL). Serve via a local web server or use the hosted version.'
         :'Network error — could not reach the AI. Things to check:\n1. Internet connection.\n2. Browser extensions — ad blockers, privacy tools, and VPN extensions can block api.anthropic.com.\n3. If you are using Brave: tap the Shields icon (🛡) in the address bar and turn Shields OFF for this site, then try again.\n4. Verify your API key is correct in Settings → AI Settings.';
@@ -7500,19 +7538,40 @@ Also vary day-to-day within each phase (no repeated proteins Mon-Sun within the 
 CRITICAL — "weekly_meals" MUST contain ALL 7 days (Monday through Sunday). EVERY day must have a fully populated "meals" array — do NOT leave any day as an empty array []. Each day must have GENUINELY DIFFERENT meals from every other day: different protein source (rotate through chicken, salmon, tofu, eggs, lean beef, shrimp, Greek yogurt, lentils, turkey, tuna), different carbohydrate source (oats, rice, quinoa, sweet potato, sourdough, pasta, barley, corn tortillas), different vegetables, and different cuisine style (Mediterranean, Asian, Mexican, classic American, Middle-Eastern, Indian). If a meal name like "Grilled Chicken" appears on Monday, it must NOT appear Tuesday through Sunday. Each day's meals must sum approximately to the daily targets above. For Intermittent Fasting, follow the meal-slot rules stated above — no Breakfast for 16:8/18:6/20:4/OMAD. For standard eating patterns include Breakfast, Lunch, Dinner, and 1-2 Snacks.`;
 
   try{
+    const _nutrAbort=new AbortController();
+    const _nutrTimeout=setTimeout(()=>_nutrAbort.abort(new Error('Request timed out after 120 seconds')),120000);
     const res=await fetch('https://api.anthropic.com/v1/messages',{
       method:'POST',
+      signal:_nutrAbort.signal,
       headers:{
         'Content-Type':'application/json',
         'x-api-key':apiKey,
         'anthropic-version':'2023-06-01',
         'anthropic-dangerous-direct-browser-access':'true'
       },
-      body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:16000,messages:[{role:'user',content:prompt}]})
+      body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:16000,stream:true,messages:[{role:'user',content:prompt}]})
     });
+    clearTimeout(_nutrTimeout);
     if(!res.ok){const e=await res.json().catch(()=>({}));throw new Error(e.error?.message||`API error ${res.status}`);}
-    const data=await res.json();
-    const text=(data.content||[]).find(b=>b.type==='text')?.text||'';
+    // Read SSE stream
+    let nutrAccumulated='';
+    const nutrReader=res.body.getReader();
+    const nutrDecoder=new TextDecoder();
+    let nutrBuf='';
+    while(true){
+      const{done,value}=await nutrReader.read();
+      if(done)break;
+      nutrBuf+=nutrDecoder.decode(value,{stream:true});
+      const lines=nutrBuf.split('\n');
+      nutrBuf=lines.pop();
+      for(const line of lines){
+        if(!line.startsWith('data: '))continue;
+        const payload=line.slice(6).trim();
+        if(payload==='[DONE]')break;
+        try{const evt=JSON.parse(payload);if(evt.type==='content_block_delta'&&evt.delta?.type==='text_delta')nutrAccumulated+=evt.delta.text||'';}catch(e){}
+      }
+    }
+    const text=nutrAccumulated;
     const parsed=extractJSONFromText(text);
     if(!parsed||!Array.isArray(parsed.weekly_meals)||!parsed.weekly_meals.length){
       throw new Error('Could not parse meal plan from AI response');
