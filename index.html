@@ -5752,13 +5752,40 @@ function saveShoppingList(){
   else localStorage.removeItem('ritual_shopping_list');
   localStorage.setItem('ritual_shopping_checked',JSON.stringify(shoppingChecked));
 }
-// Extract JSON from AI text (handles fenced code blocks and bare JSON)
+// Attempt to close truncated JSON by counting unclosed brackets/braces
+function repairTruncatedJSON(str){
+  const stack=[];
+  let inStr=false,escaped=false;
+  for(let i=0;i<str.length;i++){
+    const c=str[i];
+    if(escaped){escaped=false;continue;}
+    if(c==='\\'){escaped=true;continue;}
+    if(c==='"'){inStr=!inStr;continue;}
+    if(inStr)continue;
+    if(c==='{'||c==='[')stack.push(c==='{'?'}':']');
+    else if(c==='}'||c===']'){if(stack.length&&stack[stack.length-1]===c)stack.pop();}
+  }
+  // Strip any trailing partial token (incomplete string, dangling comma or colon)
+  let repaired=str.replace(/,\s*$/,'').replace(/:\s*"[^"]*$/,':"[truncated]"').replace(/:\s*$/,'');
+  return repaired+stack.reverse().join('');
+}
+
+// Extract JSON from AI text (handles fenced code blocks, bare JSON, and truncated responses)
 function extractJSONFromText(text){
   if(!text)return null;
+  // 1. Try fenced block first
   const fenced=text.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
-  if(fenced){try{return JSON.parse(fenced[1]);}catch(e){}}
+  if(fenced){
+    try{return JSON.parse(fenced[1]);}catch(e){}
+    try{return JSON.parse(repairTruncatedJSON(fenced[1]));}catch(e){}
+  }
+  // 2. Try raw JSON extraction
   const start=text.indexOf('{');
-  if(start!==-1){try{return JSON.parse(text.slice(start));}catch(e){}}
+  if(start!==-1){
+    const raw=text.slice(start);
+    try{return JSON.parse(raw);}catch(e){}
+    try{return JSON.parse(repairTruncatedJSON(raw));}catch(e){}
+  }
   return null;
 }
 
@@ -6167,7 +6194,8 @@ const PLAN_GEN_CAPTIONS=[
   'Balancing muscle groups & recovery…',
   'Setting nutrition targets…',
   'Crafting your weekly meal plan…',
-  'Reviewing and refining…',
+  'Generating meal rotations for each phase…',
+  'Reviewing and refining — this may take a moment for longer plans…',
 ];
 // Draft saving
 let _draftModalKeys=[];
@@ -6330,7 +6358,7 @@ function startPlanGenProgress(){
   const sv=document.getElementById('trainView');
   if(sv)sv.scrollTop=0;
   let targetPct=0,elapsed=0;
-  const totalMs=26000,maxPct=88;
+  const totalMs=55000,maxPct=88;
   planGenInterval=setInterval(()=>{
     elapsed+=150;
     targetPct=Math.min(maxPct,(elapsed/totalMs)*maxPct);
@@ -7308,16 +7336,15 @@ weekly_schedule should include ${numDays} training session(s) per week. Include 
       },
       body:JSON.stringify({
         model:'claude-sonnet-4-6',
-        max_tokens:8192,
+        max_tokens:16000,
         messages:[{role:'user',content:prompt}]
       })
     });
     if(!res.ok){const e=await res.json().catch(()=>({}));throw new Error(e.error?.message||`API error ${res.status}`);}
     const data=await res.json();
     const text=(data.content||[]).find(b=>b.type==='text')?.text||'';
-    const jsonMatch=text.match(/\{[\s\S]*\}/);
-    if(!jsonMatch)throw new Error('No JSON found in response');
-    const plan=JSON.parse(jsonMatch[0]);
+    const plan=extractJSONFromText(text);
+    if(!plan)throw new Error('Plan was too large to generate in one go — try reducing the plan duration or simplifying your goals');
     completePlanGenProgress(()=>{
       trainingPlan=plan;
       // Stamp the plan start date so exercise completions can be scoped to calendar dates
@@ -7481,7 +7508,7 @@ CRITICAL — "weekly_meals" MUST contain ALL 7 days (Monday through Sunday). EVE
         'anthropic-version':'2023-06-01',
         'anthropic-dangerous-direct-browser-access':'true'
       },
-      body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:6000,messages:[{role:'user',content:prompt}]})
+      body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:16000,messages:[{role:'user',content:prompt}]})
     });
     if(!res.ok){const e=await res.json().catch(()=>({}));throw new Error(e.error?.message||`API error ${res.status}`);}
     const data=await res.json();
