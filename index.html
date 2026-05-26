@@ -1731,6 +1731,16 @@
         <button id="apiKeySaveBtn" style="padding:9px 16px;border-radius:var(--r-sm);background:var(--accent);color:var(--bg);font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.06em;text-transform:uppercase;border:none;cursor:pointer;white-space:nowrap;flex-shrink:0">Save</button>
       </div>
       <div id="apiKeyStatus" style="font-size:11px;margin-top:8px;display:none"></div>
+
+      <div style="margin-top:16px;border-top:1px solid var(--border);padding-top:14px">
+        <div style="font-family:'DM Serif Display',serif;font-size:14px;color:var(--text);margin-bottom:4px">Claude Model</div>
+        <div style="font-size:11px;color:var(--text-dimmer);margin-bottom:10px;line-height:1.5">Haiku is faster and works with most API keys. Sonnet is higher quality but requires a paid plan with Sonnet access.</div>
+        <select id="modelSelect" style="width:100%;padding:9px 12px;border-radius:var(--r-sm);background:var(--surface-raised,var(--surface));border:1px solid var(--border);color:var(--text);font-family:'DM Mono',monospace;font-size:12px;cursor:pointer;appearance:none;-webkit-appearance:none;background-image:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E\");background-repeat:no-repeat;background-position:right 10px center;padding-right:30px">
+          <option value="claude-haiku-4-5-20251001">Claude Haiku — Fast, lower cost (default)</option>
+          <option value="claude-sonnet-4-6">Claude Sonnet — Higher quality (requires Sonnet access)</option>
+        </select>
+        <div id="modelStatus" style="font-size:11px;margin-top:6px;display:none"></div>
+      </div>
     </div>
 
   </div>
@@ -3213,6 +3223,7 @@ ${recentWellness.length?recentWellness.join('\n'):'none recorded'}`;
 }
 
 function getApiKey(){return localStorage.getItem('ritualApiKey')||'';}
+function getModel(){return localStorage.getItem('ritualModel')||'claude-haiku-4-5-20251001';}
 
 async function askAI(question,suffix){
   if(!question||!question.trim())return;
@@ -3253,7 +3264,7 @@ async function askAI(question,suffix){
         'anthropic-dangerous-direct-browser-access':'true'
       },
       body:JSON.stringify({
-        model:'claude-sonnet-4-6',
+        model:getModel(),
         max_tokens:1000,
         system:buildContext(),
         messages:[{role:'user',content:question.trim()}]
@@ -3707,7 +3718,7 @@ async function getCosmicReading(section,prompt,displayElId,btnElId){
     const resp=await fetch('https://api.anthropic.com/v1/messages',{
       method:'POST',
       headers:{'x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true','content-type':'application/json'},
-      body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:450,messages:[{role:'user',content:prompt}]})
+      body:JSON.stringify({model:getModel(),max_tokens:450,messages:[{role:'user',content:prompt}]})
     });
     const data=await resp.json();
     if(data.error)throw new Error(data.error.message);
@@ -3768,7 +3779,7 @@ function initCosmosSection(){
       const resp=await fetch('https://api.anthropic.com/v1/messages',{
         method:'POST',
         headers:{'x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true','content-type':'application/json'},
-        body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:200,messages:[{role:'user',content:`Based on birth date ${bp.date}${bp.time?`, time ${bp.time}`:''}${bp.location?`, location ${bp.location}`:''}, estimate the most likely Human Design type. Reply with ONLY one of these exact words: Generator, Manifesting Generator, Projector, Manifestor, Reflector. No explanation needed.`}]})
+        body:JSON.stringify({model:getModel(),max_tokens:200,messages:[{role:'user',content:`Based on birth date ${bp.date}${bp.time?`, time ${bp.time}`:''}${bp.location?`, location ${bp.location}`:''}, estimate the most likely Human Design type. Reply with ONLY one of these exact words: Generator, Manifesting Generator, Projector, Manifestor, Reflector. No explanation needed.`}]})
       });
       const data=await resp.json();
       if(data.error)throw new Error(data.error.message);
@@ -5243,6 +5254,26 @@ document.getElementById('signOutBtn').addEventListener('click',async()=>{
   });
 })();
 
+// ── Model Selector ──
+(function initModelSelect(){
+  const sel=document.getElementById('modelSelect');
+  const status=document.getElementById('modelStatus');
+  if(!sel)return;
+  const stored=localStorage.getItem('ritualModel')||'claude-haiku-4-5-20251001';
+  sel.value=stored;
+  sel.addEventListener('change',()=>{
+    const val=sel.value;
+    localStorage.setItem('ritualModel',val);
+    if(status){
+      status.style.display='block';
+      status.style.color='var(--accent3)';
+      const label=val.includes('sonnet')?'Claude Sonnet':'Claude Haiku';
+      status.textContent=label+' selected.';
+      setTimeout(()=>{status.style.display='none';},2500);
+    }
+  });
+})();
+
 // ══ WEEKLY GRID ══
 function freqLabel(n){
   if(n===0)return 'Tracking only';
@@ -6280,7 +6311,7 @@ The updated_weekly_schedule must be the FULL array. Keep each day object: {day, 
     const res=await fetch('https://api.anthropic.com/v1/messages',{
       method:'POST',
       headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-      body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:4096,system:systemPrompt,messages:history})
+      body:JSON.stringify({model:getModel(),max_tokens:4096,system:systemPrompt,messages:history})
     });
     if(!res.ok){const e=await res.json().catch(()=>({}));throw new Error(e.error?.message||`API error ${res.status}`);}
     const data=await res.json();
@@ -6682,7 +6713,7 @@ Use ${units} for quantities. Scale for one week (multiply daily amounts by 7). B
     const res=await fetch('https://api.anthropic.com/v1/messages',{
       method:'POST',
       headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-      body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:2000,messages:[{role:'user',content:prompt}]})
+      body:JSON.stringify({model:getModel(),max_tokens:2000,messages:[{role:'user',content:prompt}]})
     });
     if(!res.ok){const e=await res.json().catch(()=>({}));throw new Error(e.error?.message||`API error ${res.status}`);}
     const data=await res.json();
@@ -7338,7 +7369,7 @@ weekly_schedule should include ${numDays} training session(s) per week. Include 
         'anthropic-dangerous-direct-browser-access':'true'
       },
       body:JSON.stringify({
-        model:'claude-sonnet-4-6',
+        model:getModel(),
         max_tokens:16000,
         stream:true,
         messages:[{role:'user',content:prompt}]
@@ -7549,7 +7580,7 @@ CRITICAL — "weekly_meals" MUST contain ALL 7 days (Monday through Sunday). EVE
         'anthropic-version':'2023-06-01',
         'anthropic-dangerous-direct-browser-access':'true'
       },
-      body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:16000,stream:true,messages:[{role:'user',content:prompt}]})
+      body:JSON.stringify({model:getModel(),max_tokens:16000,stream:true,messages:[{role:'user',content:prompt}]})
     });
     clearTimeout(_nutrTimeout);
     if(!res.ok){const e=await res.json().catch(()=>({}));throw new Error(e.error?.message||`API error ${res.status}`);}
@@ -8229,7 +8260,7 @@ async function transcribeJournalPhoto(){
       method:'POST',
       headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
       body:JSON.stringify({
-        model:'claude-sonnet-4-6',
+        model:getModel(),
         max_tokens:2048,
         messages:[{role:'user',content:[
           {type:'image',source:{type:'base64',media_type:mediaType,data:base64}},
@@ -8237,7 +8268,8 @@ async function transcribeJournalPhoto(){
         ]}]
       })
     });
-    if(!res.ok)throw new Error('API error '+res.status);
+    if(!res.ok){const e=await res.json().catch(()=>({}));throw new Error(e.error?.message||`API error ${res.status}`);}
+
     const data=await res.json();
     const text=(data.content||[]).find(b=>b.type==='text')?.text||'';
     if(transcriptionEl){transcriptionEl.textContent=text;transcriptionEl.style.display='block';}
