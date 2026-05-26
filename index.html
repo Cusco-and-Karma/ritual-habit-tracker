@@ -5760,8 +5760,30 @@ function extractJSONFromText(text){
   return null;
 }
 
-// Completion key: "week-dayIdx-exIdx"
-function getCompletionKey(week,dayIdx,exIdx){return `${week}-${dayIdx}-${exIdx}`;}
+// Completion key: date-scoped "YYYY-MM-DD-exIdx" (falls back to "week-dayIdx-exIdx" for plans without start_date)
+function getPlanISODate(week,dayIdx){
+  if(!trainingPlan?.plan_start_date)return null;
+  const schedule=getScheduleForWeek?getScheduleForWeek(week):(trainingPlan?.weekly_schedule||[]);
+  const dayData=schedule[dayIdx];
+  if(!dayData?.day)return null;
+  const DAY_NAMES_FULL=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+  const dowOffset=DAY_NAMES_FULL.indexOf(dayData.day);
+  if(dowOffset<0)return null;
+  const start=new Date(trainingPlan.plan_start_date+'T00:00:00');
+  const startDow=(start.getDay()+6)%7; // convert Sun=0 to Mon=0 scheme
+  const planMonday=new Date(start);
+  planMonday.setDate(start.getDate()-startDow);
+  const weekMonday=new Date(planMonday);
+  weekMonday.setDate(planMonday.getDate()+(week-1)*7);
+  const target=new Date(weekMonday);
+  target.setDate(weekMonday.getDate()+dowOffset);
+  return target.toISOString().slice(0,10);
+}
+function getCompletionKey(week,dayIdx,exIdx){
+  const dateISO=getPlanISODate(week,dayIdx);
+  if(dateISO)return `date-${dateISO}-${exIdx}`;
+  return `${week}-${dayIdx}-${exIdx}`;
+}
 function getCompletions(){
   try{return JSON.parse(localStorage.getItem('ritual_training_completions')||'{}');}catch(e){return {};}
 }
@@ -6686,22 +6708,59 @@ function renderTrainingView(){
 
 // ─────────────────────────────────────────────────────────
 // TRAINING DAILY VIEW (date-based scroller)
-// Return the effective schedule for a given week (uses phase_schedules if available, falls back to weekly_schedule)
+
+// Post-process: strip boxing exercises from all weeks EXCEPT 6 & 11 (hard enforcement regardless of AI output)
+function applyBoxingFilter(schedule,weekNum){
+  if(weekNum===6||weekNum===11)return schedule;
+  return schedule.map(day=>{
+    const titleIsBoxing=/\bbox/i.test(day.title||'');
+    const typeIsBoxing=/\bbox/i.test(day.type||'');
+    // If the entire day slot is boxing-themed and no sessions remain after filtering, make it a rest day
+    const filteredSessions=(day.sessions||[]).filter(s=>!/\bbox/i.test(s.name||''));
+    if(titleIsBoxing&&typeIsBoxing&&filteredSessions.length===0){
+      return {...day,type:'rest',title:'Rest Day',sessions:[]};
+    }
+    return {...day,sessions:filteredSessions};
+  });
+}
+
+// Return the effective schedule for a given week (uses phase_schedules if available)
 function getScheduleForWeek(weekNum){
+  let schedule=null;
+  let source='unknown';
   if(trainingPlan?.phase_schedules?.length){
     const phases=trainingPlan.phases||[];
     for(const ps of trainingPlan.phase_schedules){
       const phase=phases[(ps.phase_number||1)-1];
       if(phase){
         const m=String(phase.weeks||'').match(/(\d+)\s*[-–]\s*(\d+)/);
-        if(m&&weekNum>=parseInt(m[1])&&weekNum<=parseInt(m[2]))return ps.schedule||[];
+        if(m&&weekNum>=parseInt(m[1])&&weekNum<=parseInt(m[2])){
+          schedule=ps.schedule||[];
+          source=`phase_schedules[phase_number=${ps.phase_number}, weeks=${phase.weeks}]`;
+          break;
+        }
       }
     }
-    // Fall back to last phase's schedule
-    const last=trainingPlan.phase_schedules[trainingPlan.phase_schedules.length-1];
-    if(last?.schedule?.length)return last.schedule;
+    if(!schedule){
+      const last=trainingPlan.phase_schedules[trainingPlan.phase_schedules.length-1];
+      if(last?.schedule?.length){
+        schedule=last.schedule;
+        source=`phase_schedules[last phase fallback, phase_number=${last.phase_number}]`;
+      }
+    }
   }
-  return trainingPlan?.weekly_schedule||[];
+  if(!schedule){
+    if(trainingPlan?.phase_schedules?.length===0){
+      console.warn('[Ritual] WARNING: phase_schedules is present but EMPTY — AI did not return phase-based schedules. Falling back to weekly_schedule for all weeks. Exercises will NOT vary by week.');
+    } else if(!trainingPlan?.phase_schedules){
+      console.warn('[Ritual] WARNING: phase_schedules is missing from the plan — AI may not have returned phase variation. Falling back to weekly_schedule.');
+    }
+    schedule=trainingPlan?.weekly_schedule||[];
+    source='weekly_schedule (fallback)';
+  }
+  const totalPhases=(trainingPlan?.phase_schedules||[]).length;
+  console.log(`[Ritual] getScheduleForWeek(${weekNum}): source=${source}, totalPhaseSchedules=${totalPhases}, scheduledays=${schedule.length}`);
+  return applyBoxingFilter(schedule,weekNum);
 }
 
 // Return a week_override for a specific week+day (boxing only on weeks 6 & 11, etc.)
@@ -6728,6 +6787,18 @@ function renderTrainDailyHTML(){
   const dateISO=getDateForOffset(trainingDayOffset).toISOString().slice(0,10);
   const occasionalActivities=(trainingPlan.occasional_activities||[]).filter(a=>a.date===dateISO);
 
+  // Auto-calculate the calendar week within the plan
+  let weekIndicatorHTML='';
+  if(trainingPlan?.plan_start_date){
+    const planStart=new Date(trainingPlan.plan_start_date+'T00:00:00');
+    const viewDate=getDateForOffset(trainingDayOffset);
+    viewDate.setHours(0,0,0,0);
+    const diffDays=Math.floor((viewDate-planStart)/(1000*60*60*24));
+    const calWeek=Math.max(1,Math.floor(diffDays/7)+1);
+    const totalWeeks=trainingPlan.duration_weeks||12;
+    const clampedWeek=Math.min(calWeek,totalWeeks);
+    weekIndicatorHTML=`<div style="text-align:center;font-size:10px;color:var(--text-dimmer);letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px;margin-top:-4px">Week ${clampedWeek} of ${totalWeeks}</div>`;
+  }
   const dateNav=`<div class="plan-date-nav">
     <button class="plan-date-arrow" onclick="navigateTrainingDay(-1)" aria-label="Previous day">
       <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
@@ -6739,7 +6810,8 @@ function renderTrainDailyHTML(){
     <button class="plan-date-arrow" onclick="navigateTrainingDay(1)" aria-label="Next day">
       <svg viewBox="0 0 24 24"><polyline points="9 6 15 12 9 18"/></svg>
     </button>
-  </div>`;
+  </div>
+  ${weekIndicatorHTML}`;
 
   const TYPE_COLOR={strength:'#a78bfa',cardio:'#34d399',hiit:'#fb923c',flexibility:'#38bdf8',rest:'#94a3b8',mixed:'#f0e0a0'};
   let dayContent;
@@ -7197,13 +7269,14 @@ Return ONLY valid JSON in this exact structure (no markdown fences, no explanati
 
 IMPORTANT — every session object in "sessions" MUST include a "duration" field with a concrete time estimate (e.g. "30 mins", "45-60 mins", "20 seconds x 3 sets", "30 seconds rest"). Never use vague placeholders like "See phase notes" or omit the field. If an exercise is timed rather than set/rep based, set "sets" and "reps" to null and express the full prescription in "duration" (e.g. "duration":"20 min easy jog").
 
-PHASE-BASED EXERCISE VARIATION (REQUIRED) — The plan must feel like a real periodized program, not the same exercises repeated every week. Use "phase_schedules" to provide a completely different set of exercises for each phase. Rules:
-- Each phase_schedules entry must have a "phase_number" matching the phases array and a "schedule" with the same day/type structure as weekly_schedule.
-- Exercises MUST rotate between phases for every muscle group. If Phase 1 uses Barbell Bench Press, Phase 2 must use Incline Dumbbell Press, Phase 3 must use Cable Fly or Weighted Push-ups. Never repeat the same exercise across phases.
-- Rep ranges and intensity MUST change per phase: Phase 1 = moderate load, higher reps (10-15, hypertrophy focus); Phase 2 = heavier load, lower reps (5-8, strength focus); Phase 3 = varied intensity, functional/compound movements.
-- "weekly_schedule" should be identical to phase_schedules[0].schedule (Phase 1) for backward compatibility.
+PHASE-BASED EXERCISE VARIATION (CRITICAL — THIS IS MANDATORY) — You MUST return "phase_schedules" as an array with at least 3 entries (one per training phase). Each phase MUST have completely different exercise names — not just different rep ranges, but entirely different movements. "weekly_schedule" will be ignored by the app and exists only for legacy parsing; the app reads exclusively from "phase_schedules". Rules:
+- Return at least 3 phase_schedules entries. Each entry must have "phase_number" and a complete "schedule" array (all training days for that phase).
+- Every exercise name MUST be different between phases for the same muscle group. For example: Phase 1 chest = "Barbell Bench Press", Phase 2 chest = "Incline Dumbbell Press", Phase 3 chest = "Cable Fly or Weighted Push-ups". This applies to every muscle group — NO exercise name may appear in more than one phase.
+- Rep ranges and intensity MUST change per phase: Phase 1 = moderate load, higher reps (10-15, hypertrophy); Phase 2 = heavier load, lower reps (5-8, strength); Phase 3 = functional/compound, varied intensity.
+- "weekly_schedule" must be identical to phase_schedules[0].schedule (Phase 1) — it is only there for backward compatibility and will NOT be displayed.
+- If you return phase_schedules with fewer than 3 entries, or with repeated exercise names across phases, the plan will be considered invalid.
 
-WEEK OVERRIDES (boxing / sport-specific weeks) — If the user's notes mention boxing or any activity they want to do on specific weeks only (e.g. "boxing on weeks 6 and 11"), generate "week_overrides" as an array of day replacements. Each override needs: "week" (integer), "day" (day name matching weekly_schedule), "title", "type", "duration_minutes", and "sessions". The override completely replaces that day's workout for that specific week only. Do NOT include boxing or other week-specific activities in weekly_schedule or phase_schedules — they belong exclusively in week_overrides.
+WEEK OVERRIDES (boxing / sport-specific weeks) — If the user's notes mention boxing or any activity they want to do on specific weeks only (e.g. "boxing on weeks 6 and 11"), generate "week_overrides" as an array of day replacements. Each override needs: "week" (integer), "day" (day name matching weekly_schedule), "title", "type", "duration_minutes", and "sessions". The override completely replaces that day's workout for that specific week only. Do NOT include boxing or any boxing-related exercise (shadow boxing, bag work, mitt work, sparring, punching) in weekly_schedule or phase_schedules — boxing belongs EXCLUSIVELY in week_overrides. If boxing sessions appear in weekly_schedule or phase_schedules, they will be automatically removed.
 
 OCCASIONAL ACTIVITIES — if the user's notes mention any activity described as "a few times a month", "occasional", "2-3 times a month", or similar irregular frequency (e.g. swimming, Capoeira a few times a month), do NOT add them to weekly_schedule as recurring days. Instead schedule them on specific calendar dates in the "occasional_activities" array, spread across the first 4 weeks of the plan starting from today (${new Date().toISOString().slice(0,10)}). Generate 4-8 dated entries covering the frequency mentioned. Each entry needs: "date" (YYYY-MM-DD), "name", "duration_minutes", "note". If the user mentions no occasional activities, set "occasional_activities" to [].
 
@@ -7238,6 +7311,22 @@ weekly_schedule should include ${numDays} training session(s) per week. Include 
     const plan=JSON.parse(jsonMatch[0]);
     completePlanGenProgress(()=>{
       trainingPlan=plan;
+      // Stamp the plan start date so exercise completions can be scoped to calendar dates
+      if(!trainingPlan.plan_start_date){
+        trainingPlan.plan_start_date=new Date().toISOString().slice(0,10);
+      }
+      // Log phase schedule info for debugging
+      const numPhaseSchedules=(trainingPlan.phase_schedules||[]).length;
+      console.log(`[Ritual] Plan generated. phase_schedules count: ${numPhaseSchedules}`);
+      if(numPhaseSchedules>0){
+        trainingPlan.phase_schedules.forEach((ps,i)=>{
+          const phases=trainingPlan.phases||[];
+          const ph=phases[(ps.phase_number||1)-1];
+          console.log(`[Ritual]   Phase ${ps.phase_number} (${ph?.weeks||'?'}): ${(ps.schedule||[]).length} days, first exercise: ${ps.schedule?.[0]?.sessions?.[0]?.name||'n/a'}`);
+        });
+      } else {
+        console.warn('[Ritual] WARNING: AI returned 0 phase_schedules — exercises will NOT vary by week!');
+      }
       trainPhaseIdx=0;trainingWeek=1;expandedDay=null;
       saveTrainingPlan();
       renderTrainingView();
@@ -7410,13 +7499,13 @@ CRITICAL — "weekly_meals" MUST contain ALL 7 days (Monday through Sunday). EVE
     Object.keys(localStorage).filter(k=>k.startsWith('ritual_meal_checks_')).forEach(k=>localStorage.removeItem(k));
     shoppingList=null;shoppingChecked={};saveShoppingList();
     saveTrainingPlan();
-    // Re-render diet tab in place
-    if(trainingTab==='diet'){
-      const tc=document.getElementById('trainTabContent');
-      if(tc){tc.innerHTML=renderDietHTML();bindTrainEvents();}
-    }else{
-      renderTrainingView();
-    }
+    // Reset daily view to today and close any open weekly overlay before re-rendering
+    nutritionDayOffset=0;
+    const existingWeeklyOverlay=document.getElementById('nutritionWeeklyOverlay');
+    if(existingWeeklyOverlay)existingWeeklyOverlay.remove();
+    // Always re-render the full training view so both daily and weekly meal sections reflect the new plan
+    trainingTab='diet';
+    renderTrainingView();
   }catch(err){
     console.error('[Ritual] Nutrition regeneration error:',err);
     if(btn){btn.disabled=false;btn.textContent=origLabel;}
