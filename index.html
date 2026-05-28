@@ -3288,7 +3288,7 @@ ${recentWellness.length?recentWellness.join('\n'):'none recorded'}`;
 }
 
 function getApiKey(){return localStorage.getItem('ritualApiKey')||'';}
-function getModel(){return localStorage.getItem('ritualModel')||'claude-haiku-4-5-20251001';}
+function getModel(){return localStorage.getItem('ritualModel')||'claude-haiku-4-5';}
 
 async function askAI(question,suffix){
   if(!question||!question.trim())return;
@@ -7717,8 +7717,8 @@ weekly_schedule should include ${numDays} training session(s) per week. Include 
       let msg;
       if(pfErr.networkError){
         msg=onFileProt
-          ?'Network error — direct browser API calls are blocked when opening the app as a local file (file:// URL). Serve via a local web server or use the hosted version.'
-          :'Could not connect to Anthropic. Check your internet connection.';
+          ?'Network error — direct browser API calls are blocked when opening the app as a local file (file:// URL). Open the app from GitHub Pages instead.'
+          :'Could not reach Anthropic. Most common cause: an ad blocker or browser extension is blocking the request — try disabling it (uBlock Origin, AdBlock, Privacy Badger, etc.) and retry. Also check that you have an active internet connection.';
       } else {
         msg=getStatusErrorMessage(pfErr.status)||`Connection check failed (HTTP ${pfErr.status}) — check your API key in Settings → AI Settings`;
       }
@@ -7856,8 +7856,8 @@ weekly_schedule should include ${numDays} training session(s) per week. Include 
       msg=getStatusErrorMessage(err.httpStatus)||`Generation failed: ${err.message}`;
     } else if(isNetworkFailure){
       msg=onFileProt
-        ?'Network error — direct browser API calls are blocked when opening the app as a local file (file:// URL). Serve via a local web server or use the hosted version.'
-        :'Could not connect to Anthropic. Check your internet connection.';
+        ?'Network error — direct browser API calls are blocked when opening the app as a local file (file:// URL). Open the app from GitHub Pages instead.'
+        :'Could not reach Anthropic. Most common cause: an ad blocker or browser extension (uBlock Origin, AdBlock, Privacy Badger, etc.) is blocking the request — try disabling it and retry.';
     } else {
       msg='Generation failed: '+err.message;
     }
@@ -8091,7 +8091,7 @@ CRITICAL — "weekly_meals" MUST contain ALL 7 days (Monday through Sunday). EVE
     if(err.httpStatus){
       errMsg=getStatusErrorMessage(err.httpStatus)||`Update failed: ${err.message}`;
     } else if(isNetworkFailure){
-      errMsg='Could not connect to Anthropic. Check your internet connection.';
+      errMsg='Could not reach Anthropic. Try disabling any ad blocker or VPN and retry.';
     } else {
       errMsg='Update failed: '+err.message;
     }
