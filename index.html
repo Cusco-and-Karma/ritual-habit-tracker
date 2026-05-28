@@ -6479,18 +6479,52 @@ function startPlanGenProgress(){
 
 function completePlanGenProgress(onDone){
   clearInterval(planGenInterval);planGenInterval=null;
+  // If the tab is in the background, skip animation entirely — rAF would
+  // be paused and setInterval throttled to 1s, so the user would return
+  // to a "stuck" UI. Fast-finish so the rendered plan is ready immediately.
+  if(document.hidden){
+    planGenCurrentPct=100;
+    _planGenSetUI(100,'Your plan is ready! ✨');
+    setTimeout(onDone,0);
+    return;
+  }
+  // Foreground: use setTimeout instead of requestAnimationFrame so the
+  // animation still progresses (though throttled) if the user tabs away
+  // mid-fill — rAF is paused entirely while hidden, setTimeout is not.
   const fill=()=>{
     planGenCurrentPct=Math.min(100,planGenCurrentPct+2.5);
     _planGenSetUI(planGenCurrentPct,planGenCurrentPct>=100?'Your plan is ready! ✨':'Finalizing…');
-    if(planGenCurrentPct<100)requestAnimationFrame(fill);
+    if(planGenCurrentPct<100)setTimeout(fill,30);
     else setTimeout(onDone,500);
   };
-  requestAnimationFrame(fill);
+  setTimeout(fill,30);
 }
 
 function stopPlanGenProgress(){
   clearInterval(planGenInterval);planGenInterval=null;
+  releasePlanGenWakeLock();
 }
+
+// ── Wake Lock: prevent screen from sleeping during generation (mobile especially)
+let _planGenWakeLock=null;
+async function acquirePlanGenWakeLock(){
+  try{
+    if(!('wakeLock' in navigator))return;
+    _planGenWakeLock=await navigator.wakeLock.request('screen');
+    // Re-acquire if the lock is released by tab switching (browsers auto-release)
+    _planGenWakeLock.addEventListener('release',()=>{_planGenWakeLock=null;});
+  }catch(e){/* permission denied or unsupported — silently ignore */}
+}
+function releasePlanGenWakeLock(){
+  try{if(_planGenWakeLock){_planGenWakeLock.release();_planGenWakeLock=null;}}catch(e){}
+}
+// If user tabs away during generation, browsers auto-release the lock.
+// Re-acquire when they return so the screen stays on during the rest of the generation.
+document.addEventListener('visibilitychange',()=>{
+  if(!document.hidden && document.getElementById('planGenWrap') && !_planGenWakeLock){
+    acquirePlanGenWakeLock();
+  }
+});
 
 // ─────────────────────────────────────────────────────────
 // DRAFT SAVING
@@ -7529,6 +7563,7 @@ async function doGeneratePlan(){
   const btn=document.getElementById('trainGenBtn');
   if(btn)btn.disabled=true;
   startPlanGenProgress();
+  acquirePlanGenWakeLock();
 
   // Build day context string
   const fixedActivities=trainSetup.daySlots.map((s,i)=>{
@@ -7821,30 +7856,34 @@ weekly_schedule should include ${numDays} training session(s) per week. Include 
 
     const plan=extractJSONFromText(text);
     if(!plan)throw new Error('Plan was too large to generate in one go — try reducing the plan duration or simplifying your goals');
+    // PERSIST IMMEDIATELY — before the completion animation runs.
+    // If the user backgrounds the tab during the 88→100% fill, this guarantees
+    // the plan is safely saved and won't be lost.
+    trainingPlan=plan;
+    if(!trainingPlan.plan_start_date){
+      trainingPlan.plan_start_date=new Date().toISOString().slice(0,10);
+    }
+    trainPhaseIdx=0;trainingWeek=1;expandedDay=null;
+    saveTrainingPlan();
+    // Log phase schedule info for debugging
+    const numPhaseSchedules=(trainingPlan.phase_schedules||[]).length;
+    console.log(`[Ritual] Plan generated. phase_schedules count: ${numPhaseSchedules}`);
+    if(numPhaseSchedules>0){
+      trainingPlan.phase_schedules.forEach((ps,i)=>{
+        const phases=trainingPlan.phases||[];
+        const ph=phases[(ps.phase_number||1)-1];
+        console.log(`[Ritual]   Phase ${ps.phase_number} (${ph?.weeks||'?'}): ${(ps.schedule||[]).length} days, first exercise: ${ps.schedule?.[0]?.sessions?.[0]?.name||'n/a'}`);
+      });
+    } else {
+      console.warn('[Ritual] WARNING: AI returned 0 phase_schedules — exercises will NOT vary by week!');
+    }
     completePlanGenProgress(()=>{
-      trainingPlan=plan;
-      // Stamp the plan start date so exercise completions can be scoped to calendar dates
-      if(!trainingPlan.plan_start_date){
-        trainingPlan.plan_start_date=new Date().toISOString().slice(0,10);
-      }
-      // Log phase schedule info for debugging
-      const numPhaseSchedules=(trainingPlan.phase_schedules||[]).length;
-      console.log(`[Ritual] Plan generated. phase_schedules count: ${numPhaseSchedules}`);
-      if(numPhaseSchedules>0){
-        trainingPlan.phase_schedules.forEach((ps,i)=>{
-          const phases=trainingPlan.phases||[];
-          const ph=phases[(ps.phase_number||1)-1];
-          console.log(`[Ritual]   Phase ${ps.phase_number} (${ph?.weeks||'?'}): ${(ps.schedule||[]).length} days, first exercise: ${ps.schedule?.[0]?.sessions?.[0]?.name||'n/a'}`);
-        });
-      } else {
-        console.warn('[Ritual] WARNING: AI returned 0 phase_schedules — exercises will NOT vary by week!');
-      }
-      trainPhaseIdx=0;trainingWeek=1;expandedDay=null;
-      saveTrainingPlan();
+      releasePlanGenWakeLock();
       renderTrainingView();
     });
   }catch(err){
     stopPlanGenProgress();
+    releasePlanGenWakeLock();
     const isAbort=err.name==='AbortError'||err.message?.includes('timed out');
     const isNetworkFailure=err instanceof TypeError&&!err.httpStatus;
     const onFileProt=location.protocol==='file:';
@@ -9342,6 +9381,14 @@ async function handleExDetailPhoto(event){
 document.getElementById('exDetailOverlay').addEventListener('click',function(e){
   if(e.target===this)closeExDetail();
 });
+
+// ── Build stamp — helps diagnose stale GitHub Pages cache.
+// If you see "Could not reach Anthropic", open DevTools console (Cmd+Opt+I)
+// and check this stamp matches the latest commit on GitHub.
+window.RITUAL_BUILD='2026-05-28-bg-resilient';
+console.log('[Ritual] Build:',window.RITUAL_BUILD);
+console.log('[Ritual] Model setting:',localStorage.getItem('ritualModel')||'(default — claude-haiku-4-5)');
+console.log('[Ritual] API key set:',!!localStorage.getItem('ritualApiKey'));
 
 </script>
 </body>
