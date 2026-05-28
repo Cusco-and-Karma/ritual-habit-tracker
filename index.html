@@ -1598,9 +1598,20 @@
 
   <!-- JOURNAL VIEW -->
   <div class="scroll-area view" id="journalView">
-    <div class="section-label">today's entry</div>
+    <!-- Date navigator (same style as Training / Nutrition tabs) -->
+    <div class="plan-date-nav" id="journalDateNav">
+      <button class="plan-date-arrow" onclick="navigateJournalDay(-1)" aria-label="Previous day">
+        <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <div class="plan-date-center">
+        <div class="plan-date-title" id="journalNavTitle">Today</div>
+        <div class="plan-date-sub" id="journalNavSub">Today</div>
+      </div>
+      <button class="plan-date-arrow" id="journalNavNext" onclick="navigateJournalDay(1)" aria-label="Next day">
+        <svg viewBox="0 0 24 24"><polyline points="9 6 15 12 9 18"/></svg>
+      </button>
+    </div>
     <div class="journal-section">
-      <span class="journal-date-chip" id="journalDateChip"></span>
       <!-- Quick notes -->
       <div style="font-size:10px;color:var(--text-dimmer);letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px">Daily Notes</div>
       <textarea class="journal-note-area" id="journalDailyNotes" rows="3" placeholder="How are you feeling today?"></textarea>
@@ -5969,6 +5980,7 @@ function toggleMealCheck(dayIdx,mealName){
 }
 let nutritionDayOffset=0;   // days from today (0=today, -1=yesterday, +1=tomorrow)
 let trainingDayOffset=0;    // days from today for training daily view
+let journalDayOffset=0;     // days from today for journal view
 let nutritionSettingsOpen=false;
 
 // ── Date helpers ──
@@ -5979,7 +5991,7 @@ function formatDateNav(offset){const d=getDateForOffset(offset);return d.toLocal
 function navigateNutritionDay(delta){
   nutritionDayOffset+=delta;
   const section=document.getElementById('nutritionDaySection');
-  if(section){section.outerHTML=renderNutritionDayView();}
+  if(section){section.outerHTML=renderNutritionDayView();bindMealLongPress();}
   else renderTrainingView();
 }
 
@@ -6052,8 +6064,8 @@ function renderNutritionDayView(){
       return `<div class="meal-check-row">
         <div class="meal-check-box${done?' checked':''}" onclick="toggleMealCheck(${dow},'${escapeHtml(meal.name)}')" role="checkbox" aria-checked="${done}" tabindex="0"
           onkeydown="if(event.key==='Enter'||event.key===' ')toggleMealCheck(${dow},'${escapeHtml(meal.name)}')"></div>
-        <div class="meal-check-info recipe-meal-card" onclick="openRecipePage(_mealCardLookup['${cacheKey}'],${dow})" title="Tap to view recipe">
-          <div class="meal-check-name" style="display:flex;align-items:center;gap:6px">${escapeHtml(meal.name)}<svg viewBox="0 0 24 24" width="11" height="11" style="stroke:var(--text-dimmer);fill:none;stroke-width:2;stroke-linecap:round;flex-shrink:0"><polyline points="9 6 15 12 9 18"/></svg></div>
+        <div class="meal-check-info recipe-meal-card" data-lpkey="${cacheKey}" data-lpdow="${dow}" title="Hold to view recipe">
+          <div class="meal-check-name" style="display:flex;align-items:center;gap:6px">${escapeHtml(meal.name)}<svg viewBox="0 0 24 24" width="11" height="11" style="stroke:var(--text-dimmer);fill:none;stroke-width:2;stroke-linecap:round;flex-shrink:0"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg></div>
           ${meal.description?`<div class="meal-check-desc"${done?' style="opacity:.5;text-decoration:line-through"':''}>${escapeHtml(meal.description)}</div>`:''}
           ${cals>0?`<div class="meal-check-macros">P ${meal.protein_g||0}g · C ${meal.carbs_g||0}g · F ${meal.fat_g||0}g · ${cals} kcal</div>`:''}
         </div>
@@ -6131,8 +6143,8 @@ function renderNutritionWeeklyPageHTML(){
         _mealCardLookup[cacheKey]=meal;
         return `<div class="meal-check-row">
           <div class="meal-check-box${done?' checked':''}" style="cursor:default"></div>
-          <div class="meal-check-info recipe-meal-card" onclick="openRecipePage(_mealCardLookup['${cacheKey}'],${di})" title="Tap to view recipe">
-            <div class="meal-check-name" style="display:flex;align-items:center;gap:6px">${escapeHtml(meal.name)}<svg viewBox="0 0 24 24" width="11" height="11" style="stroke:var(--text-dimmer);fill:none;stroke-width:2;stroke-linecap:round;flex-shrink:0"><polyline points="9 6 15 12 9 18"/></svg></div>
+          <div class="meal-check-info recipe-meal-card" data-lpkey="${cacheKey}" data-lpdow="${di}" title="Hold to view recipe">
+            <div class="meal-check-name" style="display:flex;align-items:center;gap:6px">${escapeHtml(meal.name)}<svg viewBox="0 0 24 24" width="11" height="11" style="stroke:var(--text-dimmer);fill:none;stroke-width:2;stroke-linecap:round;flex-shrink:0"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg></div>
             ${meal.description?`<div class="meal-check-desc">${escapeHtml(meal.description)}</div>`:''}
             ${cals>0?`<div class="meal-check-macros">P ${meal.protein_g||0}g · C ${meal.carbs_g||0}g · F ${meal.fat_g||0}g · ${cals} kcal</div>`:''}
           </div>
@@ -6578,7 +6590,9 @@ function buildShoppingListHTML(){
       const done=!!shoppingChecked[key];
       const qty=item.qty?`${String(item.qty)} ${item.unit||''}`.trim():'';
       const notesHTML=item.notes?` <em style="color:var(--text-dimmer);font-size:10px;font-style:normal">(${escapeHtml(item.notes)})</em>`:'';
-      const priceHTML=item.price_usd?`<span class="shop-item-price">~$${Number(item.price_usd).toFixed(2)}</span>`:'';
+      const priceHTML=item.price_usd!=null
+        ?`<span class="shop-item-price">~$${Number(item.price_usd).toFixed(2)}</span>`
+        :`<span class="shop-item-price" style="color:var(--text-dimmer)">-</span>`;
       return `<div class="shop-item">
         <button class="shop-check${done?' checked':''}" onclick="toggleShoppingItem('${key}')" aria-label="Toggle ${escapeHtml(item.name)}">
           <svg viewBox="0 0 12 12"><polyline points="2 6 5 9 10 3"/></svg>
@@ -7044,7 +7058,20 @@ function getScheduleForWeek(weekNum){
     return {...dayData,sessions:[...(dayData.sessions||[]),...weekAccessories]};
   });
   const totalPhases=(trainingPlan?.phase_schedules||[]).length;
-  console.log(`[Ritual] getScheduleForWeek(${weekNum}): source=${source}, weekWithinPhase=${weekWithinPhase+1}, totalPhaseSchedules=${totalPhases}, scheduledays=${schedule.length}`);
+  // Determine phase name for logging
+  let phaseName='unknown';
+  if(trainingPlan?.phase_schedules){
+    for(const ps of trainingPlan.phase_schedules){
+      const ph=(trainingPlan.phases||[])[(ps.phase_number||1)-1];
+      if(ph){const m=String(ph.weeks||'').match(/(\d+)\s*[-–]\s*(\d+)/);if(m&&weekNum>=parseInt(m[1])&&weekNum<=parseInt(m[2])){phaseName=ph.name||`Phase ${ps.phase_number}`;break;}}
+    }
+  }
+  // Accessory set index (1-based) per day, for the first training day that has accessory_weeks
+  const sampleDay=mergedSchedule.find(d=>d.accessory_weeks?.length);
+  const accessorySetInfo=sampleDay
+    ?`accessory_set=${weekWithinPhase%sampleDay.accessory_weeks.length+1}/${sampleDay.accessory_weeks.length}`
+    :'no_accessory_weeks';
+  console.log(`[Ritual] getScheduleForWeek(${weekNum}): phase="${phaseName}", phase_week=${weekWithinPhase+1}, ${accessorySetInfo}, source=${source}, totalPhases=${totalPhases}`);
   return mergedSchedule;
 }
 
@@ -7056,23 +7083,17 @@ function getWeekOverride(weekNum,dayName){
 
 function renderTrainDailyHTML(){
   if(!trainingPlan)return renderTrainSetupHTML();
-  const schedule=getScheduleForWeek(trainingWeek);
   const dateLabel=formatDateNav(trainingDayOffset);
   const isToday=trainingDayOffset===0;
   const dow=getDowForOffset(trainingDayOffset);
   const DAY_NAMES_FULL=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
   const dayName=DAY_NAMES_FULL[dow];
-  let dayData=schedule.find(d=>(d.day||'').toLowerCase()===dayName.toLowerCase());
-  // Apply week override (e.g. boxing on weeks 6 & 11 replaces that day's workout)
-  const override=getWeekOverride(trainingWeek,dayName);
-  if(override)dayData={...override};
-  const di=dayData?(getScheduleForWeek(trainingWeek)).indexOf(dayData):-1;
 
-  // Occasional activities for this specific calendar date
-  const dateISO=getDateForOffset(trainingDayOffset).toISOString().slice(0,10);
-  const occasionalActivities=(trainingPlan.occasional_activities||[]).filter(a=>a.date===dateISO);
-
-  // Auto-calculate the calendar week within the plan
+  // Derive effective week from the date offset so the day navigator and the
+  // week navigator stay in sync. When plan_start_date is set, compute the
+  // calendar week from the currently-viewed date; otherwise fall back to the
+  // manually set trainingWeek.
+  let effectiveWeek=trainingWeek;
   let weekIndicatorHTML='';
   if(trainingPlan?.plan_start_date){
     const planStart=new Date(trainingPlan.plan_start_date+'T00:00:00');
@@ -7081,9 +7102,21 @@ function renderTrainDailyHTML(){
     const diffDays=Math.floor((viewDate-planStart)/(1000*60*60*24));
     const calWeek=Math.max(1,Math.floor(diffDays/7)+1);
     const totalWeeks=trainingPlan.duration_weeks||12;
-    const clampedWeek=Math.min(calWeek,totalWeeks);
-    weekIndicatorHTML=`<div style="text-align:center;font-size:10px;color:var(--text-dimmer);letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px;margin-top:-4px">Week ${clampedWeek} of ${totalWeeks}</div>`;
+    effectiveWeek=Math.min(calWeek,totalWeeks);
+    weekIndicatorHTML=`<div style="text-align:center;font-size:10px;color:var(--text-dimmer);letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px;margin-top:-4px">Week ${effectiveWeek} of ${totalWeeks}</div>`;
   }
+
+  const schedule=getScheduleForWeek(effectiveWeek);
+  let dayData=schedule.find(d=>(d.day||'').toLowerCase()===dayName.toLowerCase());
+  // Apply week override (e.g. boxing on weeks 6 & 11 replaces that day's workout)
+  const override=getWeekOverride(effectiveWeek,dayName);
+  if(override)dayData={...override};
+  // Find di from the SAME schedule array reference to avoid indexOf always returning -1
+  const di=dayData?schedule.indexOf(dayData):-1;
+
+  // Occasional activities for this specific calendar date
+  const dateISO=getDateForOffset(trainingDayOffset).toISOString().slice(0,10);
+  const occasionalActivities=(trainingPlan.occasional_activities||[]).filter(a=>a.date===dateISO);
   const dateNav=`<div class="plan-date-nav">
     <button class="plan-date-arrow" onclick="navigateTrainingDay(-1)" aria-label="Previous day">
       <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
@@ -7114,18 +7147,24 @@ function renderTrainDailyHTML(){
     const sessions=dayData.sessions||[];
     const type=(dayData.type||'rest').toLowerCase();
     const dotColor=TYPE_COLOR[type]||'#94a3b8';
-    const {done,total}=getDayCompletionStats(trainingWeek,di,sessions);
+    // Check if any day in this plan uses accessory_weeks — if none do, the plan is old format
+    const hasAccessoryFormat=(schedule||[]).some(d=>d.accessory_weeks&&d.accessory_weeks.length);
+    const missingAccessoryWarning=!hasAccessoryFormat&&trainingPlan?.phase_schedules?.length
+      ?`<div style="background:rgba(240,196,160,.1);border:1px solid rgba(240,196,160,.3);border-radius:var(--r-sm);padding:10px 12px;font-size:12px;color:var(--accent2);margin-bottom:10px">
+          Plan is using an older format without weekly accessory rotation. Regenerate your plan to enable progressive exercise variety.
+        </div>`:'';
+    const {done,total}=getDayCompletionStats(effectiveWeek,di,sessions);
     const allDone=total>0&&done===total;
     const exRows=sessions.map((ex,ei)=>{
-      const chk=isExerciseDone(trainingWeek,di,ei);
-      const exNoteKey=`${trainingWeek}_${di}_${ei}`;
+      const chk=isExerciseDone(effectiveWeek,di,ei);
+      const exNoteKey=`${effectiveWeek}_${di}_${ei}`;
       const savedNote=getExNotes()[exNoteKey]||'';
       const savedPhoto=getExPhotos()[exNoteKey]||'';
       const hasNote=savedNote.trim().length>0;
       const hasPhoto=savedPhoto.length>0;
       return `<div class="train-ex-row">
-        <div class="train-ex-check${chk?' done':''}" onclick="toggleExerciseDone(${trainingWeek},${di},${ei})" role="checkbox" aria-checked="${chk}" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' ')toggleExerciseDone(${trainingWeek},${di},${ei})">${chk?'✓':''}</div>
-        <div class="train-ex-info" style="cursor:pointer" onclick="openExDetail(${trainingWeek},${di},${ei})">
+        <div class="train-ex-check${chk?' done':''}" onclick="toggleExerciseDone(${effectiveWeek},${di},${ei})" role="checkbox" aria-checked="${chk}" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' ')toggleExerciseDone(${effectiveWeek},${di},${ei})">${chk?'✓':''}</div>
+        <div class="train-ex-info" style="cursor:pointer" onclick="openExDetail(${effectiveWeek},${di},${ei})">
           <div class="train-ex-name" style="display:flex;align-items:center;gap:6px">${escapeHtml(ex.name)}${hasNote||hasPhoto?`<span style="font-size:9px;color:var(--accent);letter-spacing:.04em">${hasPhoto?'📷 ':''}${hasNote?'📝':''}</span>`:''}
           </div>
           <div class="train-ex-meta">${ex.sets?ex.sets+' sets':''} ${ex.reps?'× '+ex.reps:''} ${ex.duration?`<span style="color:var(--accent2);margin-left:2px">⏱ ${escapeHtml(ex.duration)}</span>`:''} <span style="color:var(--accent);font-size:9px;margin-left:4px">tap for details</span></div>
@@ -7133,7 +7172,7 @@ function renderTrainDailyHTML(){
         </div>
       </div>`;
     }).join('');
-    dayContent=`<div class="train-day-card">
+    dayContent=`${missingAccessoryWarning}<div class="train-day-card">
       <div class="train-day-header" style="cursor:default">
         <div class="train-day-dot" style="background:${dotColor}"></div>
         <div class="train-day-name">${escapeHtml(dayName)}</div>
@@ -8310,6 +8349,47 @@ function bindTrainEvents(){
     });
     document.removeEventListener('click',handler);
   },{once:true,capture:false});
+  // Attach long-press listeners to meal cards
+  bindMealLongPress();
+}
+
+// ── Long-press on meal cards to open recipe ──
+// Regular tap does nothing (or just selects the checkbox via its own handler).
+// A 500 ms hold opens the full recipe page.
+function bindMealLongPress(){
+  document.querySelectorAll('.recipe-meal-card[data-lpkey]').forEach(el=>{
+    // Clone to remove any previously attached listeners
+    const fresh=el.cloneNode(true);
+    el.parentNode.replaceChild(fresh,el);
+    let timer=null;
+    let moved=false;
+    const cancel=()=>{
+      if(timer){clearTimeout(timer);timer=null;}
+    };
+    const start=()=>{
+      moved=false;
+      cancel();
+      timer=setTimeout(()=>{
+        timer=null;
+        if(moved)return;
+        const key=fresh.dataset.lpkey;
+        const dow=parseInt(fresh.dataset.lpdow);
+        const meal=_mealCardLookup[key];
+        if(meal)openRecipePage(meal,dow);
+      },500);
+    };
+    // Mobile: touch events
+    fresh.addEventListener('touchstart',()=>{start();},{passive:true});
+    fresh.addEventListener('touchend',cancel,{passive:true});
+    fresh.addEventListener('touchmove',()=>{moved=true;cancel();},{passive:true});
+    fresh.addEventListener('touchcancel',cancel,{passive:true});
+    // Desktop: mouse events
+    fresh.addEventListener('mousedown',start);
+    fresh.addEventListener('mouseup',cancel);
+    fresh.addEventListener('mouseleave',cancel);
+    // Prevent context menu on long-press (Android)
+    fresh.addEventListener('contextmenu',e=>{e.preventDefault();});
+  });
 }
 
 // Call at app init
@@ -8322,6 +8402,21 @@ loadShoppingList();
 
 function getJournalKey(dateStr){return 'ritual_journal_'+dateStr;}
 function getTodayDateStr(){return new Date().toISOString().slice(0,10);}
+
+// Return the ISO date string for the current journal offset
+function getJournalDateStr(){
+  const d=new Date();
+  d.setDate(d.getDate()+journalDayOffset);
+  return d.toISOString().slice(0,10);
+}
+
+// Navigate journal by delta days and re-render
+function navigateJournalDay(delta){
+  const proposed=journalDayOffset+delta;
+  if(proposed>0)return; // don't navigate into the future
+  journalDayOffset=proposed;
+  renderJournalView();
+}
 
 function loadJournalEntry(dateStr){
   try{return JSON.parse(localStorage.getItem(getJournalKey(dateStr))||'{}');}catch(e){return {};}
@@ -8361,7 +8456,7 @@ function fileToBase64(file){
 // The "daily notes" field is shared with the Home page reflection.
 // Both read/write getDayData(key).reflection so they stay in sync.
 function saveJournalEntry(){
-  const dateStr=getTodayDateStr();
+  const dateStr=getJournalDateStr();
   const dailyText=document.getElementById('journalDailyNotes').value;
   // Persist to the shared day-data store so Home page stays in sync
   const dd=getDayData(dateStr);
@@ -8379,12 +8474,20 @@ function saveJournalEntry(){
 
 // ── Render Journal View ──
 function renderJournalView(){
-  const dateStr=getTodayDateStr();
+  const dateStr=getJournalDateStr();
+  const isToday=journalDayOffset===0;
   const entry=loadJournalEntry(dateStr);
 
-  // Date chip
-  const chip=document.getElementById('journalDateChip');
-  if(chip){const d=new Date();chip.textContent=d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});}
+  // Update date navigator UI
+  const titleEl=document.getElementById('journalNavTitle');
+  const subEl=document.getElementById('journalNavSub');
+  const nextBtn=document.getElementById('journalNavNext');
+  if(titleEl){
+    const d=new Date();d.setDate(d.getDate()+journalDayOffset);
+    titleEl.textContent=d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
+  }
+  if(subEl){subEl.textContent=isToday?'Today':'';subEl.style.display=isToday?'':'none';}
+  if(nextBtn)nextBtn.disabled=journalDayOffset>=0;
 
   // Fill notes — daily note is shared with Home page (getDayData reflection)
   const dailyEl=document.getElementById('journalDailyNotes');
@@ -8393,24 +8496,30 @@ function renderJournalView(){
     // Prefer the shared store; fall back to the legacy journal store for old entries
     const dayReflection=getDayData(dateStr).reflection;
     dailyEl.value=dayReflection||entry.daily||'';
-    // Wire auto-save so typing in Journal syncs to Home immediately
+    // Wire auto-save so typing in Journal syncs to Home immediately (only for the active date)
     dailyEl.oninput=()=>{
-      const dd=getDayData(dateStr);
+      const activeDateStr=getJournalDateStr();
+      const dd=getDayData(activeDateStr);
       dd.reflection=dailyEl.value;
-      saveDayData(dateStr,dd);
-      // keep journal-specific store in sync too
-      const e=loadJournalEntry(dateStr);
+      saveDayData(activeDateStr,dd);
+      const e=loadJournalEntry(activeDateStr);
       e.daily=dailyEl.value;
-      saveJournalEntryData(dateStr,e);
+      saveJournalEntryData(activeDateStr,e);
     };
   }
-  if(extEl)extEl.value=entry.extended||'';
+  if(extEl){
+    extEl.value=entry.extended||'';
+    extEl.oninput=()=>{
+      const activeDateStr=getJournalDateStr();
+      const e=loadJournalEntry(activeDateStr);
+      e.extended=extEl.value;
+      saveJournalEntryData(activeDateStr,e);
+    };
+  }
 
-  // Training notes
+  // Training notes, photos, progress photos (scoped to selected date)
   renderJournalTrainingNotes();
-  // Training photos
   renderJournalTrainingPhotos();
-  // Progress photos
   renderJournalProgressPhotos();
 }
 
