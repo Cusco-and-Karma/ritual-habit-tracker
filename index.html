@@ -6461,18 +6461,38 @@ function startPlanGenProgress(){
   const sv=document.getElementById('trainView');
   if(sv)sv.scrollTop=0;
   let targetPct=0,elapsed=0;
-  const totalMs=55000,maxPct=88;
+  // Two-phase progress so the bar never *parks*:
+  // Phase 1 (0–55s): linear 0 → 88%  — covers the expected generation window
+  // Phase 2 (55s+):  asymptotic 88 → 97%  — keeps visible motion if the API
+  //                  is still streaming (common on mobile networks for large plans).
+  // Never reach 100% until completePlanGenProgress() actually fires.
+  const phase1Ms=55000,phase1Cap=88,phase2Asymptote=97;
+  const longWaitMs=70000;
+  const LONG_WAIT_CAP='Still working — large plans can take 60–90s on mobile…';
   planGenInterval=setInterval(()=>{
     elapsed+=150;
-    targetPct=Math.min(maxPct,(elapsed/totalMs)*maxPct);
+    if(elapsed<=phase1Ms){
+      targetPct=Math.min(phase1Cap,(elapsed/phase1Ms)*phase1Cap);
+    } else {
+      // Exponential approach to the asymptote — fast at first, then slow.
+      // Time constant 25s → reaches ~63% of the remaining gap in 25s, ~95% in 75s.
+      const approach=1-Math.exp(-(elapsed-phase1Ms)/25000);
+      targetPct=phase1Cap+approach*(phase2Asymptote-phase1Cap);
+    }
     // Strictly monotonic: only advance, never retreat.
     // Without this guard the lerp formula can pull planGenCurrentPct *down*
     // when the SSE stream has already pushed it past the timer's current target.
     const candidate=planGenCurrentPct+(targetPct-planGenCurrentPct)*0.1;
     if(candidate>planGenCurrentPct){
       planGenCurrentPct=candidate;
-      const capIdx=Math.min(Math.floor(planGenCurrentPct/maxPct*PLAN_GEN_CAPTIONS.length),PLAN_GEN_CAPTIONS.length-1);
-      _planGenSetUI(planGenCurrentPct,PLAN_GEN_CAPTIONS[capIdx]);
+      let cap;
+      if(elapsed>=longWaitMs){
+        cap=LONG_WAIT_CAP;
+      } else {
+        const capIdx=Math.min(Math.floor(planGenCurrentPct/phase1Cap*PLAN_GEN_CAPTIONS.length),PLAN_GEN_CAPTIONS.length-1);
+        cap=PLAN_GEN_CAPTIONS[capIdx];
+      }
+      _planGenSetUI(planGenCurrentPct,cap);
     }
   },150);
 }
@@ -9385,7 +9405,7 @@ document.getElementById('exDetailOverlay').addEventListener('click',function(e){
 // ── Build stamp — helps diagnose stale GitHub Pages cache.
 // If you see "Could not reach Anthropic", open DevTools console (Cmd+Opt+I)
 // and check this stamp matches the latest commit on GitHub.
-window.RITUAL_BUILD='2026-05-28-bg-resilient';
+window.RITUAL_BUILD='2026-05-28-asymptotic-progress';
 console.log('[Ritual] Build:',window.RITUAL_BUILD);
 console.log('[Ritual] Model setting:',localStorage.getItem('ritualModel')||'(default — claude-haiku-4-5)');
 console.log('[Ritual] API key set:',!!localStorage.getItem('ritualApiKey'));
