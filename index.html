@@ -259,6 +259,50 @@
   .reflection-save:hover{border-color:var(--accent);color:var(--accent)}
   .reflection-save.saved{border-color:var(--accent3);color:var(--accent3)}
   .home-wellness-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px;margin-bottom:4px}
+  /* Wellness mode toggle */
+  .wellness-mode-tabs{display:flex;gap:6px;margin-bottom:12px}
+  .wellness-mode-tab{flex:1;padding:7px 4px;border-radius:var(--r-sm);border:1.5px solid var(--border);background:transparent;color:var(--text-dim);font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;transition:all .15s}
+  .wellness-mode-tab.active{border-color:var(--accent);background:var(--accent-glow);color:var(--accent)}
+  /* Manual category sliders */
+  .well-cat-row{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+  .well-cat-label{font-size:11px;color:var(--text-dim);width:72px;flex-shrink:0;letter-spacing:.03em}
+  .well-cat-slider{flex:1;-webkit-appearance:none;appearance:none;height:4px;border-radius:99px;background:var(--surface2);outline:none;cursor:pointer}
+  .well-cat-slider::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--accent);cursor:pointer;border:2px solid var(--bg);box-shadow:0 0 6px rgba(200,180,240,.4)}
+  .well-cat-slider::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:var(--accent);cursor:pointer;border:2px solid var(--bg)}
+  .well-cat-val{font-size:13px;font-family:'DM Serif Display',serif;color:var(--text);width:18px;text-align:right;flex-shrink:0}
+  .well-manual-score{text-align:center;font-family:'DM Serif Display',serif;font-size:28px;color:var(--accent);margin:6px 0 10px;line-height:1}
+  .well-manual-lbl{font-size:11px;color:var(--text-dimmer);text-align:center;margin-bottom:10px;min-height:16px}
+  .well-save-btn{width:100%;padding:10px;border-radius:var(--r-sm);background:var(--accent);border:none;color:var(--bg);font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;transition:opacity .15s}
+  .well-save-btn:hover{opacity:.85}
+  .well-save-btn.saved{background:var(--accent3);color:var(--bg)}
+  /* AI questionnaire mode */
+  .well-ai-btn{width:100%;padding:11px;border-radius:var(--r-sm);background:var(--surface2);border:1.5px solid var(--accent);color:var(--accent);font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:8px}
+  .well-ai-btn:hover{background:var(--accent-glow)}
+  .well-ai-chat{background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-sm);padding:12px;margin-top:10px;max-height:280px;overflow-y:auto}
+  .well-ai-msg{font-size:12px;line-height:1.6;margin-bottom:8px;padding:8px 10px;border-radius:var(--r-sm)}
+  .well-ai-msg.ai{background:rgba(200,180,240,.08);color:var(--text);border:1px solid rgba(200,180,240,.15)}
+  .well-ai-msg.user{background:var(--surface);color:var(--text-dim);text-align:right}
+  .well-ai-input-row{display:flex;gap:6px;margin-top:8px}
+  .well-ai-input{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-sm);padding:8px 10px;color:var(--text);font-family:'DM Mono',monospace;font-size:12px;outline:none;transition:border-color .2s}
+  .well-ai-input:focus{border-color:var(--accent)}
+  .well-ai-send{padding:8px 12px;border-radius:var(--r-sm);background:var(--accent);border:none;color:var(--bg);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:opacity .15s}
+  .well-ai-send:hover{opacity:.85}
+  .well-score-result{background:rgba(200,180,240,.08);border:1px solid rgba(200,180,240,.25);border-radius:var(--r-sm);padding:14px;margin-top:10px;text-align:center}
+  .well-score-num{font-family:'DM Serif Display',serif;font-size:36px;color:var(--accent);line-height:1;margin-bottom:4px}
+  .well-score-insight{font-size:12px;color:var(--text-dim);line-height:1.6}
+  /* Missed workout carry-over banner */
+  .missed-wo-banner{background:rgba(240,196,160,.08);border:1.5px solid rgba(240,196,160,.35);border-radius:var(--r-sm);padding:12px 14px;margin-bottom:10px;display:flex;align-items:flex-start;gap:10px}
+  .missed-wo-banner-icon{font-size:18px;flex-shrink:0;margin-top:1px}
+  .missed-wo-banner-text{flex:1}
+  .missed-wo-banner-title{font-size:13px;font-family:'DM Serif Display',serif;color:var(--accent2);margin-bottom:2px}
+  .missed-wo-banner-sub{font-size:11px;color:var(--text-dim);line-height:1.5}
+  .missed-wo-dismiss{background:none;border:1px solid rgba(240,196,160,.35);border-radius:var(--r-sm);padding:4px 10px;font-size:10px;color:var(--accent2);font-family:'DM Mono',monospace;cursor:pointer;margin-top:6px;letter-spacing:.04em}
+  /* Weekly summary card */
+  .week-summary-card{background:rgba(160,228,200,.06);border:1.5px solid rgba(160,228,200,.25);border-radius:var(--r);padding:14px 16px;margin-bottom:10px}
+  .week-summary-title{font-family:'DM Serif Display',serif;font-size:15px;color:var(--accent3);margin-bottom:6px}
+  .week-summary-body{font-size:12px;color:var(--text-dim);line-height:1.6}
+  .week-summary-body strong{color:var(--text)}
+  .week-summary-dismiss{background:none;border:1px solid rgba(160,228,200,.25);border-radius:var(--r-sm);padding:5px 12px;font-size:10px;color:var(--accent3);font-family:'DM Mono',monospace;cursor:pointer;margin-top:8px;letter-spacing:.04em}
 
   /* DAY SCROLLER — fixed 7-day week strip */
   .day-scroller{display:flex;align-items:stretch;flex-shrink:0;background:var(--bg);padding:0 8px;border-bottom:1px solid var(--border)}
@@ -1118,9 +1162,8 @@
     </div>
 
     <div class="section-label" id="homeWellnessLabel">wellness</div>
-    <div class="home-wellness-card">
-      <div class="wellness-row" id="homeWellnessRow"></div>
-      <div class="wellness-score-lbl" id="homeWellnessLbl">tap to rate your day</div>
+    <div class="home-wellness-card" id="homeWellnessCard">
+      <!-- rendered by renderHomeWellness() -->
     </div>
 
     <div class="section-label" id="homeNotesLabel">notes</div>
@@ -2083,6 +2126,7 @@ let selectedCalDay=null,calFilterHabit=null;
 function fmtKey(y,m,d){return `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`}
 function todayKey(){const d=new Date();return fmtKey(d.getFullYear(),d.getMonth()+1,d.getDate())}
 function dateKey(offset){const d=new Date();d.setDate(d.getDate()+offset);return fmtKey(d.getFullYear(),d.getMonth()+1,d.getDate())}
+function _currentISOWeek(){const d=new Date();const mon=new Date(d);mon.setDate(d.getDate()-(d.getDay()||7)+1);return fmtKey(mon.getFullYear(),mon.getMonth()+1,mon.getDate());}
 function isCompleted(hid,day){day=day||todayKey();return !!(completions[day]&&completions[day][hid])}
 function save(){
   // always save locally - works for both guests and signed-in users
@@ -3268,15 +3312,47 @@ function buildContext(){
     const day=dateKey(-i);const dd=getDayData(day);
     return dd.wellness>0?`${day}: ${dd.wellness}/10`:'';
   }).filter(Boolean);
-  return `You are a compassionate habit coach. Be concise, warm, and specific. Keep responses under 120 words.
+
+  // Training context
+  const trainCtx=trainingPlan
+    ?`Plan: "${trainingPlan.plan_name}" · ${trainingPlan.duration_weeks} weeks · Week ${trainingWeek} · Goals: ${(trainSetup?.goals||[]).map(g=>g.replace(/_/g,' ')).join(', ')||'not set'}`
+    :'No training plan generated yet.';
+
+  // Nutrition context
+  const hasDiet=!!(trainingPlan?.diet);
+  const nutritionCtx=hasDiet
+    ?`Personalised meal plan active (${trainingPlan.diet.calories_per_day||'?'} kcal/day, P:${trainingPlan.diet.protein_g||'?'}g C:${trainingPlan.diet.carbs_g||'?'}g F:${trainingPlan.diet.fats_g||'?'}g). Dietary restrictions: ${(trainSetup?.dietary_restrictions||[]).join(', ')||'none'}.`
+    :'No meal plan yet.';
+
+  // Wellness score context
+  const wellnessEntry=JSON.parse(localStorage.getItem('ritual_wellness_entry_'+today)||'null');
+  const wellnessCtx=wellnessEntry
+    ?`Today's wellness score: ${wellnessEntry.score}/10 (Energy ${wellnessEntry.energy||'-'}, Sleep ${wellnessEntry.sleep||'-'}, Mood ${wellnessEntry.mood||'-'}, Stress ${wellnessEntry.stress||'-'}, Recovery ${wellnessEntry.recovery||'-'}). Insight: ${wellnessEntry.insight||'none'}.`
+    :(dayData.wellness>0?`Today's wellness: ${dayData.wellness}/10 (${WELLNESS_LABELS[dayData.wellness]})`:'Wellness not yet rated today.');
+
+  // Adaptive training context
+  const weekAdaptKey='ritual_adapt_week_'+_currentISOWeek();
+  const adaptNote=localStorage.getItem(weekAdaptKey);
+  const adaptCtx=adaptNote?`Adaptive plan note this week: ${adaptNote}`:'No adaptive adjustment this week.';
+
+  return `You are a compassionate all-round health and habit coach embedded in the Ritual app. Be concise, warm, and specific. Keep responses under 150 words unless the user asks for detail.
+
+APP SECTIONS you can help with:
+- Training: personalised periodized workout plan, daily view with date navigation, weekly view, exercise detail pages with animations, progress tracking.
+- Nutrition: personalised meal plan with daily scroll, weekly view, shopping list with prices, recipe pages, dietary restrictions, fasting windows.
+- Journal: daily notes, extended journal, handwritten photo transcription, training notes sync, progress photos.
+- COSMOS: horoscope and astrology section tied to habits and wellness.
+- Insights: performance charts, habit correlation, trends over 7/30/90 days.
+- Wellness score: daily wellbeing rating — manual (5 categories 1-5) or AI-guided questionnaire (5-7 questions).
+- Settings: Anthropic API key, model selector, dietary preferences, theme.
 
 TODAY (${today}):
 - Habits completed: ${doneToday}/${totalHabits}
-- Wellness: ${dayData.wellness>0?`${dayData.wellness}/10 (${WELLNESS_LABELS[dayData.wellness]})`:'not set'}
+- ${wellnessCtx}
 - Note: ${dayData.reflection||'none'}
 
 HABITS & STREAKS:
-${streaks.join('\n')}
+${streaks.join('\n')||'none'}
 
 LAST 7 DAYS:
 ${last7.join('\n')}
@@ -3284,7 +3360,14 @@ ${last7.join('\n')}
 30-DAY RATE: ${rate30}%
 
 RECENT WELLNESS:
-${recentWellness.length?recentWellness.join('\n'):'none recorded'}`;
+${recentWellness.length?recentWellness.join('\n'):'none recorded'}
+
+TRAINING:
+${trainCtx}
+${adaptCtx}
+
+NUTRITION:
+${nutritionCtx}`;
 }
 
 function getApiKey(){return localStorage.getItem('ritualApiKey')||'';}
@@ -3369,23 +3452,45 @@ function renderDateNav(){
 }
 
 let _notesDebounce=null;
+let _wellnessMode='manual'; // 'manual' | 'ai'
+let _wellAIChatHistory=[];  // [{role:'user'|'ai', text}]
+let _wellAIQuestionIdx=0;
+let _wellAIAnswers={};
+let _wellAIActive=false;
+
+function _getWellnessEntry(key){
+  try{return JSON.parse(localStorage.getItem('ritual_wellness_entry_'+key)||'null');}catch(e){return null;}
+}
+function _saveWellnessEntry(key,entry){
+  localStorage.setItem('ritual_wellness_entry_'+key,JSON.stringify(entry));
+  // also sync into legacy dayData.wellness so charts stay current
+  const dd=getDayData(key);
+  dd.wellness=entry.score;
+  saveDayData(key,dd);
+}
+function _calcManualScore(cats){
+  // stress is inverted (5=very stressed = bad)
+  const stressInv=6-cats.stress;
+  const raw=(cats.energy+cats.sleep+cats.mood+stressInv+cats.recovery)/5; // 1-5
+  return Math.round(raw*2); // scale to 1-10
+}
+
 function renderHomeWellness(key){
   key=key||todayKey();
   renderDateNav();
   const dayData=getDayData(key);
-  const row=document.getElementById('homeWellnessRow');
-  const lbl=document.getElementById('homeWellnessLbl');
+  const card=document.getElementById('homeWellnessCard');
   const notes=document.getElementById('homeNotes');
   const saveBtn=document.getElementById('homeNotesSave');
-  if(!row||!lbl)return;
+  if(!card)return;
   if(notes)notes.value=dayData.reflection||'';
 
-  // Autosave notes on input with debounce — re-attach every render so key is always current
+  // Autosave notes on input with debounce
   if(notes){
     notes.oninput=()=>{
       clearTimeout(_notesDebounce);
       _notesDebounce=setTimeout(()=>{
-        const k=key; // capture current key in closure
+        const k=key;
         const dd=getDayData(k);
         dd.reflection=notes.value;
         saveDayData(k,dd);
@@ -3394,8 +3499,6 @@ function renderHomeWellness(key){
       },600);
     };
   }
-
-  // Manual save button still works as a fallback
   if(saveBtn){
     saveBtn.onclick=()=>{
       clearTimeout(_notesDebounce);
@@ -3407,22 +3510,168 @@ function renderHomeWellness(key){
     };
   }
 
-  row.innerHTML=Array.from({length:10},(_,i)=>{
-    const score=i+1,sel=dayData.wellness===score;
-    const bg=sel?`background:${WELLNESS_COLORS[score]}`:'';
-    return `<button class="wellness-pip${sel?' selected':''}" style="${bg}" data-score="${score}" aria-label="Wellness ${score}">${score}</button>`;
+  const existing=_getWellnessEntry(key);
+  const isPast=key!==todayKey();
+
+  // ── MANUAL MODE ──
+  const cats=['energy','sleep','mood','stress','recovery'];
+  const catLabels={energy:'Energy',sleep:'Sleep',mood:'Mood',stress:'Stress',recovery:'Recovery'};
+  const catColors={energy:'#c8b4f0',sleep:'#a0c8f0',mood:'#f0c4a0',stress:'#f0a0b4',recovery:'#a0e4c8'};
+  const defaults={energy:3,sleep:3,mood:3,stress:3,recovery:3};
+  const catVals=existing&&existing.categories?existing.categories:{...defaults};
+  const manualScore=_calcManualScore(catVals);
+
+  const catRows=cats.map(c=>{
+    const col=catColors[c];
+    return `<div class="well-cat-row">
+      <label class="well-cat-label" for="wellSlider_${c}">${catLabels[c]}</label>
+      <input class="well-cat-slider" id="wellSlider_${c}" type="range" min="1" max="5" value="${catVals[c]||3}"
+        style="accent-color:${col}"
+        oninput="document.getElementById('wellVal_${c}').textContent=this.value;_wellUpdateManualScore('${key}')">
+      <span class="well-cat-val" id="wellVal_${c}">${catVals[c]||3}</span>
+    </div>`;
   }).join('');
-  lbl.textContent=dayData.wellness>0?`${dayData.wellness}/10 \u2013 ${WELLNESS_LABELS[dayData.wellness]}`:'tap to rate your day';
-  row.querySelectorAll('.wellness-pip').forEach(btn=>{
-    btn.addEventListener('click',()=>{
-      const score=Number(btn.dataset.score);
-      const dd=getDayData(key);
-      dd.wellness=dd.wellness===score?0:score;
-      saveDayData(key,dd);
+
+  const savedTag=existing
+    ?`<div style="font-size:10px;color:var(--accent3);text-align:center;margin-top:6px;letter-spacing:.04em">${isPast?'Saved for this day':'Saved today'} – ${existing.score}/10 ${WELLNESS_LABELS[existing.score]||''}</div>`
+    :'';
+
+  const manualHTML=`
+    ${catRows}
+    <div class="well-manual-score" id="wellManualScore">${existing?existing.score:manualScore}/10</div>
+    <div class="well-manual-lbl" id="wellManualLbl">${existing?(WELLNESS_LABELS[existing.score]||''):(WELLNESS_LABELS[manualScore]||'')}</div>
+    <button class="well-save-btn${existing?' saved':''}" id="wellSaveBtn" onclick="_wellSaveManual('${key}')">${existing?'Update score':'Save score'}</button>
+    ${savedTag}`;
+
+  // ── AI MODE ──
+  const aiMsgs=_wellAIChatHistory.map(m=>
+    `<div class="well-ai-msg ${m.role}">${m.role==='ai'?m.text:escapeHtml(m.text)}</div>`
+  ).join('');
+
+  const aiResult=existing&&existing.ai_insight
+    ?`<div class="well-score-result">
+        <div class="well-score-num">${existing.score}/10</div>
+        <div class="well-score-insight">${escapeHtml(existing.ai_insight)}</div>
+      </div>`:'';
+
+  const aiHTML=_wellAIActive
+    ?`<div class="well-ai-chat" id="wellAIChat">${aiMsgs}</div>
+      <div class="well-ai-input-row">
+        <input class="well-ai-input" id="wellAIInput" placeholder="Your answer..." maxlength="300" autocomplete="off"
+          onkeydown="if(event.key==='Enter')_wellAIRespond('${key}')"/>
+        <button class="well-ai-send" onclick="_wellAIRespond('${key}')" aria-label="Send">
+          <svg viewBox="0 0 24 24" width="14" height="14"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        </button>
+      </div>
+      ${aiResult}`
+    :`<button class="well-ai-btn" onclick="_wellAIStart('${key}')">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        Assess with AI
+      </button>
+      ${aiResult}`;
+
+  card.innerHTML=`
+    <div class="wellness-mode-tabs">
+      <button class="wellness-mode-tab${_wellnessMode==='manual'?' active':''}" onclick="_wellSetMode('manual','${key}')">Manual</button>
+      <button class="wellness-mode-tab${_wellnessMode==='ai'?' active':''}" onclick="_wellSetMode('ai','${key}')">AI assess</button>
+    </div>
+    <div id="wellManualPanel" style="display:${_wellnessMode==='manual'?'block':'none'}">${manualHTML}</div>
+    <div id="wellAIPanel" style="display:${_wellnessMode==='ai'?'block':'none'}">${aiHTML}</div>`;
+
+  const aiChat=document.getElementById('wellAIChat');
+  if(aiChat)aiChat.scrollTop=aiChat.scrollHeight;
+}
+
+function _wellSetMode(mode,key){
+  _wellnessMode=mode;
+  renderHomeWellness(key||todayKey());
+}
+
+function _wellUpdateManualScore(key){
+  const cats=['energy','sleep','mood','stress','recovery'];
+  const vals={};
+  cats.forEach(c=>{const el=document.getElementById('wellSlider_'+c);vals[c]=el?parseInt(el.value):3;});
+  const score=_calcManualScore(vals);
+  const scoreEl=document.getElementById('wellManualScore');
+  const lblEl=document.getElementById('wellManualLbl');
+  if(scoreEl)scoreEl.textContent=score+'/10';
+  if(lblEl)lblEl.textContent=WELLNESS_LABELS[score]||'';
+}
+
+function _wellSaveManual(key){
+  const cats=['energy','sleep','mood','stress','recovery'];
+  const vals={};
+  cats.forEach(c=>{const el=document.getElementById('wellSlider_'+c);vals[c]=el?parseInt(el.value):3;});
+  const score=_calcManualScore(vals);
+  _saveWellnessEntry(key,{score,categories:vals,mode:'manual',ts:Date.now()});
+  const btn=document.getElementById('wellSaveBtn');
+  if(btn){btn.textContent='Saved!';btn.classList.add('saved');}
+  setTimeout(()=>renderHomeWellness(key),800);
+  if(currentView==='insights')renderCalendar();
+}
+
+const _wellAIQuestions=[
+  'How many hours did you sleep last night?',
+  'How would you rate your energy level today? (1 = exhausted, 5 = full of energy)',
+  'How stressed have you felt today? (1 = very calm, 5 = very stressed)',
+  'Did you complete your planned workout or movement today? (yes / partially / no)',
+  'How well have you stuck to your nutrition plan today? (1 = not at all, 5 = perfectly)',
+  'How would you describe your mood overall? (1 = low, 5 = great)',
+  'How hydrated have you felt today? (1 = very thirsty all day, 5 = well hydrated)',
+];
+
+function _wellAIStart(key){
+  _wellAIActive=true;
+  _wellAIQuestionIdx=0;
+  _wellAIAnswers={};
+  _wellAIChatHistory=[{role:'ai',text:_wellAIQuestions[0]}];
+  renderHomeWellness(key);
+}
+
+async function _wellAIRespond(key){
+  const input=document.getElementById('wellAIInput');
+  const answer=(input?input.value:'').trim();
+  if(!answer)return;
+  if(input)input.value='';
+  _wellAIChatHistory.push({role:'user',text:answer});
+  _wellAIAnswers[_wellAIQuestions[_wellAIQuestionIdx]]=answer;
+  _wellAIQuestionIdx++;
+
+  if(_wellAIQuestionIdx<_wellAIQuestions.length){
+    _wellAIChatHistory.push({role:'ai',text:_wellAIQuestions[_wellAIQuestionIdx]});
+    renderHomeWellness(key);
+  } else {
+    _wellAIChatHistory.push({role:'ai',text:'<em style="color:var(--text-dimmer)">Calculating your wellness score...</em>'});
+    renderHomeWellness(key);
+    const apiKey=getApiKey();
+    if(!apiKey){
+      _wellAIChatHistory[_wellAIChatHistory.length-1]={role:'ai',text:'<span style="color:#ef4444">Add your API key in Settings to enable AI scoring.</span>'};
+      renderHomeWellness(key);return;
+    }
+    const qa=Object.entries(_wellAIAnswers).map(([q,a])=>`Q: ${q}\nA: ${a}`).join('\n\n');
+    const prompt=`Based on these wellness check-in answers, calculate a wellness score from 1 to 10 and provide a short 1-2 sentence insight explaining what is helping or hurting the score most today.\n\n${qa}\n\nRespond in this exact JSON format:\n{"score":7,"insight":"You slept well and stayed hydrated, but high stress is dragging your recovery score down."}`;
+    try{
+      const res=await fetch('https://api.anthropic.com/v1/messages',{
+        method:'POST',
+        headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+        body:JSON.stringify({model:getModel(),max_tokens:256,system:'You are a wellness scoring assistant. Always respond with valid JSON only, no prose outside the JSON.',messages:[{role:'user',content:prompt}]})
+      });
+      const data=await res.json();
+      const raw=(data.content||[]).find(b=>b.type==='text')?.text||'{}';
+      let parsed;
+      try{parsed=JSON.parse(raw.replace(/```json|```/g,'').trim());}catch(e){parsed={score:5,insight:'Unable to parse score — please try again.'};}
+      const score=Math.max(1,Math.min(10,parseInt(parsed.score)||5));
+      const insight=parsed.insight||'Wellness assessed.';
+      _saveWellnessEntry(key,{score,ai_insight:insight,mode:'ai',qa:_wellAIAnswers,ts:Date.now()});
+      _wellAIChatHistory[_wellAIChatHistory.length-1]={role:'ai',text:'Done! Here is your wellness score.'};
+      _wellAIActive=false;
       renderHomeWellness(key);
       if(currentView==='insights')renderCalendar();
-    });
-  });
+    }catch(err){
+      _wellAIChatHistory[_wellAIChatHistory.length-1]={role:'ai',text:`<span style="color:#ef4444">Error: ${escapeHtml(err.message)}</span>`};
+      renderHomeWellness(key);
+    }
+  }
 }
 
 function renderAll(){renderHeader();renderStreakBar();renderDayScroller();renderHomeForDay();if(currentView==='insights'){renderStats();renderTrends();renderYearly();renderCalendar();}if(currentView==='cosmos')renderCosmos();}
@@ -5833,6 +6082,10 @@ function clearTrainingPlan(){
   localStorage.removeItem('ritual_training_completions');
   localStorage.removeItem('ritual_shopping_list');
   localStorage.removeItem('ritual_shopping_checked');
+  localStorage.removeItem('ritual_missed_workouts');
+  localStorage.removeItem('ritual_weekly_summary');
+  // Remove all adapt-week keys
+  Object.keys(localStorage).filter(k=>k.startsWith('ritual_adapt_week_')).forEach(k=>localStorage.removeItem(k));
 }
 // Shopping list persistence
 function loadShoppingList(){
@@ -5920,6 +6173,17 @@ function setCompletion(key,val){
 function isExerciseDone(week,dayIdx,exIdx){return !!getCompletions()[getCompletionKey(week,dayIdx,exIdx)];}
 function toggleExerciseDone(week,dayIdx,exIdx){
   setCompletion(getCompletionKey(week,dayIdx,exIdx),!isExerciseDone(week,dayIdx,exIdx));
+  // Check if all exercises for today's carry-over workout are now done
+  if(trainingPlan?.plan_start_date){
+    const carryOver=_getPendingCarryOver();
+    if(carryOver){
+      const schedule=getScheduleForWeek(carryOver.week);
+      const dayData=schedule[carryOver.dayIdx];
+      if(dayData&&_isDayFullyCompleted(carryOver.week,carryOver.dayIdx,dayData.sessions)){
+        _completeCarryOver(carryOver.dateISO);
+      }
+    }
+  }
   refreshTrainView();
 }
 function getDayCompletionStats(week,dayIdx,sessions){
@@ -5929,7 +6193,201 @@ function getDayCompletionStats(week,dayIdx,sessions){
   return {done,total};
 }
 
-// Determine which phase the current week falls in
+// ── Adaptive training system ──────────────────────────────────────────────────
+
+// Returns true if a training day (non-rest, has sessions) was fully completed
+function _isDayFullyCompleted(week,dayIdx,sessions){
+  if(!sessions||!sessions.length)return false;
+  const c=getCompletions();
+  return sessions.every((_,i)=>c[getCompletionKey(week,dayIdx,i)]);
+}
+
+// Mark a date as missed in storage
+function _getMissedWorkouts(){
+  try{return JSON.parse(localStorage.getItem('ritual_missed_workouts')||'{}');}catch(e){return {};}
+}
+function _setMissedWorkout(dateISO,missedInfo){
+  const m=_getMissedWorkouts();
+  m[dateISO]=missedInfo;
+  localStorage.setItem('ritual_missed_workouts',JSON.stringify(m));
+}
+function _clearMissedWorkout(dateISO){
+  const m=_getMissedWorkouts();
+  delete m[dateISO];
+  localStorage.setItem('ritual_missed_workouts',JSON.stringify(m));
+}
+
+// Run nightly check: look at past training days (up to 7 days back) and mark any
+// non-rest days with exercises that were never touched as missed.
+function _checkAndMarkMissedWorkouts(){
+  if(!trainingPlan?.plan_start_date)return;
+  const today=new Date();today.setHours(0,0,0,0);
+  const DAY_NAMES_FULL=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+
+  for(let offsetDays=1;offsetDays<=7;offsetDays++){
+    const pastDate=new Date(today);
+    pastDate.setDate(today.getDate()-offsetDays);
+    const dateISO=pastDate.toISOString().slice(0,10);
+
+    // Already dismissed/handled?
+    const missed=_getMissedWorkouts();
+    if(missed[dateISO]?.dismissed)continue;
+
+    // Figure out week/dayIdx for this past date
+    const planStart=new Date(trainingPlan.plan_start_date+'T00:00:00');
+    const diffDays=Math.floor((pastDate-planStart)/(1000*60*60*24));
+    if(diffDays<0)continue; // before plan start
+
+    const weekNum=Math.min(Math.floor(diffDays/7)+1,trainingPlan.duration_weeks||12);
+    const schedule=getScheduleForWeek(weekNum);
+    const dow=(pastDate.getDay()+6)%7; // Mon=0
+    const dayName=DAY_NAMES_FULL[dow];
+    const di=schedule.findIndex(d=>(d.day||'').toLowerCase()===dayName.toLowerCase());
+    if(di<0)continue;
+    const dayData=schedule[di];
+    if(!dayData||dayData.type==='rest'||!dayData.sessions?.length)continue;
+
+    // Check if ANY exercise was completed (partial counts as attempted, not missed)
+    const c=getCompletions();
+    const anyDone=dayData.sessions.some((_,ei)=>c[getCompletionKey(weekNum,di,ei)]);
+    if(anyDone)continue; // attempted, not missed
+
+    // Mark as missed if not already marked
+    if(!missed[dateISO]){
+      _setMissedWorkout(dateISO,{week:weekNum,dayIdx:di,dayName,title:dayData.title||dayData.type,sessions:dayData.sessions,ts:Date.now()});
+    }
+  }
+}
+
+// Returns the oldest unresolved missed workout (to carry over to today)
+function _getPendingCarryOver(){
+  const missed=_getMissedWorkouts();
+  const entries=Object.entries(missed)
+    .filter(([,v])=>!v.dismissed&&!v.completed)
+    .sort(([a],[b])=>a.localeCompare(b));
+  return entries.length?{dateISO:entries[0][0],...entries[0][1]}:null;
+}
+
+// Mark carry-over as completed
+function _completeCarryOver(dateISO){
+  const missed=_getMissedWorkouts();
+  if(missed[dateISO]){missed[dateISO].completed=true;missed[dateISO].completedTs=Date.now();}
+  localStorage.setItem('ritual_missed_workouts',JSON.stringify(missed));
+}
+
+// Dismiss carry-over banner without completing
+function dismissCarryOver(dateISO){
+  const missed=_getMissedWorkouts();
+  if(missed[dateISO]){missed[dateISO].dismissed=true;}
+  localStorage.setItem('ritual_missed_workouts',JSON.stringify(missed));
+  renderTrainingView();
+}
+
+// ── Weekly completion rate & adaptation ──────────────────────────────────────
+
+// ISO week key: "YYYY-MM-DD" of the Monday of that week
+function _weekMonday(dateISO){
+  const d=new Date(dateISO+'T00:00:00');
+  const mon=new Date(d);
+  mon.setDate(d.getDate()-(d.getDay()||7)+1);
+  return mon.toISOString().slice(0,10);
+}
+
+function _getWeekCompletionRate(weekMonISO){
+  // Count training days (non-rest, has sessions) vs completed for the 7-day window
+  if(!trainingPlan?.plan_start_date)return null;
+  const mon=new Date(weekMonISO+'T00:00:00');
+  const planStart=new Date(trainingPlan.plan_start_date+'T00:00:00');
+  const diffDays=Math.floor((mon-planStart)/(1000*60*60*24));
+  if(diffDays<0)return null;
+  const weekNum=Math.min(Math.floor(diffDays/7)+1,trainingPlan.duration_weeks||12);
+  const schedule=getScheduleForWeek(weekNum);
+  const DAY_NAMES_FULL=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+  let trainingDays=0,completedDays=0;
+  for(let i=0;i<7;i++){
+    const d=new Date(mon);d.setDate(mon.getDate()+i);
+    const dayName=DAY_NAMES_FULL[(d.getDay()+6)%7];
+    const di=schedule.findIndex(dd=>(dd.day||'').toLowerCase()===dayName.toLowerCase());
+    if(di<0)continue;
+    const dayData=schedule[di];
+    if(!dayData||dayData.type==='rest'||!dayData.sessions?.length)continue;
+    trainingDays++;
+    if(_isDayFullyCompleted(weekNum,di,dayData.sessions))completedDays++;
+  }
+  return trainingDays>0?{completedDays,trainingDays,rate:completedDays/trainingDays}:null;
+}
+
+// Adaptation logic: called at start of new training week
+function _runWeeklyAdaptation(){
+  if(!trainingPlan)return;
+  const today=new Date();
+  const thisWeekMon=_weekMonday(today.toISOString().slice(0,10));
+  const adaptKey='ritual_adapt_week_'+thisWeekMon;
+  if(localStorage.getItem(adaptKey))return; // already ran for this week
+
+  // Get last week's monday
+  const lastWeekDate=new Date(today);
+  lastWeekDate.setDate(today.getDate()-7);
+  const lastWeekMon=_weekMonday(lastWeekDate.toISOString().slice(0,10));
+  const stats=_getWeekCompletionRate(lastWeekMon);
+  if(!stats||stats.trainingDays===0)return;
+
+  const rate=stats.rate;
+  let note='';
+  if(rate<0.6){
+    note=`Last week: ${stats.completedDays}/${stats.trainingDays} workouts completed (${Math.round(rate*100)}%). Plan adapted: volume reduced 10% and extra rest day added.`;
+    _applyVolumeAdjustment(-0.1);
+  } else if(rate>0.8){
+    note=`Last week: ${stats.completedDays}/${stats.trainingDays} workouts completed (${Math.round(rate*100)}%). Plan progressing normally — small volume increase applied.`;
+    _applyVolumeAdjustment(0.05);
+  } else {
+    note=`Last week: ${stats.completedDays}/${stats.trainingDays} workouts completed (${Math.round(rate*100)}%). Volume maintained.`;
+  }
+  localStorage.setItem(adaptKey,note);
+  // Store for weekly summary banner
+  localStorage.setItem('ritual_weekly_summary',JSON.stringify({note,weekMon:thisWeekMon,seen:false}));
+}
+
+// Adjust sets in plan by a factor (e.g. -0.1 = 10% fewer sets)
+function _applyVolumeAdjustment(factor){
+  if(!trainingPlan)return;
+  const schedules=trainingPlan.phase_schedules?.length
+    ?trainingPlan.phase_schedules.map(ps=>ps.schedule||[])
+    :[trainingPlan.weekly_schedule||[]];
+  schedules.forEach(sched=>{
+    sched.forEach(day=>{
+      (day.sessions||[]).forEach(ex=>{
+        if(ex.sets){
+          const n=parseInt(ex.sets)||3;
+          const adjusted=Math.max(1,Math.round(n*(1+factor)));
+          ex.sets=adjusted;
+        }
+      });
+      // Also adjust accessory_weeks if present
+      (day.accessory_weeks||[]).forEach(week=>{
+        (week||[]).forEach(ex=>{
+          if(ex.sets){
+            const n=parseInt(ex.sets)||3;
+            ex.sets=Math.max(1,Math.round(n*(1+factor)));
+          }
+        });
+      });
+    });
+  });
+  saveTrainingPlan();
+}
+
+// Get/dismiss the weekly summary banner
+function _getWeeklySummary(){
+  try{return JSON.parse(localStorage.getItem('ritual_weekly_summary')||'null');}catch(e){return null;}
+}
+function dismissWeeklySummary(){
+  const s=_getWeeklySummary();
+  if(s){s.seen=true;localStorage.setItem('ritual_weekly_summary',JSON.stringify(s));}
+  renderTrainingView();
+}
+
+// ── Determine which phase the current week falls in
 function getCurrentPhase(weekNum,phases){
   if(!phases||!phases.length)return 0;
   for(let i=0;i<phases.length;i++){
@@ -7137,6 +7595,36 @@ function getWeekOverride(weekNum,dayName){
 
 function renderTrainDailyHTML(){
   if(!trainingPlan)return renderTrainSetupHTML();
+
+  // Run missed-workout detection and weekly adaptation on every render (cheap — localStorage only)
+  if(trainingPlan?.plan_start_date){
+    _checkAndMarkMissedWorkouts();
+    _runWeeklyAdaptation();
+  }
+
+  // Weekly summary banner (shown once at start of new training week)
+  const weeklySummary=_getWeeklySummary();
+  const weeklySummaryHTML=weeklySummary&&!weeklySummary.seen
+    ?`<div class="week-summary-card">
+        <div class="week-summary-title">Last week recap</div>
+        <div class="week-summary-body">${escapeHtml(weeklySummary.note)}</div>
+        <button class="week-summary-dismiss" onclick="dismissWeeklySummary()">Got it</button>
+      </div>`
+    :'';
+
+  // Carry-over banner: show pending missed workout if viewing today
+  const carryOver=trainingDayOffset===0?_getPendingCarryOver():null;
+  const carryOverHTML=carryOver
+    ?`<div class="missed-wo-banner">
+        <div class="missed-wo-banner-icon">⚠️</div>
+        <div class="missed-wo-banner-text">
+          <div class="missed-wo-banner-title">Missed workout carry-over</div>
+          <div class="missed-wo-banner-sub">You missed <strong>${escapeHtml(carryOver.title||carryOver.dayName)}</strong> from ${escapeHtml(carryOver.dateISO)} — complete it today before moving on.</div>
+          <button class="missed-wo-dismiss" onclick="dismissCarryOver('${carryOver.dateISO}')">Skip / Dismiss</button>
+        </div>
+      </div>`
+    :'';
+
   const dateLabel=formatDateNav(trainingDayOffset);
   const isToday=trainingDayOffset===0;
   const dow=getDowForOffset(trainingDayOffset);
@@ -7277,7 +7765,9 @@ function renderTrainDailyHTML(){
     </div>`;
 
   return `<div id="trainDailySection">
+    ${weeklySummaryHTML}
     ${dateNav}
+    ${carryOverHTML}
     ${dayContent}
     ${occasionalHTML}
     ${weeklyBtn}
