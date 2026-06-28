@@ -996,6 +996,9 @@
   .refine-status.busy{color:var(--accent)}
   .refine-status.ok{color:#4ade80}
   .refine-status.err{color:#ef4444}
+  .refine-scope-toggle{display:inline-flex;gap:0;border:1px solid var(--border);border-radius:999px;padding:2px;margin-bottom:10px;background:var(--surface2)}
+  .refine-scope-btn{padding:5px 14px;border-radius:999px;border:none;background:none;color:var(--text-dim);font-family:var(--font-body);font-size:11px;cursor:pointer;transition:all .2s;white-space:nowrap}
+  .refine-scope-btn.active{background:var(--accent);color:var(--bg);font-weight:500}
   /* ── Plan generation progress circle ── */
   @keyframes fadeIn{from{opacity:0}to{opacity:1}}
   .plan-gen-wrap{display:flex;flex-direction:column;align-items:center;padding:52px 24px 24px;gap:22px;animation:fadeIn .3s ease}
@@ -6490,6 +6493,7 @@ function toggleMealCheck(dayIdx,mealName){
   renderTrainingView();
 }
 let nutritionDayOffset=0;   // days from today (0=today, -1=yesterday, +1=tomorrow)
+let nutritionRefineScope='week'; // 'day' | 'week' — scope of the nutrition refine box
 let trainingDayOffset=0;    // days from today for training daily view
 let journalDayOffset=0;     // days from today for journal view
 let nutritionSettingsOpen=false;
@@ -7155,23 +7159,42 @@ function _applySwap(){
 // INLINE PLAN REFINE (free-text "update my week" box on both tabs)
 function renderPlanRefineHTML(scope){
   const isNutr=scope==='nutrition';
+  const dayScope=isNutr&&nutritionRefineScope==='day';
+  const dow=getDowForOffset(nutritionDayOffset);
+  const dayName=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'][dow];
+  const dayLabel=nutritionDayOffset===0?dayName+' (today)':dayName;
+
   const chips=isNutr
-    ? ['Add Seitan dishes','More plant-based protein','Quicker weeknight meals','Add more variety']
+    ? (dayScope
+        ? ['Add a Seitan dish','Swap the protein','Make it quicker','Higher protein']
+        : ['Add Seitan dishes','More plant-based protein','Quicker weeknight meals','Add more variety'])
     : ['Add more core work','Swap in more cardio','Make sessions shorter','Add mobility work'];
   const placeholder=isNutr
-    ? 'e.g. add Seitan dishes, more Mediterranean…'
+    ? (dayScope?`e.g. make ${dayName}’s dinner a Seitan stir-fry…`:'e.g. add Seitan dishes, more Mediterranean…')
     : 'e.g. add more core work, shorter sessions…';
-  const title=isNutr?'Refine this week’s meals':'Refine this week’s workouts';
+  const title=isNutr
+    ? (dayScope?`Refine ${dayLabel}’s meals`:'Refine this week’s meals')
+    : 'Refine this week’s workouts';
   const sub=isNutr
-    ? 'Type what you’d like and your full 7-day meal plan refreshes — macros stay on target.'
+    ? (dayScope
+        ? `Type what you’d like and just ${dayName}’s meals refresh — macros stay on target.`
+        : 'Type what you’d like and your full 7-day meal plan refreshes — macros stay on target.')
     : 'Type what you’d like and this week’s schedule refreshes — your goals & phases stay intact.';
   const chipHTML=chips.map(c=>`<button class="refine-chip" onclick="_refineChip('${scope}','${c.replace(/'/g,"\\'")}')">${c}</button>`).join('');
+
+  // Day/Week scope toggle — nutrition only
+  const scopeToggle=isNutr?`<div class="refine-scope-toggle">
+      <button class="refine-scope-btn${nutritionRefineScope==='day'?' active':''}" onclick="setNutritionRefineScope('day')">This day</button>
+      <button class="refine-scope-btn${nutritionRefineScope==='week'?' active':''}" onclick="setNutritionRefineScope('week')">Whole week</button>
+    </div>`:'';
+
   return `<div class="refine-box" id="refineBox_${scope}">
     <div class="refine-box-title">
       <svg viewBox="0 0 24 24"><path d="M12 2l2.4 7.4H22l-6 4.6 2.3 7.4-6.3-4.6L5.7 21.4 8 14 2 9.4h7.6z"/></svg>
       ${title}
     </div>
     <div class="refine-box-sub">${sub}</div>
+    ${scopeToggle}
     <div class="refine-chips">${chipHTML}</div>
     <div class="refine-input-row">
       <textarea class="refine-input" id="refineInput_${scope}" rows="2" placeholder="${placeholder}"
@@ -7180,6 +7203,19 @@ function renderPlanRefineHTML(scope){
     </div>
     <div class="refine-status" id="refineStatus_${scope}"></div>
   </div>`;
+}
+
+// Switch the nutrition refine box between day-scope and week-scope without
+// losing whatever the user has already typed.
+function setNutritionRefineScope(s){
+  if(nutritionRefineScope===s)return;
+  const inp=document.getElementById('refineInput_nutrition');
+  const typed=inp?inp.value:'';
+  nutritionRefineScope=s;
+  const box=document.getElementById('refineBox_nutrition');
+  if(box)box.outerHTML=renderPlanRefineHTML('nutrition');
+  const inp2=document.getElementById('refineInput_nutrition');
+  if(inp2){inp2.value=typed;}
 }
 
 function _refineChip(scope,text){
@@ -7201,13 +7237,114 @@ async function applyPlanRefine(scope){
   const btn=document.getElementById('refineBtn_'+scope);
   if(btn){btn.disabled=true;btn.textContent='Updating…';}
   if(scope==='nutrition'){
-    _refineStatus(scope,'Rebuilding your 7-day meal plan…','busy');
-    await regenerateNutrition(instruction);
-    // regenerateNutrition re-renders the whole view on success (status box is gone);
-    // on failure it writes to #nutrUpdateError. Re-enable handled by re-render.
+    if(nutritionRefineScope==='day'){
+      _refineStatus(scope,'Updating this day’s meals…','busy');
+      await regenerateNutritionDay(instruction);
+    } else {
+      _refineStatus(scope,'Rebuilding your 7-day meal plan…','busy');
+      await regenerateNutrition(instruction);
+    }
+    // On success these re-render the whole view (status box is gone);
+    // on failure they surface an error and re-enable the button.
   } else {
     _refineStatus(scope,'Updating this week’s schedule…','busy');
     await regenerateTrainingWeek(instruction);
+  }
+}
+
+// Find the meal_rotation entry that getMealsForDow() would currently use,
+// so a day-level update writes to the same place the UI reads from.
+function _currentMealRotation(diet){
+  const rotations=trainingPlan?.diet?.meal_rotations||diet.meal_rotations||[];
+  if(!rotations.length)return null;
+  const phases=trainingPlan?.phases||[];
+  for(const rot of rotations){
+    const phase=phases[(rot.phase_number||1)-1];
+    if(phase){
+      const m=String(phase.weeks||'').match(/(\d+)\s*[-–]\s*(\d+)/);
+      if(m&&trainingWeek>=parseInt(m[1])&&trainingWeek<=parseInt(m[2]))return rot;
+    }
+  }
+  return rotations[rotations.length-1];
+}
+
+// Update ONLY the currently-viewed day's meals from a free-text instruction.
+async function regenerateNutritionDay(instruction){
+  const scope='nutrition';
+  const apiKey=getApiKey();
+  if(!apiKey){_refineStatus(scope,'Add your Anthropic API key in Settings → AI Settings first.','err');_refineReset();return false;}
+  if(!trainingPlan||!trainingPlan.diet){_refineStatus(scope,'Generate a training plan first.','err');_refineReset();return false;}
+
+  const diet=trainingPlan.diet;
+  const DAYS=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+  const dow=getDowForOffset(nutritionDayOffset);
+  const dayName=DAYS[dow];
+  const currentMeals=getMealsForDow(dow)||[];
+  const slotNames=currentMeals.map(m=>m.name);
+  const unitSystem=isMetric()?'metric (g, ml)':'imperial (oz, cups)';
+  const restrictionsCombined=[
+    (trainSetup.restrictionTags||[]).join(', '),
+    trainSetup.dietaryRestrictions||''
+  ].filter(Boolean).join(' · ');
+  const daily=diet.daily_calories||2000, pg=diet.protein_g||150, cg=diet.carbs_g||200, fg=diet.fat_g||65;
+
+  const prompt=`Update ONLY ${dayName}'s meals in an existing nutrition plan. Keep the same meal slots${slotNames.length?' ('+slotNames.join(', ')+')':''} and keep the day's totals on target.
+
+DAILY TARGETS (the day's meals should sum to roughly these):
+- Calories: ${daily} kcal · Protein: ${pg}g · Carbs: ${cg}g · Fat: ${fg}g
+
+CURRENT ${dayName.toUpperCase()} MEALS:
+${JSON.stringify(currentMeals,null,2)}
+
+CONSTRAINTS:
+${restrictionsCombined?'- Dietary restrictions (hard — every meal MUST comply): '+restrictionsCombined:'- No specific dietary restrictions'}
+${trainSetup.eatPattern==='if'?getIFMealSlotGuidance(trainSetup.ifWindow||'16:8'):'- Eating pattern: Standard (Breakfast, Lunch, Dinner, 1-2 Snacks).'}
+- Use ${unitSystem} for portion weights.
+
+USER REQUEST (apply to ${dayName}): ${instruction}
+
+Return ONLY valid JSON (no markdown, no commentary):
+{"updated_meals":[{"name":"Breakfast","description":"specific meal","protein_g":35,"carbs_g":45,"fat_g":18}]}`;
+
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model:getModel(),max_tokens:2000,messages:[{role:'user',content:prompt}]})
+    });
+    if(!res.ok){const e=await res.json().catch(()=>({}));const er=new Error(e.error?.message||`API error ${res.status}`);er.httpStatus=res.status;throw er;}
+    const data=await res.json();
+    const reply=(data.content||[]).find(b=>b.type==='text')?.text||'';
+    const parsed=extractJSONFromText(reply);
+    if(!parsed||!Array.isArray(parsed.updated_meals)||!parsed.updated_meals.length){
+      throw new Error('Could not parse the updated meals — try rephrasing.');
+    }
+    const updatedMeals=parsed.updated_meals;
+    // Write to base weekly_meals
+    diet.weekly_meals=Array.isArray(diet.weekly_meals)?diet.weekly_meals:[];
+    let dayEntry=diet.weekly_meals.find(d=>(d.day||'').toLowerCase()===dayName.toLowerCase());
+    if(dayEntry)dayEntry.meals=updatedMeals; else diet.weekly_meals.push({day:dayName,meals:updatedMeals});
+    // Write to the active phase rotation (what getMealsForDow reads first)
+    const rot=_currentMealRotation(diet);
+    if(rot){
+      rot.weekly_meals=Array.isArray(rot.weekly_meals)?rot.weekly_meals:[];
+      let rd=rot.weekly_meals.find(d=>(d.day||'').toLowerCase()===dayName.toLowerCase());
+      if(rd)rd.meals=updatedMeals; else rot.weekly_meals.push({day:dayName,meals:updatedMeals});
+    }
+    // Day's meals changed — the shopping list is now stale
+    shoppingList=null;shoppingChecked={};saveShoppingList();
+    saveTrainingPlan();
+    renderTrainingView();
+    return true;
+  }catch(err){
+    console.error('[Ritual] Nutrition day update error —',err.name,err.message);
+    let msg;
+    if(err.httpStatus){msg=getStatusErrorMessage(err.httpStatus)||`Update failed: ${err.message}`;}
+    else if(err instanceof TypeError&&!err.httpStatus){msg='Could not reach Anthropic. Try disabling any ad blocker or VPN and retry.';}
+    else msg='Update failed: '+err.message;
+    _refineStatus(scope,msg,'err');
+    _refineReset();
+    return false;
   }
 }
 
@@ -7651,6 +7788,26 @@ function _buildDocxBlob(categories,planName,dateStr,recipes){
   if(totalCost>0){
     body+=`<w:p><w:pPr><w:spacing w:before="80" w:after="200"/><w:pBdr><w:top w:val="single" w:sz="4" w:space="4" w:color="4A3580"/></w:pBdr></w:pPr>`+
       `<w:r><w:rPr><w:b/><w:sz w:val="26"/><w:szCs w:val="26"/><w:color w:val="2D6A4F"/></w:rPr><w:t>Estimated weekly total: ~$${totalCost.toFixed(2)}</w:t></w:r></w:p>`;
+  }
+  // Ingredients by Recipe — a per-recipe shopping/prep checklist (ingredients only,
+  // no cooking steps; the full recipes with instructions follow on the next page).
+  if(recipes&&recipes.length){
+    body+=`<w:p><w:pPr><w:pageBreakBefore/><w:spacing w:after="120"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="40"/><w:szCs w:val="40"/><w:color w:val="2D1B69"/></w:rPr><w:t>Ingredients by Recipe</w:t></w:r></w:p>`;
+    recipes.forEach((rec,ri)=>{
+      // Recipe heading
+      body+=`<w:p><w:pPr><w:spacing w:before="${ri>0?'140':'40'}" w:after="40"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="26"/><w:szCs w:val="26"/><w:color w:val="4A3580"/></w:rPr><w:t>${_xmlEsc(rec.name||'Recipe')}</w:t></w:r></w:p>`;
+      const metaParts=[];
+      if(rec.meal_slot)metaParts.push(rec.meal_slot);
+      if(rec.day)metaParts.push(rec.day);
+      if(metaParts.length)body+=_docxPara(metaParts.join('  ·  '),{bold:false,size:18,color:'888888',spaceAfter:50});
+      if(rec.ingredients&&rec.ingredients.length){
+        rec.ingredients.forEach(ing=>{
+          body+=_docxPara(`• ${ing}`,{bold:false,size:20,color:'222222',spaceAfter:30});
+        });
+      } else {
+        body+=_docxPara('(no ingredients listed)',{bold:false,size:18,color:'999999',spaceAfter:30});
+      }
+    });
   }
   // Recipes section
   if(recipes&&recipes.length){
@@ -10331,7 +10488,7 @@ document.getElementById('exDetailOverlay').addEventListener('click',function(e){
 // ── Build stamp — helps diagnose stale GitHub Pages cache.
 // If you see "Could not reach Anthropic", open DevTools console (Cmd+Opt+I)
 // and check this stamp matches the latest commit on GitHub.
-window.RITUAL_BUILD='2026-06-28-reorder-noflash';
+window.RITUAL_BUILD='2026-06-28-day-week-meal-update';
 console.log('[Ritual] Build:',window.RITUAL_BUILD);
 console.log('[Ritual] Model setting:',localStorage.getItem('ritualModel')||'(default — claude-haiku-4-5)');
 console.log('[Ritual] API key set:',!!localStorage.getItem('ritualApiKey'));
