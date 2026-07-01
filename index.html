@@ -1074,8 +1074,9 @@
   .weekly-view-btn svg{stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
   /* weekly view full-page overlay */
   /* ── Recipe page ── */
-  .recipe-page{position:fixed;inset:0;background:var(--bg);z-index:99;display:flex;flex-direction:column;max-width:420px;left:50%;transform:translateX(-50%);overflow:hidden}
-  .recipe-page.hidden{display:none}
+  /* Legacy recipe overlay — superseded by inline recipe view; always hidden */
+  .recipe-page{display:none!important}
+  .recipe-page.hidden{display:none!important}
   .recipe-page.slide-in{animation:recipeSlideIn .22s cubic-bezier(.4,0,.2,1) both}
   @keyframes recipeSlideIn{from{transform:translateX(calc(-50% + 40px));opacity:0}to{transform:translateX(-50%);opacity:1}}
   .recipe-page-header{display:flex;align-items:center;gap:12px;padding:52px 16px 14px;flex-shrink:0;background:var(--bg);border-bottom:1px solid var(--border)}
@@ -6100,6 +6101,9 @@ let trainSetup = {
 let expandedDay = null;        // which day card is open
 let trainingViewMode = 'daily'; // 'daily' | 'weekly'
 let nutritionViewMode = 'daily'; // 'daily' | 'weekly'
+let nutritionView = 'daily';    // 'daily' | 'weekly' | 'recipe'
+let _pendingRecipeMeal = null;  // {meal, dow} set when nutritionView='recipe'
+let _pendingRecipeData = null;  // cached recipe object once fetched
 let currentMealSlot = null;    // name of open meal slot
 let pendingFood = null;        // food awaiting qty confirm
 let foodSearchTimer = null;    // debounce handle
@@ -7981,31 +7985,17 @@ const mealRecipeCache={};
 
 let _currentRecipeData={meal:null,rec:null};
 function openRecipePage(meal,dow){
-  const page=document.getElementById('recipePage');
-  const titleEl=document.getElementById('recipePageTitle');
-  const bodyEl=document.getElementById('recipePageBody');
-  if(!page||!titleEl||!bodyEl)return;
   const mealName=meal.name||'Recipe';
-  titleEl.textContent=mealName;
-  _currentRecipeData={meal,rec:null};
-  page.classList.remove('hidden');
-  page.classList.add('slide-in');
-
   const cacheKey=`${dow}_${mealName}`;
-  // If recipe found in shopping list, use that
+  // Check cache sources
   const shopRecipe=(shoppingList&&shoppingList.recipes||[]).find(r=>r.name===mealName||(r.meal_slot===mealName&&r.day));
-  if(shopRecipe||mealRecipeCache[cacheKey]){
-    const r=shopRecipe||mealRecipeCache[cacheKey];
-    _currentRecipeData={meal,rec:r};
-    _renderRecipePageContent(bodyEl,r,meal);
-    return;
-  }
-  // Show loading then fetch
-  bodyEl.innerHTML=`<div class="recipe-loading"><div class="recipe-loading-spinner"></div><span>Fetching recipe…</span></div>`;
-  _fetchMealRecipe(meal,dow,cacheKey).then(rec=>{
-    if(rec){mealRecipeCache[cacheKey]=rec;_currentRecipeData={meal,rec};_renderRecipePageContent(bodyEl,rec,meal);}
-    else{bodyEl.innerHTML=`<div class="recipe-loading" style="color:var(--accent4)">Could not load recipe — check your API key in Settings.</div>`;}
-  });
+  const cachedRec=shopRecipe||mealRecipeCache[cacheKey]||null;
+  // Set state and switch to inline recipe view
+  _pendingRecipeMeal={meal,dow};
+  _pendingRecipeData=cachedRec;
+  _currentRecipeData={meal,rec:cachedRec};
+  nutritionView='recipe';
+  renderTrainingView();
 }
 
 async function _fetchMealRecipe(meal,dow,cacheKey){
@@ -8066,8 +8056,11 @@ function _renderRecipePageContent(bodyEl,rec,meal){
 }
 
 function closeRecipePage(){
+  // Hide legacy overlay if still present
   const page=document.getElementById('recipePage');
   if(page){page.classList.add('hidden');page.classList.remove('slide-in');}
+  // Also reset inline recipe view state
+  closeInlineRecipePage();
 }
 
 function exportRecipePDF(){
@@ -8120,6 +8113,17 @@ function exportRecipePDF(){
 function renderTrainingView(){
   const el=document.getElementById('trainContent');
   if(!el)return;
+
+  // Recipe full-screen mode: hide subtabs, fill content area with recipe page
+  if(trainingTab==='diet'&&nutritionView==='recipe'){
+    el.innerHTML=`<div id="trainTabContent"></div>`;
+    const tc=document.getElementById('trainTabContent');
+    if(tc){tc.innerHTML=renderInlineRecipeHTML();}
+    // Wire up meal card clicks in case recipe loaded async
+    bindTrainEvents();
+    return;
+  }
+
   el.innerHTML=`
     <div class="view-subtabs">
       <button class="view-subtab${trainingTab==='plan'?' active':''}" onclick="switchTrainTab('plan')">Training</button>
@@ -8142,6 +8146,140 @@ function renderTrainingView(){
   if(coachEl&&trainingPlan&&trainingViewMode==='daily'&&nutritionViewMode==='daily')coachEl.innerHTML=renderTrainCoachHTML();
   // After render, wire up dynamic event listeners
   bindTrainEvents();
+}
+
+// Render the full-screen recipe view as inline HTML (no overlay)
+function renderInlineRecipeHTML(){
+  const {meal,rec}=_pendingRecipeData
+    ?{meal:_pendingRecipeMeal?.meal,rec:_pendingRecipeData}
+    :{meal:_pendingRecipeMeal?.meal,rec:null};
+  const mealName=meal?.name||'Recipe';
+
+  const headerHTML=`
+    <div style="display:flex;align-items:center;gap:12px;padding:16px 16px 14px;border-bottom:1px solid var(--border);background:var(--bg)">
+      <button onclick="closeInlineRecipePage()" aria-label="Back"
+        style="width:36px;height:36px;border-radius:50%;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0">
+        <svg viewBox="0 0 24 24" width="16" height="16" style="stroke:var(--text-dim);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <div style="font-family:'DM Serif Display',serif;font-size:17px;color:var(--text);flex:1;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(mealName)}</div>
+      <button onclick="exportInlineRecipePDF()" aria-label="Export recipe"
+        style="padding:6px 12px;border:1px solid var(--border);border-radius:var(--r-sm);background:var(--surface2);color:var(--text-dim);font-family:var(--font-body);font-size:10px;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;flex-shrink:0">Export</button>
+    </div>`;
+
+  if(!rec){
+    // Loading state — fetch and re-render when done
+    const dow=_pendingRecipeMeal?.dow??0;
+    const cacheKey=`${dow}_${mealName}`;
+    if(!_pendingRecipeData){
+      _fetchMealRecipe(meal,dow,cacheKey).then(r=>{
+        if(r){mealRecipeCache[cacheKey]=r;_pendingRecipeData=r;}
+        // Re-render to show content (or error)
+        const tc=document.getElementById('trainTabContent');
+        if(tc&&nutritionView==='recipe')tc.innerHTML=renderInlineRecipeHTML();
+      });
+    }
+    return `<div style="display:flex;flex-direction:column;height:100%">
+      ${headerHTML}
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;color:var(--text-dim);font-size:13px;padding:40px 0">
+        <div style="width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .9s linear infinite"></div>
+        <span>Fetching recipe…</span>
+      </div>
+    </div>`;
+  }
+
+  const cals=Math.round((meal?.protein_g||0)*4+(meal?.carbs_g||0)*4+(meal?.fat_g||0)*9);
+  const metaChips=[
+    rec.prep_time?`<span style="padding:5px 12px;border-radius:99px;background:var(--surface2);border:1px solid var(--border);font-size:11px;color:var(--text-dim);letter-spacing:.03em">Prep: ${escapeHtml(rec.prep_time)}</span>`:'',
+    rec.cook_time?`<span style="padding:5px 12px;border-radius:99px;background:var(--surface2);border:1px solid var(--border);font-size:11px;color:var(--text-dim);letter-spacing:.03em">Cook: ${escapeHtml(rec.cook_time)}</span>`:'',
+    rec.meal_slot?`<span style="padding:5px 12px;border-radius:99px;background:var(--surface2);border:1px solid var(--border);font-size:11px;color:var(--text-dim);letter-spacing:.03em">${escapeHtml(rec.meal_slot)}</span>`:'',
+    rec.day?`<span style="padding:5px 12px;border-radius:99px;background:var(--surface2);border:1px solid var(--border);font-size:11px;color:var(--text-dim);letter-spacing:.03em">${escapeHtml(rec.day)}</span>`:''
+  ].filter(Boolean).join('');
+  const ingredientsHTML=(rec.ingredients||[]).map(ing=>`
+    <div style="display:flex;align-items:baseline;gap:10px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.04)">
+      <div style="width:5px;height:5px;border-radius:50%;background:var(--accent);flex-shrink:0;margin-top:9px"></div>
+      <div style="font-size:16px;color:var(--text);line-height:1.55;flex:1">${escapeHtml(ing)}</div>
+    </div>`).join('');
+  const stepsHTML=(rec.steps||[]).map((step,i)=>`
+    <div style="display:flex;gap:14px;padding:13px 0;border-bottom:1px solid rgba(255,255,255,.04)">
+      <div style="width:26px;height:26px;border-radius:50%;background:var(--accent-glow);border:1px solid rgba(200,180,240,.3);display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--accent);flex-shrink:0;font-family:'DM Serif Display',serif;margin-top:2px">${i+1}</div>
+      <div style="font-size:16px;color:var(--text);line-height:1.7;flex:1">${escapeHtml(step)}</div>
+    </div>`).join('');
+  const nutritionHTML=(meal?.protein_g||meal?.carbs_g||meal?.fat_g)?`
+    <div style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-dimmer);margin:24px 0 12px;display:flex;align-items:center;gap:8px">Nutrition<span style="flex:1;height:1px;background:var(--border);display:block"></span></div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
+      ${cals>0?`<div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-sm);padding:10px 8px;text-align:center"><div style="font-family:'DM Serif Display',serif;font-size:18px;color:var(--text)">${cals}</div><div style="font-size:9px;color:var(--text-dimmer);letter-spacing:.06em;text-transform:uppercase;margin-top:4px">kcal</div></div>`:''}
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-sm);padding:10px 8px;text-align:center"><div style="font-family:'DM Serif Display',serif;font-size:18px;color:var(--text)">${meal?.protein_g||0}g</div><div style="font-size:9px;color:var(--text-dimmer);letter-spacing:.06em;text-transform:uppercase;margin-top:4px">Protein</div></div>
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-sm);padding:10px 8px;text-align:center"><div style="font-family:'DM Serif Display',serif;font-size:18px;color:var(--text)">${meal?.carbs_g||0}g</div><div style="font-size:9px;color:var(--text-dimmer);letter-spacing:.06em;text-transform:uppercase;margin-top:4px">Carbs</div></div>
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-sm);padding:10px 8px;text-align:center"><div style="font-family:'DM Serif Display',serif;font-size:18px;color:var(--text)">${meal?.fat_g||0}g</div><div style="font-size:9px;color:var(--text-dimmer);letter-spacing:.06em;text-transform:uppercase;margin-top:4px">Fat</div></div>
+    </div>`:'';
+
+  const bodyHTML=`
+    <div style="font-family:'DM Serif Display',serif;font-size:26px;color:var(--text);line-height:1.2;margin-bottom:6px">${escapeHtml(rec.name||mealName)}</div>
+    ${meal?.description?`<p style="font-size:14px;color:var(--text-dim);line-height:1.65;margin-bottom:18px">${escapeHtml(meal.description)}</p>`:''}
+    ${metaChips?`<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px">${metaChips}</div>`:''}
+    ${ingredientsHTML?`<div style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-dimmer);margin:24px 0 12px;display:flex;align-items:center;gap:8px">Ingredients<span style="flex:1;height:1px;background:var(--border);display:block"></span></div><div>${ingredientsHTML}</div>`:''}
+    ${stepsHTML?`<div style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-dimmer);margin:24px 0 12px;display:flex;align-items:center;gap:8px">Instructions<span style="flex:1;height:1px;background:var(--border);display:block"></span></div><div>${stepsHTML}</div>`:''}
+    ${nutritionHTML}`;
+
+  return `<div style="display:flex;flex-direction:column;min-height:100%">
+    ${headerHTML}
+    <div style="flex:1;overflow-y:auto;overscroll-behavior:contain;padding:24px 20px 120px;scrollbar-width:none">
+      ${bodyHTML}
+    </div>
+  </div>`;
+}
+
+function closeInlineRecipePage(){
+  nutritionView='daily';
+  _pendingRecipeMeal=null;
+  _pendingRecipeData=null;
+  renderTrainingView();
+}
+
+function exportInlineRecipePDF(){
+  const meal=_pendingRecipeMeal?.meal;
+  const rec=_pendingRecipeData;
+  if(!rec&&!meal)return;
+  const name=escapeHtml((rec&&rec.name)||meal?.name||'Recipe');
+  const desc=escapeHtml(meal?.description||'');
+  const prep=rec?.prep_time?`<span class="chip">Prep: ${escapeHtml(rec.prep_time)}</span>`:'';
+  const cook=rec?.cook_time?`<span class="chip">Cook: ${escapeHtml(rec.cook_time)}</span>`:'';
+  const ingredients=(rec?.ingredients||[]).map(i=>`<li>${escapeHtml(i)}</li>`).join('');
+  const steps=(rec?.steps||[]).map((s,idx)=>`<li><strong>${idx+1}.</strong> ${escapeHtml(s)}</li>`).join('');
+  const cals=meal?Math.round((meal.protein_g||0)*4+(meal.carbs_g||0)*4+(meal.fat_g||0)*9):0;
+  const nutrition=meal&&(meal.protein_g||meal.carbs_g||meal.fat_g)?`
+    <div class="section-title">Nutrition</div>
+    <table class="nutrition-table">
+      <tr>${cals>0?`<th>${cals} kcal</th>`:''}<th>${meal.protein_g||0}g Protein</th><th>${meal.carbs_g||0}g Carbs</th><th>${meal.fat_g||0}g Fat</th></tr>
+    </table>`:'';
+  const html=`<!DOCTYPE html><html><head><meta charset="utf-8"><title>${name}</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;font-size:15px;color:#1a1a1a;padding:48px;max-width:680px;margin:0 auto;line-height:1.6}
+    h1{font-family:Georgia,serif;font-size:32px;margin-bottom:8px;color:#111}
+    .desc{color:#555;margin-bottom:16px;font-size:14px}
+    .chips{display:flex;gap:10px;margin-bottom:24px;flex-wrap:wrap}
+    .chip{background:#f0f0f0;border-radius:20px;padding:4px 14px;font-size:12px;color:#444}
+    .section-title{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#888;margin:28px 0 10px;border-bottom:1px solid #e0e0e0;padding-bottom:6px}
+    ul,ol{padding-left:20px}
+    li{margin-bottom:10px;font-size:15px;line-height:1.65}
+    .nutrition-table{width:100%;border-collapse:collapse;margin-top:8px}
+    .nutrition-table th{background:#f5f5f5;padding:8px 12px;text-align:center;font-weight:500;font-size:13px;border:1px solid #e0e0e0}
+    @media print{body{padding:24px}}
+  </style></head><body>
+  <h1>${name}</h1>
+  ${desc?`<p class="desc">${desc}</p>`:''}
+  ${(prep||cook)?`<div class="chips">${prep}${cook}</div>`:''}
+  ${ingredients?`<div class="section-title">Ingredients</div><ul>${ingredients}</ul>`:''}
+  ${steps?`<div class="section-title">Instructions</div><ol style="list-style:none;padding:0">${steps}</ol>`:''}
+  ${nutrition}
+  </body></html>`;
+  const win=window.open('','_blank','width=780,height=900');
+  if(!win){alert('Please allow popups to export the recipe.');return;}
+  win.document.write(html);
+  win.document.close();
+  win.focus();
+  setTimeout(()=>win.print(),400);
 }
 
 // ─────────────────────────────────────────────────────────
@@ -8438,7 +8576,7 @@ function refreshTrainView(){
   else{renderTrainingView();}
 }
 
-function switchTrainTab(tab){trainingTab=tab;renderTrainingView();}
+function switchTrainTab(tab){trainingTab=tab;nutritionView='daily';renderTrainingView();}
 
 // ─────────────────────────────────────────────────────────
 // SETUP FORM
