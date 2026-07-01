@@ -6579,7 +6579,7 @@ function renderNutritionDayView(){
       return `<div class="meal-check-row">
         <div class="meal-check-box${done?' checked':''}" onclick="toggleMealCheck(${dow},'${escapeHtml(meal.name)}')" role="checkbox" aria-checked="${done}" tabindex="0"
           onkeydown="if(event.key==='Enter'||event.key===' ')toggleMealCheck(${dow},'${escapeHtml(meal.name)}')"></div>
-        <div class="meal-check-info recipe-meal-card" data-lpkey="${cacheKey}" data-lpdow="${dow}" title="Hold to view recipe">
+        <div class="meal-check-info recipe-meal-card" data-lpkey="${cacheKey}" data-lpdow="${dow}" title="Tap to view recipe">
           <div class="meal-check-name" style="display:flex;align-items:center;gap:6px">${escapeHtml(meal.name)}<svg viewBox="0 0 24 24" width="11" height="11" style="stroke:var(--text-dimmer);fill:none;stroke-width:2;stroke-linecap:round;flex-shrink:0"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg></div>
           ${meal.description?`<div class="meal-check-desc"${done?' style="opacity:.5;text-decoration:line-through"':''}>${escapeHtml(meal.description)}</div>`:''}
           ${cals>0?`<div class="meal-check-macros">P ${meal.protein_g||0}g · C ${meal.carbs_g||0}g · F ${meal.fat_g||0}g · ${cals} kcal</div>`:''}
@@ -6658,7 +6658,7 @@ function renderNutritionWeeklyPageHTML(){
         _mealCardLookup[cacheKey]=meal;
         return `<div class="meal-check-row">
           <div class="meal-check-box${done?' checked':''}" style="cursor:default"></div>
-          <div class="meal-check-info recipe-meal-card" data-lpkey="${cacheKey}" data-lpdow="${di}" title="Hold to view recipe">
+          <div class="meal-check-info recipe-meal-card" data-lpkey="${cacheKey}" data-lpdow="${di}" title="Tap to view recipe">
             <div class="meal-check-name" style="display:flex;align-items:center;gap:6px">${escapeHtml(meal.name)}<svg viewBox="0 0 24 24" width="11" height="11" style="stroke:var(--text-dimmer);fill:none;stroke-width:2;stroke-linecap:round;flex-shrink:0"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg></div>
             ${meal.description?`<div class="meal-check-desc">${escapeHtml(meal.description)}</div>`:''}
             ${cals>0?`<div class="meal-check-macros">P ${meal.protein_g||0}g · C ${meal.carbs_g||0}g · F ${meal.fat_g||0}g · ${cals} kcal</div>`:''}
@@ -9641,46 +9641,24 @@ function bindTrainEvents(){
     });
     document.removeEventListener('click',handler);
   },{once:true,capture:false});
-  // Attach long-press listeners to meal cards
+  // Attach tap listeners to meal cards
   bindMealLongPress();
 }
 
-// ── Long-press on meal cards to open recipe ──
-// Regular tap does nothing (or just selects the checkbox via its own handler).
-// A 500 ms hold opens the full recipe page.
+// ── Tap on meal cards to open recipe ──
+// A regular tap/click opens the full recipe page.
+// The checkbox is a sibling element and handles its own clicks independently.
 function bindMealLongPress(){
   document.querySelectorAll('.recipe-meal-card[data-lpkey]').forEach(el=>{
     // Clone to remove any previously attached listeners
     const fresh=el.cloneNode(true);
     el.parentNode.replaceChild(fresh,el);
-    let timer=null;
-    let moved=false;
-    const cancel=()=>{
-      if(timer){clearTimeout(timer);timer=null;}
-    };
-    const start=()=>{
-      moved=false;
-      cancel();
-      timer=setTimeout(()=>{
-        timer=null;
-        if(moved)return;
-        const key=fresh.dataset.lpkey;
-        const dow=parseInt(fresh.dataset.lpdow);
-        const meal=_mealCardLookup[key];
-        if(meal)openRecipePage(meal,dow);
-      },500);
-    };
-    // Mobile: touch events
-    fresh.addEventListener('touchstart',()=>{start();},{passive:true});
-    fresh.addEventListener('touchend',cancel,{passive:true});
-    fresh.addEventListener('touchmove',()=>{moved=true;cancel();},{passive:true});
-    fresh.addEventListener('touchcancel',cancel,{passive:true});
-    // Desktop: mouse events
-    fresh.addEventListener('mousedown',start);
-    fresh.addEventListener('mouseup',cancel);
-    fresh.addEventListener('mouseleave',cancel);
-    // Prevent context menu on long-press (Android)
-    fresh.addEventListener('contextmenu',e=>{e.preventDefault();});
+    fresh.addEventListener('click',e=>{
+      const key=fresh.dataset.lpkey;
+      const dow=parseInt(fresh.dataset.lpdow);
+      const meal=_mealCardLookup[key];
+      if(meal)openRecipePage(meal,dow);
+    });
   });
 }
 
