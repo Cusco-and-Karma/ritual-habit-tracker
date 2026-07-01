@@ -863,6 +863,7 @@
   .food-log-name{font-size:12px;color:var(--text);flex:1}
   .food-log-cals{font-size:11px;color:var(--text-dimmer);white-space:nowrap}
   .food-log-del{background:none;border:none;color:var(--text-dimmer);cursor:pointer;padding:2px 6px;font-size:16px;line-height:1}
+  .food-log-qty{font-size:11px;color:var(--text-dimmer)}
   .food-search-wrap{position:relative;margin-top:10px}
   .food-search-input{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-sm);color:var(--text);font-family:var(--font-body);font-size:12px;padding:9px 12px;outline:none;transition:border-color .2s}
   .food-search-input:focus{border-color:var(--accent)}
@@ -881,6 +882,9 @@
   .food-add-qty:focus{border-color:var(--accent)}
   .food-add-unit{font-size:11px;color:var(--text-dimmer);flex:1}
   .food-add-confirm{padding:7px 14px;border:none;border-radius:var(--r-sm);background:var(--accent);color:var(--bg);font-family:var(--font-body);font-size:11px;cursor:pointer}
+  .food-add-qty-label{width:100%;margin-top:8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-sm);color:var(--text);font-family:var(--font-body);font-size:12px;padding:6px 8px;outline:none}
+  .food-add-qty-label:focus{border-color:var(--accent)}
+  .food-add-qty-label::placeholder{color:var(--text-dimmer)}
   .food-key-note{font-size:10px;color:var(--text-dimmer);padding:8px 0 2px;line-height:1.6}
   .diet-no-plan{text-align:center;padding:48px 24px;color:var(--text-dimmer);font-size:13px;line-height:1.7}
   /* weekly meal cards */
@@ -1070,29 +1074,33 @@
   .weekly-view-btn svg{stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
   /* weekly view full-page overlay */
   /* ── Recipe page ── */
-  .recipe-page{position:fixed;inset:0;background:var(--bg);z-index:300;display:flex;flex-direction:column;max-width:420px;left:50%;transform:translateX(-50%);overflow:hidden}
+  .recipe-page{position:fixed;inset:0;background:var(--bg);z-index:99;display:flex;flex-direction:column;max-width:420px;left:50%;transform:translateX(-50%);overflow:hidden}
   .recipe-page.hidden{display:none}
   .recipe-page.slide-in{animation:recipeSlideIn .22s cubic-bezier(.4,0,.2,1) both}
   @keyframes recipeSlideIn{from{transform:translateX(calc(-50% + 40px));opacity:0}to{transform:translateX(-50%);opacity:1}}
-  .recipe-page-header{display:flex;align-items:center;gap:12px;padding:52px 24px 14px;flex-shrink:0;background:var(--bg);border-bottom:1px solid var(--border)}
+  .recipe-page-header{display:flex;align-items:center;gap:12px;padding:52px 16px 14px;flex-shrink:0;background:var(--bg);border-bottom:1px solid var(--border)}
   .recipe-page-back{width:36px;height:36px;border-radius:50%;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:background .15s}
   .recipe-page-back:active{background:var(--surface)}
   .recipe-page-back svg{width:16px;height:16px;stroke:var(--text-dim);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
   .recipe-page-title{font-family:'DM Serif Display',serif;font-size:18px;color:var(--text);flex:1;line-height:1.2}
-  .recipe-page-scroll{flex:1;overflow-y:auto;overscroll-behavior:contain;padding:20px 24px 100px;scrollbar-width:none}
+  .recipe-page-export{padding:6px 12px;border:1px solid var(--border);border-radius:var(--r-sm);background:var(--surface2);color:var(--text-dim);font-family:var(--font-body);font-size:10px;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;flex-shrink:0;transition:all .2s}
+  .recipe-page-export:hover{border-color:var(--accent);color:var(--accent)}
+  .recipe-page-scroll{flex:1;overflow-y:auto;overscroll-behavior:contain;padding:24px 24px 120px;scrollbar-width:none}
   .recipe-page-scroll::-webkit-scrollbar{display:none}
+  .recipe-meal-heading{font-family:'DM Serif Display',serif;font-size:26px;color:var(--text);line-height:1.2;margin-bottom:6px}
+  .recipe-meal-desc{font-size:14px;color:var(--text-dim);line-height:1.65;margin-bottom:18px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif}
   .recipe-meta-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
-  .recipe-meta-chip{padding:5px 12px;border-radius:99px;background:var(--surface2);border:1px solid var(--border);font-size:11px;color:var(--text-dim);letter-spacing:.03em}
-  .recipe-section-title{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-dimmer);margin:20px 0 10px;display:flex;align-items:center;gap:8px}
+  .recipe-meta-chip{padding:5px 12px;border-radius:99px;background:var(--surface2);border:1px solid var(--border);font-size:11px;color:var(--text-dim);letter-spacing:.03em;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif}
+  .recipe-section-title{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-dimmer);margin:24px 0 12px;display:flex;align-items:center;gap:8px}
   .recipe-section-title::after{content:'';flex:1;height:1px;background:var(--border)}
-  .recipe-ingredient-row{display:flex;align-items:baseline;gap:8px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.04)}
+  .recipe-ingredient-row{display:flex;align-items:baseline;gap:10px;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.04)}
   .recipe-ingredient-row:last-child{border-bottom:none}
-  .recipe-ingredient-dot{width:5px;height:5px;border-radius:50%;background:var(--accent);flex-shrink:0;margin-top:6px}
-  .recipe-ingredient-text{font-size:13px;color:var(--text);line-height:1.45;flex:1}
-  .recipe-step-row{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.04)}
+  .recipe-ingredient-dot{width:5px;height:5px;border-radius:50%;background:var(--accent);flex-shrink:0;margin-top:7px}
+  .recipe-ingredient-text{font-size:14px;color:var(--text);line-height:1.5;flex:1;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif}
+  .recipe-step-row{display:flex;gap:14px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.04)}
   .recipe-step-row:last-child{border-bottom:none}
-  .recipe-step-num{width:24px;height:24px;border-radius:50%;background:var(--accent-glow);border:1px solid rgba(200,180,240,.3);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--accent);flex-shrink:0;font-family:'DM Serif Display',serif;margin-top:1px}
-  .recipe-step-text{font-size:13px;color:var(--text);line-height:1.6;flex:1}
+  .recipe-step-num{width:26px;height:26px;border-radius:50%;background:var(--accent-glow);border:1px solid rgba(200,180,240,.3);display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--accent);flex-shrink:0;font-family:'DM Serif Display',serif;margin-top:1px}
+  .recipe-step-text{font-size:14px;color:var(--text);line-height:1.7;flex:1;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif}
   .recipe-nutrition-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:6px}
   .recipe-nutrition-cell{background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-sm);padding:10px 8px;text-align:center}
   .recipe-nutrition-val{font-family:'DM Serif Display',serif;font-size:18px;color:var(--text);line-height:1}
@@ -1897,6 +1905,7 @@
         <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
       </button>
       <div class="recipe-page-title" id="recipePageTitle">Recipe</div>
+      <button class="recipe-page-export" id="recipeExportBtn" onclick="exportRecipePDF()" aria-label="Export recipe">Export</button>
     </div>
     <div class="recipe-page-scroll" id="recipePageBody">
       <div class="recipe-loading">
@@ -6094,6 +6103,8 @@ let nutritionViewMode = 'daily'; // 'daily' | 'weekly'
 let currentMealSlot = null;    // name of open meal slot
 let pendingFood = null;        // food awaiting qty confirm
 let foodSearchTimer = null;    // debounce handle
+const _usdaCache = {};         // in-memory search cache keyed by query
+let _foodLogBusy = false;      // guard against double-fire on food log actions
 
 // ── unit helpers ──
 function isMetric(){return localStorage.getItem('ritualMetric')==='1';}
@@ -7968,6 +7979,7 @@ Use ${units} for quantities. Scale for one week (multiply daily amounts by 7). B
 // Cache: mealRecipeCache[key] = {name, meal_slot, day, prep_time, cook_time, ingredients, steps, protein_g, carbs_g, fat_g}
 const mealRecipeCache={};
 
+let _currentRecipeData={meal:null,rec:null};
 function openRecipePage(meal,dow){
   const page=document.getElementById('recipePage');
   const titleEl=document.getElementById('recipePageTitle');
@@ -7975,6 +7987,7 @@ function openRecipePage(meal,dow){
   if(!page||!titleEl||!bodyEl)return;
   const mealName=meal.name||'Recipe';
   titleEl.textContent=mealName;
+  _currentRecipeData={meal,rec:null};
   page.classList.remove('hidden');
   page.classList.add('slide-in');
 
@@ -7982,13 +7995,15 @@ function openRecipePage(meal,dow){
   // If recipe found in shopping list, use that
   const shopRecipe=(shoppingList&&shoppingList.recipes||[]).find(r=>r.name===mealName||(r.meal_slot===mealName&&r.day));
   if(shopRecipe||mealRecipeCache[cacheKey]){
-    _renderRecipePageContent(bodyEl,shopRecipe||mealRecipeCache[cacheKey],meal);
+    const r=shopRecipe||mealRecipeCache[cacheKey];
+    _currentRecipeData={meal,rec:r};
+    _renderRecipePageContent(bodyEl,r,meal);
     return;
   }
   // Show loading then fetch
   bodyEl.innerHTML=`<div class="recipe-loading"><div class="recipe-loading-spinner"></div><span>Fetching recipe…</span></div>`;
   _fetchMealRecipe(meal,dow,cacheKey).then(rec=>{
-    if(rec){mealRecipeCache[cacheKey]=rec;_renderRecipePageContent(bodyEl,rec,meal);}
+    if(rec){mealRecipeCache[cacheKey]=rec;_currentRecipeData={meal,rec};_renderRecipePageContent(bodyEl,rec,meal);}
     else{bodyEl.innerHTML=`<div class="recipe-loading" style="color:var(--accent4)">Could not load recipe — check your API key in Settings.</div>`;}
   });
 }
@@ -8042,8 +8057,9 @@ function _renderRecipePageContent(bodyEl,rec,meal){
       <div class="recipe-nutrition-cell"><div class="recipe-nutrition-val">${meal.fat_g||0}g</div><div class="recipe-nutrition-lbl">Fat</div></div>
     </div>`:'';
   bodyEl.innerHTML=`
+    <div class="recipe-meal-heading">${escapeHtml(rec.name||meal.name||'')}</div>
+    ${meal.description?`<p class="recipe-meal-desc">${escapeHtml(meal.description)}</p>`:''}
     ${metaChips?`<div class="recipe-meta-row">${metaChips}</div>`:''}
-    ${meal.description?`<p style="font-size:13px;color:var(--text-dim);line-height:1.6;margin-bottom:16px">${escapeHtml(meal.description)}</p>`:''}
     ${ingredientsHTML?`<div class="recipe-section-title">Ingredients</div><div>${ingredientsHTML}</div>`:''}
     ${stepsHTML?`<div class="recipe-section-title">Instructions</div><div>${stepsHTML}</div>`:''}
     ${nutritionHTML}`;
@@ -8052,6 +8068,51 @@ function _renderRecipePageContent(bodyEl,rec,meal){
 function closeRecipePage(){
   const page=document.getElementById('recipePage');
   if(page){page.classList.add('hidden');page.classList.remove('slide-in');}
+}
+
+function exportRecipePDF(){
+  const {meal,rec}=_currentRecipeData;
+  if(!rec&&!meal){return;}
+  const name=escapeHtml((rec&&rec.name)||meal?.name||'Recipe');
+  const desc=escapeHtml(meal?.description||'');
+  const prep=rec?.prep_time?`<span class="chip">Prep: ${escapeHtml(rec.prep_time)}</span>`:'';
+  const cook=rec?.cook_time?`<span class="chip">Cook: ${escapeHtml(rec.cook_time)}</span>`:'';
+  const ingredients=(rec?.ingredients||[]).map(i=>`<li>${escapeHtml(i)}</li>`).join('');
+  const steps=(rec?.steps||[]).map((s,idx)=>`<li><strong>${idx+1}.</strong> ${escapeHtml(s)}</li>`).join('');
+  const cals=meal?Math.round((meal.protein_g||0)*4+(meal.carbs_g||0)*4+(meal.fat_g||0)*9):0;
+  const nutrition=meal&&(meal.protein_g||meal.carbs_g||meal.fat_g)?`
+    <div class="section-title">Nutrition</div>
+    <table class="nutrition-table">
+      <tr>${cals>0?`<th>${cals} kcal</th>`:''}<th>${meal.protein_g||0}g Protein</th><th>${meal.carbs_g||0}g Carbs</th><th>${meal.fat_g||0}g Fat</th></tr>
+    </table>`:'';
+  const html=`<!DOCTYPE html><html><head><meta charset="utf-8"><title>${name}</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;font-size:15px;color:#1a1a1a;padding:48px;max-width:680px;margin:0 auto;line-height:1.6}
+    h1{font-family:Georgia,serif;font-size:32px;margin-bottom:8px;color:#111}
+    .desc{color:#555;margin-bottom:16px;font-size:14px}
+    .chips{display:flex;gap:10px;margin-bottom:24px;flex-wrap:wrap}
+    .chip{background:#f0f0f0;border-radius:20px;padding:4px 14px;font-size:12px;color:#444}
+    .section-title{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#888;margin:28px 0 10px;border-bottom:1px solid #e0e0e0;padding-bottom:6px}
+    ul,ol{padding-left:20px}
+    li{margin-bottom:8px;font-size:14px;line-height:1.6}
+    .nutrition-table{width:100%;border-collapse:collapse;margin-top:8px}
+    .nutrition-table th{background:#f5f5f5;padding:8px 12px;text-align:center;font-weight:500;font-size:13px;border:1px solid #e0e0e0}
+    @media print{body{padding:24px}}
+  </style></head><body>
+  <h1>${name}</h1>
+  ${desc?`<p class="desc">${desc}</p>`:''}
+  ${(prep||cook)?`<div class="chips">${prep}${cook}</div>`:''}
+  ${ingredients?`<div class="section-title">Ingredients</div><ul>${ingredients}</ul>`:''}
+  ${steps?`<div class="section-title">Instructions</div><ol style="list-style:none;padding:0">${steps}</ol>`:''}
+  ${nutrition}
+  </body></html>`;
+  const win=window.open('','_blank','width=780,height=900');
+  if(!win){alert('Please allow popups to export the recipe.');return;}
+  win.document.write(html);
+  win.document.close();
+  win.focus();
+  setTimeout(()=>win.print(),400);
 }
 
 // ─────────────────────────────────────────────────────────
@@ -9449,7 +9510,7 @@ function renderDietHTML(){
 
     const logItems=slotLog.length?`<div class="food-log-items">${slotLog.map((item,idx)=>`
       <div class="food-log-item">
-        <span class="food-log-name">${escapeHtml(item.name)}</span>
+        <span class="food-log-name">${escapeHtml(item.name)}${item.qty?`<span class="food-log-qty"> · ${escapeHtml(item.qty)}</span>`:item.grams?`<span class="food-log-qty"> · ${item.grams}g</span>`:''}</span>
         <span class="food-log-cals">${Math.round(item.calories||0)} kcal</span>
         <button class="food-log-del" onclick="removeFoodItem('${escapeHtml(slotName)}',${log.indexOf(item)})" aria-label="Remove">×</button>
       </div>`).join('')}</div>`:'';
@@ -9465,7 +9526,7 @@ function renderDietHTML(){
             <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 014-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 01-4 4H3"/></svg>
             Swap
           </button>
-          <button class="suggested-meal-log" onclick="logSuggestedMeal('${escapeHtml(slotName)}',${meal.protein_g||0},${meal.carbs_g||0},${meal.fat_g||0},'${escapeHtml(meal.description)}')">Log</button>
+          <button class="suggested-meal-log" onclick="logSuggestedMeal('${escapeHtml(slotName)}',${meal.protein_g||0},${meal.carbs_g||0},${meal.fat_g||0},'${escapeHtml(meal.description)}',event)">Log</button>
         </div>
       </div>`:'';
 
@@ -9483,8 +9544,9 @@ function renderDietHTML(){
           <div class="food-add-row">
             <input class="food-add-qty" type="number" value="100" min="1" max="9999" id="foodAddQty_${escapeHtml(slotName).replace(/\s/g,'_')}"/>
             <span class="food-add-unit" id="foodAddUnit_${escapeHtml(slotName).replace(/\s/g,'_')}">g</span>
-            <button class="food-add-confirm" onclick="confirmAddFood('${escapeHtml(slotName)}')">Add</button>
+            <button class="food-add-confirm" onclick="confirmAddFood('${escapeHtml(slotName)}',event)">Add</button>
           </div>
+          <input class="food-add-qty-label" type="text" placeholder="Quantity label (e.g. 2 cups, 1 serving)" id="foodAddQtyLabel_${escapeHtml(slotName).replace(/\s/g,'_')}"/>
         </div>
       </div>
       <div class="food-key-note">Tap a result to set quantity · uses USDA FoodData Central</div>`;
@@ -9536,12 +9598,16 @@ function toggleMealSlot(slotName){
   renderTrainingView();
 }
 
-function logSuggestedMeal(slotName,protein,carbs,fat,description){
+function logSuggestedMeal(slotName,protein,carbs,fat,description,ev){
+  if(ev){ev.stopPropagation();}
+  if(_foodLogBusy)return;
+  _foodLogBusy=true;
   const log=getTodayFoodLog();
   const cals=Math.round(protein*4+carbs*4+fat*9);
   log.push({name:description,meal:slotName,calories:cals,protein,carbs,fat,grams:null});
   saveTodayFoodLog(log);
   renderTrainingView();
+  setTimeout(()=>{_foodLogBusy=false;},300);
 }
 
 function removeFoodItem(slotName,idx){
@@ -9557,7 +9623,7 @@ function debounceFoodSearch(query,slotName){
   const drop=document.getElementById('foodDrop_'+slotKey);
   if(!query||query.length<2){if(drop)drop.style.display='none';return;}
   if(drop){drop.style.display='';drop.innerHTML='<div class="food-search-item" style="color:var(--text-dimmer)">Searching…</div>';}
-  foodSearchTimer=setTimeout(()=>doFoodSearch(query,slotName),400);
+  foodSearchTimer=setTimeout(()=>doFoodSearch(query,slotName),800);
 }
 
 async function doFoodSearch(query,slotName){
@@ -9565,15 +9631,33 @@ async function doFoodSearch(query,slotName){
   const drop=document.getElementById('foodDrop_'+slotKey);
   if(!drop)return;
   try{
-    const results=await fetchUSDA(query);
-    if(!results.length){drop.innerHTML='<div class="food-search-item" style="color:var(--text-dimmer)">No results found</div>';drop.style.display='';return;}
-    drop.innerHTML=results.map((f,i)=>`
+    let results,isAI=false;
+    if(_usdaCache[query]){
+      results=_usdaCache[query].results;
+      isAI=_usdaCache[query].isAI||false;
+    }else{
+      try{
+        results=await fetchUSDA(query);
+        _usdaCache[query]={results,isAI:false};
+      }catch(err){
+        if(err.message.includes('429')){
+          // Rate limited — fall back to Claude AI estimate
+          results=await fetchNutritionFromAI(query);
+          isAI=true;
+          _usdaCache[query]={results,isAI:true};
+        }else{
+          throw err;
+        }
+      }
+    }
+    if(!results||!results.length){drop.innerHTML='<div class="food-search-item" style="color:var(--text-dimmer)">No results found</div>';drop.style.display='';return;}
+    drop.innerHTML=(isAI?`<div class="food-search-item" style="color:var(--text-dimmer);font-size:10px;padding:6px 12px;border-bottom:1px solid rgba(255,255,255,.04)">AI estimate · USDA rate limit reached</div>`:'')
+      +results.map((f,i)=>`
       <div class="food-search-item" onclick="selectFood(${i},'${escapeHtml(slotName)}')" data-fidx="${i}">
         <div class="food-search-item-name">${escapeHtml(f.name)}</div>
         <div class="food-search-item-meta">P ${f.protein}g · C ${f.carbs}g · F ${f.fat}g · ${f.calories} kcal / 100g</div>
       </div>`).join('');
     drop.style.display='';
-    // store results for selection
     drop._results=results;
   }catch(e){
     drop.innerHTML=`<div class="food-search-item" style="color:#ef4444">Search failed: ${escapeHtml(e.message)}</div>`;
@@ -9594,6 +9678,30 @@ async function fetchUSDA(query){
   });
 }
 
+async function fetchNutritionFromAI(query){
+  const apiKey=getApiKey();
+  if(!apiKey)return[];
+  const prompt=`Estimate the macronutrients per 100g for "${query}". Return ONLY valid JSON array, no markdown, no explanation:
+[{"name":"${query}","protein":0,"carbs":0,"fat":0,"calories":0}]
+Fill in realistic values based on typical composition. Only return one item.`;
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model:getModel(),max_tokens:200,messages:[{role:'user',content:prompt}]})
+    });
+    if(!res.ok)return[];
+    const data=await res.json();
+    const text=(data.content||[]).find(b=>b.type==='text')?.text||'';
+    const parsed=extractJSONFromText(text);
+    if(Array.isArray(parsed))return parsed.map(f=>({
+      name:f.name||query,protein:Math.round(f.protein||0),carbs:Math.round(f.carbs||0),
+      fat:Math.round(f.fat||0),calories:Math.round(f.calories||0),servingSize:100,servingSizeUnit:'g'
+    }));
+  }catch(e){}
+  return[];
+}
+
 function selectFood(idx,slotName){
   const slotKey=slotName.replace(/\s/g,'_');
   const drop=document.getElementById('foodDrop_'+slotKey);
@@ -9611,11 +9719,15 @@ function selectFood(idx,slotName){
   panel.classList.add('visible');
 }
 
-function confirmAddFood(slotName){
-  if(!pendingFood)return;
+function confirmAddFood(slotName,ev){
+  if(ev){ev.stopPropagation();}
+  if(!pendingFood||_foodLogBusy)return;
+  _foodLogBusy=true;
   const slotKey=slotName.replace(/\s/g,'_');
   const qtyEl=document.getElementById('foodAddQty_'+slotKey);
+  const qtyLabelEl=document.getElementById('foodAddQtyLabel_'+slotKey);
   const qty=parseFloat(qtyEl?.value||'100')||100;
+  const qtyLabel=(qtyLabelEl?.value||'').trim();
   const ratio=qty/100;
   const log=getTodayFoodLog();
   log.push({
@@ -9625,11 +9737,13 @@ function confirmAddFood(slotName){
     protein:Math.round(pendingFood.protein*ratio*10)/10,
     carbs:Math.round(pendingFood.carbs*ratio*10)/10,
     fat:Math.round(pendingFood.fat*ratio*10)/10,
-    grams:qty
+    grams:qty,
+    qty:qtyLabel||null
   });
   saveTodayFoodLog(log);
   pendingFood=null;
   renderTrainingView();
+  setTimeout(()=>{_foodLogBusy=false;},300);
 }
 
 // bind non-inline events after each render
